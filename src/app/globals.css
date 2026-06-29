@@ -1,7 +1,21 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   AuraPTE design tokens
+   ---------------------------------------------------------------------------
+   Every visual surface in the app reads from these semantic tokens via
+   Tailwind v4 --color-* variables. Light tokens are the default; the .dark
+   class on <html> swaps them to dark variants in one place — no per-component
+   dark: overrides needed for backgrounds, text, borders, or shadows.
+
+   To add a new colour: define the token here and use it as a Tailwind class
+   (`bg-canvas`, `text-ink`, `border-hairline`, …). Don't hardcode hex codes
+   in components — that defeats the dark-mode and theme-system work in this
+   file. The single exception is the gradient strips on hero cards, which
+   are intentionally theme-stable for branding.
+   --------------------------------------------------------------------------- */
 @theme {
-  /* Vercel Design System Colors */
+  /* Light tokens (default) */
   --color-primary: #171717;
   --color-on-primary: #ffffff;
   --color-ink: #171717;
@@ -30,20 +44,55 @@
   --color-cyan-deep: #29bc9b;
   --color-highlight-pink: #ff0080;
   --color-highlight-magenta: #eb367f;
-  
+
   --color-gradient-develop-start: #007cf0;
   --color-gradient-develop-end: #00dfd8;
   --color-gradient-preview-start: #7928ca;
   --color-gradient-preview-end: #ff0080;
   --color-gradient-ship-start: #ff4d4d;
   --color-gradient-ship-end: #f9cb28;
-  
-  /* Fonts */
+
   --font-geist: var(--font-geist-sans), Geist, Inter, system-ui, -apple-system, sans-serif;
   --font-geist-mono: var(--font-geist-mono), Geist Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 }
 
+/* Dark tokens: override only what changes. The token *names* stay the same,
+   so every Tailwind class that uses them auto-flips. */
+.dark {
+  --color-primary: #fafafa;
+  --color-on-primary: #0a0a0a;
+  --color-ink: #fafafa;
+  --color-body: #a3a3a3;
+  --color-mute: #6b6b6b;
+  --color-hairline: #262626;
+  --color-hairline-strong: #404040;
+  --color-canvas: #0a0a0a;
+  --color-canvas-soft: #111111;
+  --color-canvas-soft-2: #1a1a1a;
+  --color-link: #4ea8ff;
+  --color-link-deep: #79b8ff;
+  --color-link-bg-soft: #0e2a4d;
+  --color-success: #4ea8ff;
+  --color-error: #ff5c5c;
+  --color-error-soft: #3a1717;
+  --color-error-deep: #ff8585;
+  --color-warning: #ffb547;
+  --color-warning-soft: #3a2a17;
+  --color-warning-deep: #ffc977;
+  --color-violet: #b388ff;
+  --color-violet-soft: #2a1f3d;
+  --color-violet-deep: #d4baff;
+  --color-cyan: #6affd9;
+  --color-cyan-soft: #0e3a32;
+  --color-cyan-deep: #8fffe6;
+}
+
 @layer base {
+  /* Smooth theme flip — no flash, just a 200ms colour cross-fade. */
+  *, *::before, *::after {
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+  }
+
   body {
     background-color: var(--color-canvas-soft);
     color: var(--color-ink);
@@ -51,24 +100,136 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Scrollbar theme to match — light grey default, dark grey in dark mode. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--color-canvas-soft); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-hairline-strong);
+    border-radius: 6px;
+    border: 2px solid var(--color-canvas-soft);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-mute); }
 }
 
-/* Custom Vercel Shadows and Utilities */
+/* ---------------------------------------------------------------------------
+   Hover / interaction consistency
+   ---------------------------------------------------------------------------
+   One single hover style for every interactive card surface in the app.
+   Replaces the mess of mixed hover effects (some had hover:scale-[1.01], some
+   had hover:shadow-md, some had hover:border-strong, some had rainbow top
+   stripe that appeared only on hover, some had nothing at all). Pick one
+   pattern, apply it everywhere via `card-hover` class.
+   --------------------------------------------------------------------------- */
+.card-hover {
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.card-hover:hover {
+  border-color: var(--color-hairline-strong);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Disabled / locked cards don't lift. */
+.card-hover.card-locked {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.card-hover.card-locked:hover {
+  border-color: var(--color-hairline);
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 2px 2px rgba(0, 0, 0, 0.04);
+  transform: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Shadows — light tokens only (dark mode shadows are stronger to compensate
+   for darker backgrounds and would feel too heavy otherwise)
+   --------------------------------------------------------------------------- */
 .shadow-vercel-card {
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 2px 2px rgba(0, 0, 0, 0.04);
+}
+.dark .shadow-vercel-card {
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4), 0px 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .shadow-vercel-popover {
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.04), 0px 8px 16px rgba(0, 0, 0, 0.08);
 }
+.dark .shadow-vercel-popover {
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5), 0px 8px 24px rgba(0, 0, 0, 0.7);
+}
 
 .shadow-vercel-modal {
   box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.12), 0px 32px 64px rgba(0, 0, 0, 0.16);
 }
+.dark .shadow-vercel-modal {
+  box-shadow: 0px 16px 48px rgba(0, 0, 0, 0.6), 0px 32px 80px rgba(0, 0, 0, 0.8);
+}
 
-/* Custom Drag and Drop styling helpers */
+/* ---------------------------------------------------------------------------
+   Drag & drop styling
+   --------------------------------------------------------------------------- */
 .dragging {
   opacity: 0.5;
   transform: scale(1.02);
   cursor: grabbing;
+}
+
+/* ---------------------------------------------------------------------------
+   3D landing-page scene helpers
+   ---------------------------------------------------------------------------
+   The landing page uses a Three.js canvas behind the hero. These helpers
+   let the canvas sit at -z-10 and remain click-through where appropriate.
+   --------------------------------------------------------------------------- */
+.landing-3d-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.landing-aurora {
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(60% 50% at 20% 30%, color-mix(in oklab, var(--color-link) 28%, transparent) 0%, transparent 60%),
+    radial-gradient(50% 60% at 80% 20%, color-mix(in oklab, var(--color-violet) 24%, transparent) 0%, transparent 65%),
+    radial-gradient(40% 40% at 50% 80%, color-mix(in oklab, var(--color-cyan) 18%, transparent) 0%, transparent 60%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Marquee text for landing stats strip */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Section reveal — used on landing scroll-into-view */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal-up {
+  animation: reveal-up 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Pulse ring for CTA */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-link) 35%, transparent); }
+  70% { box-shadow: 0 0 0 12px color-mix(in oklab, var(--color-link) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-link) 0%, transparent); }
+}
+.pulse-ring {
+  animation: pulse-ring 2.4s cubic-bezier(0.66, 0, 0, 1) infinite;
+}
+
+/* Lightbox for MediaDetail */
+.media-lightbox-backdrop {
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
 }

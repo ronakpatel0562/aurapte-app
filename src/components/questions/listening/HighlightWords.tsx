@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import AudioPlayer from "../shared/AudioPlayer";
 import ScoreBadge from "../shared/ScoreBadge";
-import ModelAnswer from "../shared/ModelAnswer";
 import { scoreHighlightIncorrectWords } from "@/lib/scoring/listening";
 
 interface HighlightWordsProps {
@@ -12,9 +11,13 @@ interface HighlightWordsProps {
     title: string;
     content: {
       audio_url?: string;
-      correct_transcript: string;
+      /** Spoken version of the passage (with substituted words in it).
+       *  Comes from the DB's `transcript` field via taskTypeMapper. */
       passage_with_incorrect_words: string;
+      /** Words the student should click. Comes from the DB's
+       *  `incorrect_words` field via taskTypeMapper. */
       incorrect_words: string[];
+      audio_transcript?: string;
     };
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
@@ -25,6 +28,8 @@ interface WordToken {
   index: number;
   text: string;
   cleanText: string;
+  /** True when this token's clean form is in the incorrect_words list. */
+  isTarget: boolean;
 }
 
 export default function HighlightWords({
@@ -34,63 +39,62 @@ export default function HighlightWords({
 }: HighlightWordsProps) {
   const {
     audio_url,
-    correct_transcript,
     passage_with_incorrect_words,
     incorrect_words,
+    audio_transcript,
   } = question.content;
 
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  // The DB only stores the clean transcript + the list of words that were
-  // changed in the spoken version. We can't reconstruct what the wrong words
-  // were without a separate `incorrect_transcript` field. When that's
-  // missing, show a clear notice instead of pretending there are words to
-  // click on.
-  const hasInteractiveTranscript =
-    !!passage_with_incorrect_words &&
-    passage_with_incorrect_words.trim() !== correct_transcript.trim();
-
-  // Clean helper
+  // Strip punctuation + lowercase for matching. The DB stores the spoken
+  // words as bare tokens (no quotes / apostrophes), so we can compare
+  // apples-to-apples against the user's clicks.
   const cleanWord = (word: string) =>
     word
       .toLowerCase()
       .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "")
       .trim();
 
-  const incorrectWordsClean = useMemo(() => {
-    return incorrect_words.map((w) => cleanWord(w));
-  }, [incorrect_words]);
+  const incorrectSet = useMemo(
+    () => new Set((incorrect_words ?? []).map(cleanWord).filter(Boolean)),
+    [incorrect_words]
+  );
 
-  // Tokenize the incorrect transcript
+  // Tokenize the spoken passage. We keep the original surface form so the
+  // UI shows real punctuation/case, but we precompute the clean form for
+  // matching and a `isTarget` flag so each token knows whether it's a
+  // candidate answer.
   const tokens = useMemo<WordToken[]>(() => {
-    return passage_with_incorrect_words.split(/\s+/).map((word, index) => ({
-      index,
-      text: word,
-      cleanText: cleanWord(word),
-    }));
-  }, [passage_with_incorrect_words]);
+    if (!passage_with_incorrect_words) return [];
+    return passage_with_incorrect_words.split(/\s+/).map((word, index) => {
+      const cleanText = cleanWord(word);
+      return {
+        index,
+        text: word,
+        cleanText,
+        isTarget: incorrectSet.has(cleanText),
+      };
+    });
+  }, [passage_with_incorrect_words, incorrectSet]);
 
   const handleToggle = (index: number) => {
     if (submitted) return;
     setSelectedIndices((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : [...prev, index]
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
     );
   };
 
   const handleSubmit = () => {
     if (submitted) return;
-
-    const userSelectedWords = selectedIndices.map(
-      (idx) => tokens.find((t) => t.index === idx)?.cleanText || ""
-    );
+    const userSelectedWords = selectedIndices
+      .map((idx) => tokens.find((t) => t.index === idx)?.cleanText || "")
+      .filter(Boolean);
 
     const scoreResult = scoreHighlightIncorrectWords(
       userSelectedWords,
-      incorrectWordsClean
+      Array.from(incorrectSet)
     );
 
     setResult(scoreResult);
@@ -104,12 +108,13 @@ export default function HighlightWords({
     setResult(null);
   };
 
+  const hasInteractiveTranscript =
+    tokens.length > 0 && incorrectSet.size > 0;
+
   return (
     <div className="space-y-6">
-      {/* Audio Player */}
-      <AudioPlayer audioUrl={audio_url} transcript={correct_transcript} hasSubmitted={submitted} />
+      <AudioPlayer audioUrl={audio_url} transcript={audio_transcript} hasSubmitted={submitted} />
 
-      {/* Clickable Word Card */}
       <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-6">
         <div className="flex justify-between items-center pb-4 border-b border-hairline">
           <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
@@ -120,23 +125,43 @@ export default function HighlightWords({
           )}
         </div>
 
-        <p className="text-xs text-body leading-relaxed">
-          Listen to the recording. Below is the transcript, but some words have
-          been replaced. Click the words in the transcript that are different
-          from what the speaker says.
-        </p>
+        <div className="text-xs text-body leading-relaxed space-y-1">
+          <p>
+            Listen to the recording and read along. The transcript below contains
+            some words that differ from what the speaker actually says.
+          </p>
+          <p>
+            <strong className="text-ink">Click each word</strong> in the
+            transcript that is different from what you hear in the audio.
+          </p>
+        </div>
 
-        {/* Interactive passage OR honest placeholder when the DB row is missing
-            the incorrect-transcript field. */}
+        {/* Hint banner showing how many words need to be flagged. */}
+        {hasInteractiveTranscript && (
+          <div className="flex items-center justify-between gap-3 px-3 py-2 bg-canvas-soft-2 border border-hairline rounded-md">
+            <span className="text-2xs font-mono uppercase tracking-wider text-mute">
+              Words to find
+            </span>
+            <span className="flex items-center gap-2 text-xs">
+              <span className="font-mono font-bold text-ink tabular-nums">
+                {selectedIndices.length}
+              </span>
+              <span className="text-mute">of</span>
+              <span className="font-mono font-bold text-ink tabular-nums">
+                {incorrectSet.size}
+              </span>
+              <span className="text-mute">selected</span>
+            </span>
+          </div>
+        )}
+
         {hasInteractiveTranscript ? (
-          <div className="text-body-md text-ink leading-loose select-none font-geist py-2 select-text border border-hairline p-4 rounded-md bg-canvas-soft-2 pr-2">
+          <div className="text-base text-ink leading-loose font-geist py-3 px-4 border border-hairline rounded-md bg-canvas-soft-2">
             {tokens.map((token) => {
               const isSel = selectedIndices.includes(token.index);
-              const isWordIncorrect = incorrectWordsClean.includes(
-                token.cleanText
-              );
+              const isWordIncorrect = token.isTarget;
 
-              const getHighlightClass = () => {
+              const highlightClass = (() => {
                 if (submitted) {
                   if (isWordIncorrect && isSel) {
                     return "bg-success/15 border-b-2 border-success text-success font-semibold";
@@ -145,23 +170,23 @@ export default function HighlightWords({
                     return "bg-error/15 border-b-2 border-error text-error-deep font-semibold";
                   }
                   if (isWordIncorrect && !isSel) {
-                    return "bg-warning-soft/30 border-b-2 border-dashed border-warning-deep text-warning-deep font-semibold";
+                    return "bg-warning-soft/40 border-b-2 border-dashed border-warning-deep text-warning-deep font-semibold";
                   }
                   return "";
                 }
                 return isSel
                   ? "bg-primary/10 border-b-2 border-primary text-ink font-semibold"
                   : "hover:bg-canvas border-b border-transparent";
-              };
+              })();
 
               return (
                 <span
                   key={token.index}
                   onClick={() => handleToggle(token.index)}
-                  className={`inline-block mx-0.5 px-0.5 rounded cursor-pointer transition select-none ${getHighlightClass()}`}
+                  className={`inline-block mx-0.5 px-0.5 rounded cursor-pointer transition ${highlightClass}`}
                   title={
                     submitted && isWordIncorrect && !isSel
-                      ? `Incorrect term: ${token.text}`
+                      ? `You missed this word: "${token.text}"`
                       : undefined
                   }
                 >
@@ -172,69 +197,61 @@ export default function HighlightWords({
           </div>
         ) : (
           <div className="bg-warning-soft/30 border border-warning/30 rounded-md p-3.5">
-            <p className="text-3xs font-bold font-mono uppercase tracking-wider text-warning-deep">
-              Missing Data
+            <p className="text-2xs font-bold font-mono uppercase tracking-wider text-warning-deep">
+              Question Data Missing
             </p>
-            <p className="text-3xs text-body leading-relaxed mt-1">
-              This question does not include the transcript-with-substitutions
-              field needed for interactive practice. The substituted words are
-              listed below for reference.
+            <p className="text-xs text-body leading-relaxed mt-1">
+              This question does not include the spoken passage or the list of
+              substituted words needed for interactive practice. The expected
+              incorrect words (if any) are listed below for reference.
             </p>
-            <ul className="text-3xs text-body leading-relaxed mt-2 space-y-0.5 font-mono">
-              {incorrect_words.map((w, i) => (
-                <li key={i}>• {w}</li>
-              ))}
-            </ul>
+            {incorrect_words.length > 0 && (
+              <ul className="text-2xs text-body leading-relaxed mt-2 space-y-0.5 font-mono">
+                {incorrect_words.map((w, i) => (
+                  <li key={i}>• {w}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
-        {/* Legend */}
+        {/* Legend — visible during/after submit so the colour coding makes sense. */}
         {submitted && (
-          <div className="flex flex-wrap gap-4 text-3xs font-mono">
+          <div className="flex flex-wrap gap-4 text-2xs font-mono">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded bg-success/15 border-b-2 border-success" />
-              <span className="text-body">Correct (Wrongly Spoken)</span>
+              <span className="text-body">Correctly flagged (spoken differently)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded bg-error/15 border-b-2 border-error" />
-              <span className="text-body">Incorrectly Flagged (Actually Correct)</span>
+              <span className="text-body">Flagged but actually correct (−1)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-warning-soft/30 border-b-2 border-dashed border-warning-deep" />
-              <span className="text-body">Missed Wrong Word</span>
+              <span className="w-3 h-3 rounded bg-warning-soft/40 border-b-2 border-dashed border-warning-deep" />
+              <span className="text-body">Missed incorrect word</span>
             </div>
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex gap-4 pt-4 border-t border-hairline">
           {!submitted ? (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || !hasInteractiveTranscript}
-              className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-95 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99] disabled:opacity-50"
+              className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-95 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Submit Answers
             </button>
           ) : (
             <button
               onClick={handleReset}
-              className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99]"
+              className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center active:scale-[0.99]"
             >
               Try Again
             </button>
           )}
         </div>
       </div>
-
-      {submitted && (
-        <ModelAnswer
-          answer={`Original text:\n"${correct_transcript}"\n\nReplaced terms:\n${incorrect_words
-            .map((w) => `• "${w}"`)
-            .join("\n")}`}
-          title="Explanation & Original Transcript"
-        />
-      )}
     </div>
   );
 }

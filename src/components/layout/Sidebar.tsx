@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
+import { planName, isPremiumPlan } from "@/lib/plans";
+import ThemeToggle from "@/components/providers/ThemeToggle";
 
 interface TaskTypeItem {
   name: string;
@@ -38,24 +40,15 @@ const MODULES: ModuleGroup[] = [
       { name: "Read Aloud", href: "/questions/speaking/read-aloud" },
       { name: "Repeat Sentence", href: "/questions/speaking/repeat-sentence" },
       { name: "Describe Image", href: "/questions/speaking/describe-image" },
-      {
-        name: "Responding to Situation",
-        href: "/questions/speaking/responding-to-situation",
-      },
-      {
-        name: "Answer Short Question",
-        href: "/questions/speaking/answer-short-question",
-      },
+      { name: "Responding to Situation", href: "/questions/speaking/responding-to-situation" },
+      { name: "Answer Short Question", href: "/questions/speaking/answer-short-question" },
     ],
   },
   {
     name: "Writing",
     icon: PenTool,
     tasks: [
-      {
-        name: "Summarize Written Text",
-        href: "/questions/writing/summarize-written-text",
-      },
+      { name: "Summarize Written Text", href: "/questions/writing/summarize-written-text" },
       { name: "Write an Email", href: "/questions/writing/write-an-email" },
     ],
   },
@@ -63,72 +56,30 @@ const MODULES: ModuleGroup[] = [
     name: "Reading",
     icon: BookOpenCheck,
     tasks: [
-      {
-        name: "R&W Fill in the Blanks",
-        href: "/questions/reading/rw-fill-in-the-blanks",
-      },
-      {
-        name: "Multiple Choice – Multiple",
-        href: "/questions/reading/multiple-choice-multiple",
-      },
-      {
-        name: "Re-order Paragraphs",
-        href: "/questions/reading/reorder-paragraphs",
-      },
-      {
-        name: "Reading Fill in the Blanks",
-        href: "/questions/reading/reading-fill-in-the-blanks",
-      },
-      {
-        name: "Multiple Choice – Single",
-        href: "/questions/reading/multiple-choice-single",
-      },
+      { name: "R&W Fill in the Blanks", href: "/questions/reading/rw-fill-in-the-blanks" },
+      { name: "Multiple Choice – Multiple", href: "/questions/reading/multiple-choice-multiple" },
+      { name: "Re-order Paragraphs", href: "/questions/reading/reorder-paragraphs" },
+      { name: "Reading Fill in the Blanks", href: "/questions/reading/reading-fill-in-the-blanks" },
+      { name: "Multiple Choice – Single", href: "/questions/reading/multiple-choice-single" },
     ],
   },
   {
     name: "Listening",
     icon: Headphones,
     tasks: [
-      {
-        name: "Summarize Spoken Text",
-        href: "/questions/listening/summarize-spoken-text",
-      },
-      {
-        name: "Multiple Choice – Multiple",
-        href: "/questions/listening/multiple-choice-multiple",
-      },
-      {
-        name: "Fill in the Blanks",
-        href: "/questions/listening/fill-in-the-blanks",
-      },
-      {
-        name: "Multiple Choice – Single",
-        href: "/questions/listening/multiple-choice-single",
-      },
-      {
-        name: "Select Missing Word",
-        href: "/questions/listening/select-missing-word",
-      },
-      {
-        name: "Highlight Incorrect Words",
-        href: "/questions/listening/highlight-incorrect-words",
-      },
-      {
-        name: "Write from Dictation",
-        href: "/questions/listening/write-from-dictation",
-      },
+      { name: "Summarize Spoken Text", href: "/questions/listening/summarize-spoken-text" },
+      { name: "Multiple Choice – Multiple", href: "/questions/listening/multiple-choice-multiple" },
+      { name: "Fill in the Blanks", href: "/questions/listening/fill-in-the-blanks" },
+      { name: "Multiple Choice – Single", href: "/questions/listening/multiple-choice-single" },
+      { name: "Select Missing Word", href: "/questions/listening/select-missing-word" },
+      { name: "Highlight Incorrect Words", href: "/questions/listening/highlight-incorrect-words" },
+      { name: "Write from Dictation", href: "/questions/listening/write-from-dictation" },
     ],
   },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [openModules, setOpenModules] = useState<Record<string, boolean>>({
-    Speaking: pathname.includes("/speaking/"),
-    Writing: pathname.includes("/writing/"),
-    Reading: pathname.includes("/reading/"),
-    Listening: pathname.includes("/listening/"),
-  });
   const [questionBankOpen, setQuestionBankOpen] = useState(true);
   const [plan, setPlan] = useState<string>("free");
 
@@ -146,9 +97,7 @@ export default function Sidebar() {
           .eq("id", user.id)
           .maybeSingle();
 
-        if (dbProfile) {
-          setPlan(dbProfile.plan || "free");
-        }
+        if (dbProfile) setPlan(dbProfile.plan || "free");
       }
     } catch (err) {
       console.error("Failed to load user plan in sidebar:", err);
@@ -157,32 +106,21 @@ export default function Sidebar() {
 
   useEffect(() => {
     loadPlan();
-
-    // Listen for custom plan change events from the header switcher
-    const handlePlanChange = () => {
-      loadPlan();
-    };
+    const handlePlanChange = () => loadPlan();
     window.addEventListener("planChanged", handlePlanChange);
-    return () => {
-      window.removeEventListener("planChanged", handlePlanChange);
-    };
+    return () => window.removeEventListener("planChanged", handlePlanChange);
   }, []);
 
-  const isPremium = plan === "premium";
+  const isPremium = isPremiumPlan(plan);
 
-  const toggleModule = (moduleName: string) => {
-    setOpenModules((prev) => ({
-      ...prev,
-      [moduleName]: !prev[moduleName],
-    }));
-  };
+
 
   const handleLogout = async () => {
     await logout();
   };
 
   return (
-    <aside className="w-64 border-r border-hairline bg-canvas flex flex-col h-screen sticky top-0 overflow-y-auto select-none font-geist">
+    <aside className="w-64 shrink-0 border-r border-hairline bg-canvas flex flex-col h-screen sticky top-0 overflow-y-auto select-none font-geist">
       {/* Brand Header */}
       <div className="h-16 border-b border-hairline flex items-center px-6">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
@@ -198,13 +136,11 @@ export default function Sidebar() {
         </Link>
       </div>
 
-      {/* Nav Content */}
-      <nav className="flex-1 px-4 py-6 space-y-6">
-        {/* Core Links */}
-        <div className="space-y-1">
+      <nav className="flex-1 px-3 py-5 space-y-5">
+        <div className="space-y-0.5">
           <Link
             href="/dashboard"
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
               pathname === "/dashboard"
                 ? "bg-canvas-soft-2 text-ink font-semibold"
                 : "text-body hover:bg-canvas-soft hover:text-ink"
@@ -214,7 +150,8 @@ export default function Sidebar() {
             Dashboard
           </Link>
 
-          {/* Question Bank Parent */}
+          {/* Question Bank — expand/collapse. When open, shows modules with
+              their task-type tree nested beneath. */}
           <div>
             <button
               onClick={() => setQuestionBankOpen(!questionBankOpen)}
@@ -231,25 +168,32 @@ export default function Sidebar() {
               )}
             </button>
 
-            {/* Modules Nested Tree */}
             {questionBankOpen && (
-              <div className="pl-4 mt-1 space-y-1">
+              <div className="pl-3 mt-0.5 space-y-0.5">
                 {MODULES.map((mod) => {
                   const Icon = mod.icon;
-                  const isActive = pathname.startsWith(`/questions/${mod.name.toLowerCase()}`);
+                  const moduleHref = `/questions/${mod.name.toLowerCase()}`;
+                  const isModuleActive = pathname.startsWith(moduleHref);
                   return (
-                    <Link
-                      key={mod.name}
-                      href={`/questions/${mod.name.toLowerCase()}`}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider rounded-md transition ${
-                        isActive
-                          ? "text-primary bg-canvas-soft font-semibold"
-                          : "text-mute hover:text-ink"
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{mod.name}</span>
-                    </Link>
+                    <div key={mod.name}>
+                      <div
+                        className={`flex items-center gap-1 rounded-md ${
+                          isModuleActive ? "bg-canvas-soft" : ""
+                        }`}
+                      >
+                        <Link
+                          href={moduleHref}
+                          className={`flex-1 flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider rounded-md transition ${
+                            isModuleActive
+                              ? "text-primary"
+                              : "text-mute hover:text-ink"
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{mod.name}</span>
+                        </Link>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -257,81 +201,105 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Add-on Sections */}
-        <div className="space-y-1 pt-4 border-t border-hairline">
+        <div className="space-y-0.5 pt-4 border-t border-hairline">
           <p className="px-3 text-2xs font-semibold text-mute uppercase tracking-widest mb-2">
             Add-ons
           </p>
-          
-          {/* Practice Test */}
+
           <Link
             href="/practice-tests"
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
+            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
               pathname === "/practice-tests"
                 ? "bg-canvas-soft-2 text-ink font-semibold"
                 : "text-body hover:bg-canvas-soft hover:text-ink"
             }`}
           >
-            <div className="flex items-center gap-3">
+            <span className="flex items-center gap-3">
               <BookOpenCheck className="w-4 h-4" />
-              <span>Practice Test</span>
-            </div>
+              Practice Test
+            </span>
             {!isPremium && (
-              <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute font-medium uppercase scale-90">
+              <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute font-medium uppercase">
                 10 Free
               </span>
             )}
           </Link>
 
-          {/* Mock Test */}
           <Link
             href="/mock-tests"
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
+            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
               pathname === "/mock-tests"
                 ? "bg-canvas-soft-2 text-ink font-semibold"
                 : "text-body hover:bg-canvas-soft hover:text-ink"
             }`}
           >
-            <div className="flex items-center gap-3">
+            <span className="flex items-center gap-3">
               <Award className="w-4 h-4" />
-              <span>Mock Test</span>
-            </div>
+              Mock Test
+            </span>
             {!isPremium && (
-              <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute font-medium uppercase scale-90">
+              <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute font-medium uppercase">
                 5 Free
               </span>
             )}
           </Link>
 
-          {/* Specialised Tips */}
           <Link
             href="/specialised-tips"
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
+            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
               pathname === "/specialised-tips"
                 ? "bg-canvas-soft-2 text-ink font-semibold"
                 : "text-body hover:bg-canvas-soft hover:text-ink"
             }`}
           >
-            <div className="flex items-center gap-3">
+            <span className="flex items-center gap-3">
               <PenTool className="w-4 h-4" />
-              <span>Specialised Tips</span>
-            </div>
+              Specialised Tips
+            </span>
             {!isPremium ? (
               <Lock className="w-3.5 h-3.5 text-mute" />
             ) : (
-              <span className="text-[10px] bg-success/10 text-success border border-success/20 px-1.5 py-0.5 rounded font-mono font-medium uppercase scale-90">
+              <span className="text-[10px] bg-success/10 text-success border border-success/20 px-1.5 py-0.5 rounded font-mono font-medium uppercase">
                 PDF
               </span>
             )}
           </Link>
+
+          <Link
+            href="/billing"
+            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
+              pathname === "/billing"
+                ? "bg-canvas-soft-2 text-ink font-semibold"
+                : "text-body hover:bg-canvas-soft hover:text-ink"
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Award className="w-4 h-4" />
+              Plans &amp; Billing
+            </span>
+            <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
+              {planName(plan)}
+            </span>
+          </Link>
+        </div>
+
+        {/* Theme toggle — collapsed into a single icon button at the
+            bottom of the sidebar to save space; the full pill toggle is
+            available in the header. */}
+        <div className="pt-4 border-t border-hairline">
+          <p className="px-3 text-2xs font-semibold text-mute uppercase tracking-widest mb-2">
+            Appearance
+          </p>
+          <div className="px-3">
+            <ThemeToggle />
+          </div>
         </div>
       </nav>
 
-      {/* Logout Footer */}
-      <div className="p-4 border-t border-hairline">
+      <div className="p-3 border-t border-hairline">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-error hover:bg-error-soft hover:text-error-deep rounded-md transition cursor-pointer"
+          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-error hover:bg-error-soft rounded-md transition"
         >
           <LogOut className="w-4 h-4" />
           Log Out

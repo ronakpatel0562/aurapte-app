@@ -6,6 +6,7 @@ import path from "path";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import SupabaseSetupRequired from "@/components/layout/SupabaseSetupRequired";
 import NavigationLoader from "@/components/layout/NavigationLoader";
+import { ThemeProvider, themeInitScript } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,9 +21,6 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "AuraPTE — Premium PTE Academic Prep",
   description: "Experience the next generation of PTE Academic exam preparation, styled by design engineers.",
-  // Icons are declared via files in src/app/ (icon.png, apple-icon.png).
-  // Next.js auto-generates the <link> tags and route handlers — that
-  // works on Vercel out of the box.
 };
 
 export default function RootLayout({
@@ -43,6 +41,12 @@ export default function RootLayout({
 
     return (
       <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+        <head>
+          {/* Inline init runs before paint so the dark class is set on the
+              very first render — no flash. */}
+          <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+          <meta name="theme-color" content="#fafafa" />
+        </head>
         <body className="bg-[#0a0a0a] min-h-screen flex flex-col font-geist antialiased">
           <SupabaseSetupRequired schemaSql={schemaSql} />
         </body>
@@ -51,12 +55,19 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Inline init runs before paint so the dark class is set on the
+            very first render — no flash. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <meta name="theme-color" content="#fafafa" />
+      </head>
       <body className="bg-canvas-soft text-ink min-h-screen flex flex-col font-geist antialiased">
-        <NavigationLoader />
-        {children}
+        <ThemeProvider>
+          <NavigationLoader />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-

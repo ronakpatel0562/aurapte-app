@@ -3,10 +3,10 @@
  */
 
 // 1. Summarize Spoken Text (AI evaluation mock)
-export function scoreSummarizeSpoken(userText: string) {
+export function scoreSummarizeSpoken(userText: string, min = 50, max = 70) {
   const words = userText.trim().split(/\s+/).filter(Boolean).length;
   // Standard PTE range is 50-70 words
-  const isWithinLimit = words >= 50 && words <= 70;
+  const isWithinLimit = words >= min && words <= max;
   
   return {
     score: isWithinLimit ? 10 : 5, // Mocked content/form score

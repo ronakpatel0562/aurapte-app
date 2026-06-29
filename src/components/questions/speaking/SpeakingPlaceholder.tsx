@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mic, Square, Play, Sparkles } from "lucide-react";
+import { Mic, Square, Sparkles } from "lucide-react";
 import AudioPlayer from "../shared/AudioPlayer";
 import ComingSoonBanner from "../shared/ComingSoonBanner";
+import MediaDetail from "../MediaDetail";
 
 interface SpeakingPlaceholderProps {
   question: {
@@ -80,18 +81,17 @@ export default function SpeakingPlaceholder({
         )}
 
         {type === "describe-image" && content.image_url && (
-          <div className="space-y-4">
-            <div className="border border-hairline rounded-md overflow-hidden max-w-md mx-auto bg-canvas-soft-2 aspect-[4/3] flex items-center justify-center relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={content.image_url}
-                alt="Describe Image Source"
-                className="object-contain w-full h-full"
-              />
-            </div>
-            <p className="text-3xs text-center text-mute italic">
-              Seeded mockup: {content.description}
-            </p>
+          <div className="space-y-3">
+            <MediaDetail
+              src={content.image_url}
+              alt="Describe Image Source"
+              caption="Click to enlarge"
+            />
+            {content.description && (
+              <p className="text-2xs text-center text-mute italic">
+                {content.description}
+              </p>
+            )}
           </div>
         )}
 

@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { AlertCircle, Check, X } from "lucide-react";
 import AudioPlayer from "../shared/AudioPlayer";
 import ScoreBadge from "../shared/ScoreBadge";
-import ModelAnswer from "../shared/ModelAnswer";
 import { scoreListeningMCQMultiple } from "@/lib/scoring/listening";
 
 interface MCQMultipleProps {
@@ -23,6 +22,15 @@ interface MCQMultipleProps {
   isSubmitting: boolean;
 }
 
+/**
+ * Listening: Multiple Choice, Multiple Answers.
+ *
+ * Negative marking applies. The previous "Explanation & Answer Key"
+ * panel that listed the correct options after submit has been removed;
+ * the inline colour-coded feedback (green = +1, red = -1, warning =
+ * missed correct option) communicates the answer without leaking it as
+ * a separate block.
+ */
 export default function MCQMultiple({
   question,
   onSubmitAttempt,
@@ -174,16 +182,6 @@ export default function MCQMultiple({
           )}
         </div>
       </div>
-
-      {submitted && (
-        <ModelAnswer
-          answer={`Correct options are:\n${options
-            .filter((o) => correct_answers.includes(o[0]))
-            .map((o) => `• ${o}`)
-            .join("\n")}`}
-          title="Explanation & Answer Key"
-        />
-      )}
     </div>
   );
 }

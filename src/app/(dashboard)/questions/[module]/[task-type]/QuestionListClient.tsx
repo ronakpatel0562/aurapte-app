@@ -69,6 +69,7 @@ export default function QuestionListClient({
       // 3. Attempt Status Filter Match
       const attempt = attemptMap[q.id];
       const isComplete =
+        taskTypeName !== "summarize-spoken-text" &&
         attempt &&
         (attempt.is_correct ||
           (attempt.score === attempt.max_score && attempt.max_score > 0));
@@ -230,7 +231,7 @@ export default function QuestionListClient({
                 { id: "all", label: "All" },
                 { id: "unattempted", label: "New" },
                 { id: "attempted", label: "Done" },
-                { id: "completed", label: "Complete" },
+                ...(taskTypeName !== "summarize-spoken-text" ? [{ id: "completed", label: "Complete" }] : []),
               ].map((status) => (
                 <button
                   key={status.id}
@@ -278,7 +279,7 @@ export default function QuestionListClient({
                         {q.difficulty}
                       </span>
                       {attempt && (
-                        attempt.score === attempt.max_score && attempt.max_score > 0 ? (
+                        attempt.score === attempt.max_score && attempt.max_score > 0 && taskTypeName !== "summarize-spoken-text" ? (
                           <div className="flex items-center gap-1 text-emerald-600 text-2xs font-medium font-mono uppercase bg-emerald-50 border border-emerald-200/50 px-2 py-0.5 rounded-full">
                             <CheckCircle className="w-3 h-3 text-emerald-500" />
                             <span>Complete</span>
@@ -298,7 +299,7 @@ export default function QuestionListClient({
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-hairline">
-                  {attempt && (
+                  {attempt && taskTypeName !== "summarize-spoken-text" && (
                     <div className="flex flex-col items-start md:items-end">
                       <span className="text-3xs font-mono text-mute uppercase">
                         Best Score

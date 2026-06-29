@@ -328,30 +328,35 @@ export function transformQuestionContent(question: any): any {
 
   // 7. Highlight Incorrect Words (stored as highlight_incorrect_words)
   if (type === "highlight_incorrect_words" || type === "highlight-incorrect-words") {
-    // Component wants `correct_transcript` and `passage_with_incorrect_words`;
-    // DB stores `transcript` (the clean version) and `incorrect_words` (array
-    // of substitutions). We construct the incorrect transcript by replacing
-    // each incorrect word with a placeholder, but only when both lists are
-    // available — otherwise leave the fields empty so the UI degrades
-    // gracefully instead of crashing.
-    const clean = (w: string) =>
-      String(w).toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "").trim();
-    if (typeof content.transcript === "string" && Array.isArray(content.incorrect_words) && content.incorrect_words.length > 0) {
-      // Build the incorrect version by swapping each target word with its
-      // replacement. We walk the transcript word-by-word so that case and
-      // punctuation are preserved.
-      const incorrectSet = new Set(content.incorrect_words.map(clean));
-      const altered = content.transcript
-        .split(/\s+/)
-        .map((word: string) => (incorrectSet.has(clean(word)) ? word : word))
-        .join(" ");
-      content.correct_transcript = content.transcript;
-      content.passage_with_incorrect_words = altered;
-      content.incorrect_words = content.incorrect_words.map((w: string) => String(w));
+    // Aura's DB stores:
+    //   transcript        — the SPOKEN version (with the wrong words inserted)
+    //   incorrect_words   — the substituted words the student must identify
+    //
+    // The clean original (what should have been read aloud) is NOT in the
+    // DB — we don't fabricate it. The component renders the spoken passage
+    // and highlights whatever the student clicks; the scoring compares
+    // clicked words against the incorrect_words list.
+    //
+    // Earlier versions of this code assumed the opposite polarity (transcript
+    // = clean). That assumption was wrong for Aura's data and produced a
+    // passage identical to the correct transcript with no substitutions
+    // visible — students couldn't tell which words to click. This block
+    // preserves the spoken transcript verbatim and surfaces the
+    // incorrect_words list as-is.
+    if (typeof content.transcript === "string") {
+      content.passage_with_incorrect_words = content.transcript;
+      // AudioPlayer shows the transcript after submit (so the student can
+      // review). Pass the spoken version — it's what they were listening to.
+      content.audio_transcript = content.transcript;
     } else {
-      content.correct_transcript = content.transcript || "";
-      content.passage_with_incorrect_words = content.transcript || "";
-      content.incorrect_words = Array.isArray(content.incorrect_words) ? content.incorrect_words : [];
+      content.passage_with_incorrect_words = "";
+      content.audio_transcript = "";
+    }
+    content.correct_transcript = ""; // not stored in DB; left empty intentionally
+    if (Array.isArray(content.incorrect_words)) {
+      content.incorrect_words = content.incorrect_words.map((w: unknown) => String(w));
+    } else {
+      content.incorrect_words = [];
     }
   }
 

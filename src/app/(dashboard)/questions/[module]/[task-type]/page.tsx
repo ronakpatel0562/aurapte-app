@@ -67,7 +67,7 @@ const TASK_DESCRIPTIONS: Record<string, { title: string; desc: string }> = {
   // Listening
   "summarize-spoken-text": {
     title: "Summarize Spoken Text",
-    desc: "Listen to an audio recording and write a summary of 50 to 70 words. Tests listening and writing.",
+    desc: "You will hear a short report. Write a summary of 20-30 words. You have 8 minutes to finish this task. Your response will be judged on the quality of your writing and on how well your response presents the key points presented in the lecture.",
   },
   "fill-in-the-blanks": {
     title: "Fill in the Blanks",

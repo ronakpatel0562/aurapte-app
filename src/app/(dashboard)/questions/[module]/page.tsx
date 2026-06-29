@@ -131,7 +131,7 @@ const MODULE_METADATA: Record<
       {
         dbType: "summarize_spoken_text",
         title: "Summarize Spoken Text",
-        desc: "Listen to an audio recording and write a summary of 50 to 70 words. Tests listening and writing.",
+        desc: "Listen to a spoken report and write a 20-30 word summary within 8 minutes.",
       },
       {
         dbType: "listening_mcq_multiple",
@@ -236,6 +236,14 @@ export default async function ModuleCategoriesPage({ params }: PageProps) {
     }
   });
 
+  const attemptedCountsByTaskType: Record<string, number> = {};
+  attemptedSet.forEach((qId) => {
+    const taskType = questionIdToTaskType[qId];
+    if (taskType) {
+      attemptedCountsByTaskType[taskType] = (attemptedCountsByTaskType[taskType] || 0) + 1;
+    }
+  });
+
   const ModuleIcon = metadata.icon;
 
   return (
@@ -290,29 +298,32 @@ export default async function ModuleCategoriesPage({ params }: PageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {metadata.tasks.map((task) => {
             const total = totalQuestionsByTaskType[task.dbType] || 0;
-            const completed = completedCountsByTaskType[task.dbType] || 0;
+            const completed = task.dbType === "summarize_spoken_text"
+              ? (attemptedCountsByTaskType[task.dbType] || 0)
+              : (completedCountsByTaskType[task.dbType] || 0);
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
             const urlPath = mapDbToUrlTaskType(task.dbType);
 
             return (
               <div
                 key={task.dbType}
-                className="group relative bg-canvas border border-hairline rounded-lg p-6 flex flex-col justify-between hover:border-hairline-strong transition duration-200 shadow-vercel-card overflow-hidden"
+                className="card-hover group relative bg-canvas border border-hairline rounded-xl p-6 flex flex-col justify-between overflow-hidden shadow-vercel-card"
               >
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${metadata.bgGradient}`} />
                 <div>
                   <div className="flex items-start justify-between gap-4 mb-3">
-                    <h2 className="text-body-md-strong text-ink font-semibold group-hover:text-link transition">
+                    <h2 className="text-base sm:text-lg text-ink font-semibold group-hover:text-link transition">
                       {task.title}
                     </h2>
 
                     {completed === total && total > 0 && (
-                      <span className="flex items-center gap-1 text-[10px] text-success font-semibold uppercase font-mono px-2 py-0.5 bg-success/10 border border-success/20 rounded-full">
+                      <span className="flex items-center gap-1 text-2xs text-success font-semibold uppercase font-mono px-2 py-0.5 bg-success/10 border border-success/20 rounded-full">
                         Completed
                       </span>
                     )}
                   </div>
 
-                  <p className="text-body-sm text-mute leading-relaxed pr-2">
+                  <p className="text-sm text-mute leading-relaxed pr-2">
                     {task.desc}
                   </p>
                 </div>
@@ -321,13 +332,13 @@ export default async function ModuleCategoriesPage({ params }: PageProps) {
                 <div className="mt-6 space-y-4">
                   {total > 0 && (
                     <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-3xs font-mono text-mute">
+                      <div className="flex justify-between items-center text-2xs font-mono text-mute">
                         <span>PROGRESS</span>
                         <span>
                           {completed} / {total} Completed ({percent}%)
                         </span>
                       </div>
-                      <div className="w-full h-1 bg-canvas-soft rounded-full overflow-hidden border border-hairline">
+                      <div className="w-full h-1.5 bg-canvas-soft rounded-full overflow-hidden border border-hairline">
                         <div
                           className="h-full bg-primary transition-all duration-300"
                           style={{ width: `${percent}%` }}
@@ -336,14 +347,14 @@ export default async function ModuleCategoriesPage({ params }: PageProps) {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-2 border-t border-hairline">
+                  <div className="flex items-center justify-between pt-3 border-t border-hairline">
                     <span className="text-xs font-mono text-mute">
                       {total} {total === 1 ? "question" : "questions"}
                     </span>
 
                     <Link
                       href={`/questions/${moduleParam}/${urlPath}`}
-                      className="text-xs font-medium text-mute group-hover:text-ink transition flex items-center gap-1.5 cursor-pointer"
+                      className="text-xs font-medium text-mute group-hover:text-ink transition flex items-center gap-1.5"
                     >
                       <span>Start Practice</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-mute group-hover:text-ink" />

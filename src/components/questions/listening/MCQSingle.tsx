@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { Check, X } from "lucide-react";
 import AudioPlayer from "../shared/AudioPlayer";
 import ScoreBadge from "../shared/ScoreBadge";
-import ModelAnswer from "../shared/ModelAnswer";
 import { scoreListeningMCQSingle } from "@/lib/scoring/listening";
 
 interface MCQSingleProps {
@@ -30,6 +29,13 @@ interface MCQSingleProps {
  * strings, and `correct_answer` may be a single string OR `correct_answers`
  * may be an array of letter keys. We normalize so the UI always shows
  * "A) text", "B) text", … and scoring always compares option text.
+ *
+ * The "Explanation & Answer Key" panel that used to render after submit
+ * has been removed — for MCQ questions the inline colour-coded feedback
+ * (green for correct, red for your wrong choice, dimmed for the rest) is
+ * enough to communicate the answer; a separate answer-key block was
+ * redundant and made the page feel like an answer-leaking exam paper
+ * rather than a learning exercise.
  */
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
@@ -209,19 +215,6 @@ export default function MCQSingle({
           )}
         </div>
       </div>
-
-      {submitted && (
-        <ModelAnswer
-          answer={
-            correctText
-              ? `The correct option is: ${options.find(
-                  (o) => stripPrefix(o) === correctText
-                ) || correctText}`
-              : "No answer key available for this question."
-          }
-          title="Explanation & Answer Key"
-        />
-      )}
     </div>
   );
 }

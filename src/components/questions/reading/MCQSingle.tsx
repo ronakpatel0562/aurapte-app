@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Check, X } from "lucide-react";
 import ScoreBadge from "../shared/ScoreBadge";
-import ModelAnswer from "../shared/ModelAnswer";
 import { scoreMCQSingle } from "@/lib/scoring/reading";
 
 interface MCQSingleProps {
@@ -31,6 +30,10 @@ interface MCQSingleProps {
  * strings, and `correct_answer` may be a single string OR `correct_answers`
  * may be an array of letter keys. We normalize so the UI always shows
  * "A) text", "B) text", … and scoring always compares option text.
+ *
+ * The post-submit "Explanation & Answer Key" ModelAnswer panel has been
+ * removed — the inline colour-coded feedback on each option already
+ * tells the student which option was correct.
  */
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
@@ -51,12 +54,10 @@ const extractCorrectAnswer = (
   content: any,
   options: string[]
 ): string | null => {
-  // Helper: if a value is a single letter (A–H), return the matching option's text.
   const resolveLetter = (val: string): string | null => {
     const upper = val.trim().toUpperCase();
     if (upper.length === 1 && LETTERS.includes(upper)) {
       const idx = LETTERS.indexOf(upper);
-      // Only match if the option at that index exists
       if (idx < options.length) return stripPrefix(options[idx]);
     }
     return null;
@@ -81,7 +82,6 @@ export default function MCQSingle({
 }: MCQSingleProps) {
   const { passage, question: stem, options } = question.content;
   const rawCorrect = extractCorrectAnswer(question.content, options);
-  // Always compare on plain option text (no letter prefix)
   const correctText = rawCorrect ? stripPrefix(rawCorrect) : null;
 
   const [selected, setSelected] = useState<string | null>(null);
@@ -95,10 +95,7 @@ export default function MCQSingle({
 
   const handleSubmit = () => {
     if (submitted || !selected) return;
-
-    // Score by comparing full option text against the (normalized) correct answer
     const scoreResult = scoreMCQSingle(stripPrefix(selected), correctText ? [correctText] : []);
-
     setResult(scoreResult);
     setSubmitted(true);
     onSubmitAttempt(scoreResult.score, scoreResult.maxScore, selected);
@@ -133,12 +130,10 @@ export default function MCQSingle({
           )}
         </div>
 
-        {/* Stem */}
         <h3 className="text-body-md-strong font-semibold text-ink leading-snug">
           {stem}
         </h3>
 
-        {/* Options list */}
         <div className="space-y-3">
           {options.map((option, index) => {
             const optionText = stripPrefix(option);
@@ -220,20 +215,6 @@ export default function MCQSingle({
           )}
         </div>
       </div>
-
-      {/* Model Answer (shows on submit) */}
-      {submitted && (
-        <ModelAnswer
-          answer={
-            correctText
-              ? `The correct option is: ${options.find(
-                  (o) => stripPrefix(o) === correctText
-                ) || correctText}`
-              : "No answer key available for this question."
-          }
-          title="Explanation & Answer Key"
-        />
-      )}
     </div>
   );
 }

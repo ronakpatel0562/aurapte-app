@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ChevronRight, ArrowLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapDbToUrlTaskType, getTaskTypeFriendlyName } from "@/lib/taskTypeMapper";
 
@@ -41,6 +41,8 @@ interface QuestionAttemptClientProps {
   question: Question;
   plan?: string;
   nextQuestionId?: string | null;
+  prevQuestionId?: string | null;
+  questionNumber?: number;
 }
 
 export default function QuestionAttemptClient({
@@ -48,10 +50,14 @@ export default function QuestionAttemptClient({
   question,
   plan = "free",
   nextQuestionId,
+  prevQuestionId,
+  questionNumber = 1,
 }: QuestionAttemptClientProps) {
   const [submitting, setSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
+
+
 
   // Reset states on question change
   useEffect(() => {
@@ -89,6 +95,8 @@ export default function QuestionAttemptClient({
       setSubmitting(false);
     }
   };
+
+
 
   const renderQuestionUI = () => {
     const type = question.task_type;
@@ -174,6 +182,9 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            questionNumber={questionNumber}
+            nextQuestionId={nextQuestionId}
+            isPremium={isPremium}
           />
         );
       }
@@ -254,31 +265,31 @@ export default function QuestionAttemptClient({
 
   return (
     <div className="space-y-6">
-      {/* Navigation Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs font-mono text-mute uppercase select-none">
-        <Link href="/dashboard" className="hover:text-ink transition">
-          Dashboard
-        </Link>
-        <ChevronRight className="w-3.5 h-3.5" />
-        <Link
-          href={`/questions/${question.module.toLowerCase()}`}
-          className="hover:text-ink transition"
-        >
-          {question.module}
-        </Link>
-        <ChevronRight className="w-3.5 h-3.5" />
-        {isPremium ? (
-          <Link href={getModuleUrl()} className="hover:text-ink transition">
-            {formatTaskType(question.task_type)}
-          </Link>
-        ) : (
-          <span className="text-mute">{formatTaskType(question.task_type)}</span>
-        )}
-        <ChevronRight className="w-3.5 h-3.5" />
-        <span className="text-body font-semibold truncate max-w-[200px]">
-          {displayTitle}
-        </span>
-      </div>
+      {/* Navigation Breadcrumb — Dashboard > Module > Subcategory.
+                The question title is intentionally NOT shown here because it's
+                already rendered as the page <h1> below the breadcrumb. Keeping
+                the title in the breadcrumb is redundant and makes the breadcrumb
+                wrap awkwardly on mobile. */}
+            <div className="flex items-center gap-2 text-xs font-mono text-mute uppercase select-none">
+              <Link href="/dashboard" className="hover:text-ink transition">
+                Dashboard
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5" />
+              <Link
+                href={`/questions/${question.module.toLowerCase()}`}
+                className="hover:text-ink transition"
+              >
+                {question.module}
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5" />
+              {isPremium ? (
+                <Link href={getModuleUrl()} className="hover:text-ink transition">
+                  {formatTaskType(question.task_type)}
+                </Link>
+              ) : (
+                <span className="text-mute">{formatTaskType(question.task_type)}</span>
+              )}
+            </div>
 
       {/* Title Header */}
       <div className="pb-4 border-b border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none">
@@ -313,34 +324,44 @@ export default function QuestionAttemptClient({
       {/* Interactive Render */}
       <div>{renderQuestionUI()}</div>
 
-      {/* Sequential Navigation */}
-      {hasSubmitted && (
-        <div className="mt-8 pt-6 border-t border-hairline flex justify-end gap-4">
-          {nextQuestionId ? (
-            <Link
-              href={`/questions/${question.module}/${mapDbToUrlTaskType(question.task_type)}/${nextQuestionId}`}
-              className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-90 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
-            >
-              <span>Next Question</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          ) : isPremium ? (
-            <Link
-              href={getModuleUrl()}
-              className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
-            >
-              <span>All Questions Done! Return to List</span>
-            </Link>
-          ) : (
-            <Link
-              href="/dashboard"
-              className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
-            >
-              <span>All Questions Done! Return to Dashboard</span>
-            </Link>
-          )}
-        </div>
-      )}
+      {/* Sequential Navigation.
+                With the server-side rotation logic (page.tsx), nextQuestionId is
+                null only when there's a single question in the DB for this task
+                type. In that case we offer a "Back to Module" link rather than
+                a confusing "All Questions Done!" dead-end. */}
+            {hasSubmitted && (
+              <div className="mt-8 pt-6 border-t border-hairline flex justify-between items-center select-none">
+                <div>
+                  {prevQuestionId && (
+                    <Link
+                      href={`/questions/${question.module}/${mapDbToUrlTaskType(question.task_type)}/${prevQuestionId}`}
+                      className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-mute" />
+                      <span>Previous Question</span>
+                    </Link>
+                  )}
+                </div>
+                <div>
+                  {nextQuestionId ? (
+                    <Link
+                      href={`/questions/${question.module}/${mapDbToUrlTaskType(question.task_type)}/${nextQuestionId}`}
+                      className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-90 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                    >
+                      <span>Next Question</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  ) : (
+                    <Link
+                      href={isPremium ? getModuleUrl() : `/questions/${question.module.toLowerCase()}`}
+                      className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
+                    >
+                      <span>Back to {isPremium ? "List" : "Module"}</span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
     </div>
   );
 }

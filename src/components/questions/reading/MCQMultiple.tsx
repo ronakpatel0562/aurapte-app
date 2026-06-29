@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { AlertCircle, Check, X } from "lucide-react";
 import ScoreBadge from "../shared/ScoreBadge";
-import ModelAnswer from "../shared/ModelAnswer";
 import { scoreMCQMultiple } from "@/lib/scoring/reading";
 
 interface MCQMultipleProps {
@@ -32,6 +31,10 @@ interface MCQMultipleProps {
  * strings; correct_answers may be letter keys ("A","B") or full option text.
  * We normalize so the UI always shows "A) text", "B) text", … and scoring
  * always compares option text.
+ *
+ * The post-submit "Explanation & Answer Key" ModelAnswer panel has been
+ * removed — the inline colour-coded feedback on each option already
+ * communicates which ones were correct.
  */
 export default function MCQMultiple({
   question,
@@ -42,28 +45,22 @@ export default function MCQMultiple({
 
   const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
-  // Detect if options are already letter-prefixed (e.g., "A) text" or "A. text")
-  // Only ")" or "." are valid separators — not a bare space, since a sentence
-  // could naturally begin with "A " (e.g., "A significant change...").
   const optionHasPrefix = (opt: string): boolean => {
     if (!opt || opt.length < 3) return false;
     const first = opt[0];
     return letters.includes(first) && (opt[1] === ")" || opt[1] === ".");
   };
 
-  // Display text always shows the letter prefix
   const getDisplayText = (option: string, index: number): string => {
     if (optionHasPrefix(option)) return option;
     return `${letters[index]}) ${option}`;
   };
 
-  // Strip letter prefix from a stored option (for plain string comparison)
   const stripPrefix = (opt: string): string => {
     if (optionHasPrefix(opt)) return opt.slice(2).trim();
     return opt;
   };
 
-  // Normalized option text used for stable identity in selection/scoring
   const normalizedOptions = options.map(stripPrefix);
   const normalizedCorrectAnswers = correct_answers.map(stripPrefix);
 
@@ -82,9 +79,7 @@ export default function MCQMultiple({
 
   const handleSubmit = () => {
     if (submitted) return;
-
     const scoreResult = scoreMCQMultiple(selected, normalizedCorrectAnswers);
-
     setResult(scoreResult);
     setSubmitted(true);
     onSubmitAttempt(scoreResult.score, scoreResult.maxScore, selected);
@@ -122,12 +117,10 @@ export default function MCQMultiple({
           )}
         </div>
 
-        {/* Question Stem */}
         <h3 className="text-body-md-strong font-semibold text-ink leading-snug">
           {stem}
         </h3>
 
-        {/* Negative marking warning banner */}
         {!submitted && (
           <div className="bg-error-soft/30 border border-error/15 rounded-md p-3.5 flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-error-deep mt-0.5 shrink-0" />
@@ -137,7 +130,6 @@ export default function MCQMultiple({
           </div>
         )}
 
-        {/* Options list */}
         <div className="space-y-3">
           {normalizedOptions.map((optText, index) => {
             const displayText = getDisplayText(options[index], index);
@@ -230,18 +222,6 @@ export default function MCQMultiple({
           )}
         </div>
       </div>
-
-      {/* Model Answer (shows on submit) */}
-      {submitted && (
-        <ModelAnswer
-          answer={`Correct options are:\n${normalizedOptions
-            .map((opt, idx) => ({ opt, idx }))
-            .filter(({ opt }) => isOptionCorrect(opt))
-            .map(({ opt, idx }) => `• ${letters[idx]}) ${opt}`)
-            .join("\n")}`}
-          title="Explanation & Answer Key"
-        />
-      )}
     </div>
   );
 }
