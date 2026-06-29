@@ -1,4 +1,5 @@
 {
+  //for test purpose
   "crons": [
     {
       "path": "/api/cron/cleanup-sessions",
