@@ -70,7 +70,7 @@ export default function SummarizeSpoken({
   const [audioProgress, setAudioProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(1.0);
 
   // Clipboard operations fallback state
   const [internalClipboard, setInternalClipboard] = useState("");
@@ -78,6 +78,30 @@ export default function SummarizeSpoken({
   // Analysis state for feedback
   const [analysis, setAnalysis] = useState<LinguisticAnalysis | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+
+  // Load saved volume level on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("portal_audio_volume");
+    if (saved !== null) {
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed)) {
+        setVolume(parsed);
+        if (audioRef.current) {
+          audioRef.current.volume = parsed;
+        }
+      }
+    } else {
+      localStorage.setItem("portal_audio_volume", "1.0");
+    }
+  }, []);
+
+  const handleVolumeChange = (val: number) => {
+    setVolume(val);
+    if (audioRef.current) {
+      audioRef.current.volume = val;
+    }
+    localStorage.setItem("portal_audio_volume", String(val));
+  };
 
   // Clean and parse item code
   const cleanTitle = question.title.replace(/\s*#\d+/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -101,6 +125,7 @@ export default function SummarizeSpoken({
       setPrepSeconds(null);
       setAudioStatus("Playing");
       if (audioRef.current) {
+        audioRef.current.volume = volume;
         audioRef.current.play().catch((err) => {
           console.warn("Autoplay blocked:", err);
           setAudioStatus("Click to Play");
@@ -110,7 +135,7 @@ export default function SummarizeSpoken({
     return () => {
       if (prepInterval) clearInterval(prepInterval);
     };
-  }, [prepSeconds, submitted]);
+  }, [prepSeconds, submitted, volume]);
 
   // Running Timer Effect
   useEffect(() => {
@@ -150,6 +175,7 @@ export default function SummarizeSpoken({
   // Audio Playback Event Handlers
   const handleAudioBoxClick = () => {
     if ((audioStatus === "Ready" || audioStatus === "Click to Play") && audioRef.current && prepSeconds === null) {
+      audioRef.current.volume = volume;
       audioRef.current.play()
         .then(() => setAudioStatus("Playing"))
         .catch((err) => {
@@ -380,11 +406,7 @@ export default function SummarizeSpoken({
                 max="1"
                 step="0.05"
                 value={volume}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  setVolume(val);
-                  if (audioRef.current) audioRef.current.volume = val;
-                }}
+                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
                 className="w-48 h-[3px] bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
                 style={{
                   background: `linear-gradient(to right, white ${volume * 100}%, rgba(255,255,255,0.3) ${

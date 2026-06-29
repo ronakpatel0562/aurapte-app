@@ -136,7 +136,7 @@ const MODULE_METADATA: Record<
       {
         dbType: "listening_mcq_multiple",
         title: "Multiple Choice, Multiple Answers",
-        desc: "Listen to a passage and select all correct options. Negative marking applies for wrong answers.",
+        desc: "Listen to the recording and answer the multiple-choice question by selecting the correct responses. More than one response is correct.",
       },
       {
         dbType: "listening_fill_in_the_blanks",

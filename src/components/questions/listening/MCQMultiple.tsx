@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { AlertCircle, Check, X } from "lucide-react";
-import AudioPlayer from "../shared/AudioPlayer";
+import React, { useState, useEffect, useRef } from "react";
+import { AlertCircle, Check, X, Volume2 } from "lucide-react";
 import ScoreBadge from "../shared/ScoreBadge";
 import { scoreListeningMCQMultiple } from "@/lib/scoring/listening";
 
@@ -25,11 +24,8 @@ interface MCQMultipleProps {
 /**
  * Listening: Multiple Choice, Multiple Answers.
  *
- * Negative marking applies. The previous "Explanation & Answer Key"
- * panel that listed the correct options after submit has been removed;
- * the inline colour-coded feedback (green = +1, red = -1, warning =
- * missed correct option) communicates the answer without leaking it as
- * a separate block.
+ * Negative marking applies. Features custom PTE-styled audio box and 
+ * inline correctness feedback in the submitted state.
  */
 export default function MCQMultiple({
   question,
@@ -38,9 +34,72 @@ export default function MCQMultiple({
 }: MCQMultipleProps) {
   const { audio_url, audio_transcript, question: stem, options, correct_answers } = question.content;
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const [selected, setSelected] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ score: number; maxScore: number } | null>(null);
+
+  // Audio status and playback properties
+  const [prepSeconds, setPrepSeconds] = useState<number | null>(3); // 3s preparation
+  const [audioStatus, setAudioStatus] = useState<string>("Ready");
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1.0);
+
+  // Load saved volume level on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("portal_audio_volume");
+    if (saved !== null) {
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed)) {
+        setVolume(parsed);
+        if (audioRef.current) {
+          audioRef.current.volume = parsed;
+        }
+      }
+    } else {
+      localStorage.setItem("portal_audio_volume", "1.0");
+    }
+  }, []);
+
+  const handleVolumeChange = (val: number) => {
+    setVolume(val);
+    if (audioRef.current) {
+      audioRef.current.volume = val;
+    }
+    localStorage.setItem("portal_audio_volume", String(val));
+  };
+
+  // Preparation Countdown Effect
+  useEffect(() => {
+    if (submitted) return;
+    let prepInterval: NodeJS.Timeout;
+    if (prepSeconds !== null && prepSeconds > 0) {
+      prepInterval = setInterval(() => {
+        setPrepSeconds((prev) => (prev !== null ? prev - 1 : null));
+      }, 1000);
+    } else if (prepSeconds === 0) {
+      setPrepSeconds(null);
+      setAudioStatus("Playing");
+      if (audioRef.current) {
+        audioRef.current.volume = volume;
+        audioRef.current.play().catch((err) => {
+          console.warn("Autoplay blocked:", err);
+          setAudioStatus("Click to Play");
+        });
+      }
+    }
+    return () => {
+      if (prepInterval) clearInterval(prepInterval);
+    };
+  }, [prepSeconds, submitted, volume]);
+
+  // Reset state when the question changes
+  useEffect(() => {
+    handleReset();
+  }, [question.id]);
 
   const handleToggle = (option: string) => {
     if (submitted) return;
@@ -60,128 +119,314 @@ export default function MCQMultiple({
     setResult(scoreResult);
     setSubmitted(true);
     onSubmitAttempt(scoreResult.score, scoreResult.maxScore, selected);
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
   };
 
   const handleReset = () => {
     setSelected([]);
     setSubmitted(false);
     setResult(null);
+    setPrepSeconds(3);
+    setAudioStatus("Ready");
+    setAudioProgress(0);
+    setCurrentTime(0);
+    setDuration(0);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  const handleAudioBoxClick = () => {
+    if ((audioStatus === "Ready" || audioStatus === "Click to Play" || audioStatus === "Paused") && audioRef.current && prepSeconds === null) {
+      audioRef.current.play()
+        .then(() => setAudioStatus("Playing"))
+        .catch((err) => {
+          console.error("Playback failed:", err);
+          setAudioStatus("Click to Play");
+        });
+    } else if (audioStatus === "Playing" && audioRef.current && submitted) {
+      audioRef.current.pause();
+      setAudioStatus("Paused");
+    }
+  };
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const el = e.currentTarget;
+    setCurrentTime(el.currentTime);
+    if (el.duration) {
+      setDuration(el.duration);
+      setAudioProgress((el.currentTime / el.duration) * 100);
+    }
+  };
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const el = e.currentTarget;
+    if (el.duration) {
+      setDuration(el.duration);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setAudioStatus("Audio Finished");
+    setAudioProgress(100);
+  };
+
+  const formatAudioTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = Math.floor(seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
   };
 
   return (
     <div className="space-y-6">
-      {/* Audio Player */}
-      <AudioPlayer audioUrl={audio_url} transcript={audio_transcript} hasSubmitted={submitted} />
+      <style>{`
+        /* Custom Volume Input Styling */
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          height: 12px;
+          width: 12px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+          height: 12px;
+          width: 12px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+      `}</style>
 
-      {/* Checkboxes card */}
-      <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-5">
-        <div className="flex justify-between items-center pb-4 border-b border-hairline">
-          <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-            Multiple Choice (Multiple Answers)
-          </span>
-          {submitted && result && (
-            <ScoreBadge score={result.score} maxScore={result.maxScore} />
-          )}
+      {audio_url && (
+        <audio
+          ref={audioRef}
+          src={audio_url}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={handleAudioEnded}
+        />
+      )}
+
+      {/* Main Container styled exactly like SST */}
+      <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
+        
+        {/* Instruction Paragraph */}
+        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+          Listen to the recording and answer the multiple-choice question by selecting the correct responses. More than one response is correct.
         </div>
 
-        <h3 className="text-body-md-strong font-semibold text-ink leading-snug">
-          {stem}
-        </h3>
+        {/* Steel Blue Audio Box */}
+        <div className="flex justify-center items-center py-10 bg-white select-none">
+          <div
+            onClick={handleAudioBoxClick}
+            className={`w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 relative ${
+              ((audioStatus === "Ready" || audioStatus === "Click to Play" || audioStatus === "Paused") || (submitted && audioStatus === "Playing")) && prepSeconds === null
+                ? "cursor-pointer hover:bg-[#5284A3]"
+                : ""
+            }`}
+          >
+            {/* Play progress bar */}
+            <div className="w-full h-[6px] bg-[#3B6C8A]/40 rounded-full overflow-hidden mt-1">
+              <div
+                className="h-full bg-[#1C415A] transition-all duration-300 ease-linear rounded-full"
+                style={{ width: `${audioProgress}%` }}
+              />
+            </div>
 
-        {!submitted && (
-          <div className="bg-error-soft/30 border border-error/15 rounded-md p-3.5 flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 text-error-deep mt-0.5 shrink-0" />
-            <p className="text-3xs text-error-deep leading-relaxed">
-              <strong>Negative marking applies:</strong> Incorrect choices deduct 1 point. Correct choices add 1 point. Minimum score is 0.
-            </p>
+            {/* Time / Countdown / Display */}
+            <div className="text-white text-xs font-semibold px-1 mt-1 flex justify-start">
+              {prepSeconds !== null ? (
+                <span>Beginning in {prepSeconds}s</span>
+              ) : audioStatus === "Audio Finished" ? (
+                <span>Audio Finished</span>
+              ) : (
+                <span className="tabular-nums">
+                  {formatAudioTime(currentTime)} / {formatAudioTime(duration || 0)}
+                </span>
+              )}
+            </div>
+
+            {/* Audio Volume Controls */}
+            <div className="flex items-center justify-center gap-3 mb-1">
+              <Volume2 className="w-5 h-5 text-white" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={volume}
+                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                className="w-48 h-[3px] bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
+                style={{
+                  background: `linear-gradient(to right, white ${volume * 100}%, rgba(255,255,255,0.3) ${
+                    volume * 100
+                  }%)`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Question & Options Area */}
+        {!submitted ? (
+          <div className="px-8 pb-6 bg-white space-y-6">
+            <h3 className="text-[15px] font-bold text-gray-800 leading-snug">
+              {stem}
+            </h3>
+
+            <div className="bg-error-soft/30 border border-error/15 rounded-md p-3.5 flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-error-deep mt-0.5 shrink-0" />
+              <p className="text-3xs text-error-deep leading-relaxed font-sans">
+                <strong>Negative marking applies:</strong> Incorrect choices deduct 1 point. Correct choices add 1 point. Minimum score is 0.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {options.map((option) => {
+                const isSel = selected.includes(option);
+                const isInteractionDisabled = audioStatus !== "Audio Finished";
+
+                return (
+                  <button
+                    key={option}
+                    onClick={() => handleToggle(option)}
+                    disabled={submitted || isInteractionDisabled}
+                    className={`w-full text-left flex items-start gap-3 group transition duration-150 select-none py-1 ${
+                      isInteractionDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer active:scale-[0.99]"
+                    }`}
+                  >
+                    <div
+                      className={`w-[18px] h-[18px] rounded border flex items-center justify-center shrink-0 mt-0.5 transition ${
+                        isSel
+                          ? "bg-[#1C415A] border-[#1C415A] text-white"
+                          : "border-gray-400 bg-white group-hover:border-gray-600"
+                      }`}
+                    >
+                      {isSel && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                    </div>
+                    <span className={`text-[14px] text-gray-700 font-sans leading-relaxed select-text ${isInteractionDisabled ? "text-gray-400" : ""}`}>
+                      {option}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="px-8 pb-6 bg-white space-y-6">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-100 select-none">
+              <h3 className="text-[15px] font-bold text-gray-800 leading-snug select-text">
+                {stem}
+              </h3>
+              {result && <ScoreBadge score={result.score} maxScore={result.maxScore} />}
+            </div>
+
+            <div className="space-y-3">
+              {options.map((option) => {
+                const letter = option[0];
+                const isSel = selected.includes(option);
+                const isCorr = correct_answers.includes(letter);
+
+                let optionClass = "border border-gray-200 bg-white text-gray-700";
+                let checkboxClass = "border-gray-400 bg-white text-transparent";
+                let iconToRender = null;
+                let pointText = null;
+
+                if (isCorr && isSel) {
+                  optionClass = "border-emerald-500 bg-emerald-50/50 text-emerald-800 font-semibold";
+                  checkboxClass = "bg-emerald-500 border-emerald-500 text-white";
+                  iconToRender = <Check className="w-3.5 h-3.5 text-white stroke-[3]" />;
+                  pointText = (
+                    <span className="text-[11px] font-bold font-mono text-emerald-700 uppercase tracking-wider">
+                      +1 point
+                    </span>
+                  );
+                } else if (!isCorr && isSel) {
+                  optionClass = "border-red-500 bg-red-50/50 text-red-800 font-semibold";
+                  checkboxClass = "bg-red-500 border-red-500 text-white";
+                  iconToRender = <X className="w-3.5 h-3.5 text-white stroke-[3]" />;
+                  pointText = (
+                    <span className="text-[11px] font-bold font-mono text-red-700 uppercase tracking-wider">
+                      -1 point
+                    </span>
+                  );
+                } else if (isCorr && !isSel) {
+                  optionClass = "border-amber-500 bg-amber-50/30 text-amber-800 font-semibold ring-1 ring-amber-400/30";
+                  checkboxClass = "border-amber-500 text-amber-700";
+                  iconToRender = <Check className="w-3.5 h-3.5 text-amber-600 stroke-[3]" />;
+                  pointText = (
+                    <span className="text-[11px] font-bold font-mono text-amber-700 uppercase tracking-wider">
+                      Missed
+                    </span>
+                  );
+                } else {
+                  optionClass = "border-gray-200 opacity-60 bg-gray-50 text-gray-400";
+                  checkboxClass = "border-gray-300 bg-gray-100";
+                }
+
+                return (
+                  <div
+                    key={option}
+                    className={`w-full text-left p-4 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
+                  >
+                    <div className="flex items-center gap-3 pr-4 select-text text-[14px]">
+                      <div
+                        className={`w-[18px] h-[18px] rounded border flex items-center justify-center shrink-0 transition ${checkboxClass}`}
+                      >
+                        {iconToRender}
+                      </div>
+                      <span className="leading-relaxed select-text font-sans">{option}</span>
+                    </div>
+                    {pointText && <div className="shrink-0 select-none">{pointText}</div>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        <div className="space-y-3">
-          {options.map((option) => {
-            const letter = option[0];
-            const isSel = selected.includes(option);
-            const isCorr = correct_answers.includes(letter);
-
-            const getOptionClass = () => {
-              if (submitted) {
-                if (isCorr && isSel) {
-                  return "border-success bg-success/5 text-success font-semibold";
-                }
-                if (!isCorr && isSel) {
-                  return "border-error bg-error/5 text-error-deep font-semibold";
-                }
-                if (isCorr && !isSel) {
-                  return "border-warning-deep ring-2 ring-warning ring-opacity-20 bg-canvas";
-                }
-                return "border-hairline opacity-50 bg-canvas-soft-2";
-              }
-              return isSel
-                ? "border-primary bg-canvas-soft text-ink font-semibold"
-                : "border-hairline hover:border-hairline-strong hover:bg-canvas-soft bg-canvas text-body";
-            };
-
-            return (
-              <button
-                key={option}
-                onClick={() => handleToggle(option)}
-                disabled={submitted}
-                className={`w-full text-left p-4 border rounded-md text-xs transition duration-150 flex items-center justify-between group active:scale-[0.99] shrink-0 ${
-                  !submitted ? "cursor-pointer" : "cursor-default"
-                } ${getOptionClass()}`}
-              >
-                <div className="flex items-center gap-3 pr-4">
-                  <div
-                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition ${
-                      submitted
-                        ? isCorr
-                          ? "bg-success border-success text-on-primary"
-                          : isSel
-                          ? "bg-error border-error text-on-primary"
-                          : "border-hairline-strong"
-                        : isSel
-                        ? "bg-primary border-primary text-on-primary"
-                        : "border-hairline-strong group-hover:border-hairline-strong"
-                    }`}
-                  >
-                    {isSel && (isCorr || !submitted ? <Check className="w-3 h-3 text-on-primary stroke-[3]" /> : <X className="w-3 h-3 text-on-primary stroke-[3]" />)}
-                    {!isSel && submitted && isCorr && <Check className="w-3 h-3 text-success stroke-[2.5]" />}
-                  </div>
-                  <span className="leading-relaxed select-text">{option}</span>
-                </div>
-
-                {submitted && (
-                  <span className="text-3xs font-mono font-semibold shrink-0 uppercase tracking-wider">
-                    {isCorr && isSel && "+1 point"}
-                    {!isCorr && isSel && "-1 point"}
-                    {isCorr && !isSel && "Missed"}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-4 pt-4 border-t border-hairline">
+        {/* Silver-grey Practice Footer Panel */}
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
           {!submitted ? (
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || selected.length === 0}
-              className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-95 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99] disabled:opacity-50"
+              disabled={isSubmitting || selected.length === 0 || audioStatus !== "Audio Finished"}
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Answer
+              {isSubmitting ? "Submitting..." : "SUBMIT & CHECK"}
             </button>
           ) : (
             <button
               onClick={handleReset}
-              className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99]"
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
             >
-              Try Again
+              TRY AGAIN
             </button>
           )}
         </div>
       </div>
+
+      {/* Audio Transcript Card (shows below player on submit) */}
+      {submitted && audio_transcript && (
+        <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-4">
+          <div className="flex justify-between items-center pb-4 border-b border-hairline select-none">
+            <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
+              Audio Transcript
+            </span>
+          </div>
+          <div className="text-sm text-ink leading-relaxed select-text font-sans text-gray-700">
+            {audio_transcript}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

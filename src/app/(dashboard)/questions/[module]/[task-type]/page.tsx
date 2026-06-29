@@ -162,10 +162,14 @@ export default async function QuestionListPage({ params }: PageProps) {
     }
   });
 
-  const taskDetails = TASK_DESCRIPTIONS[taskTypeParam] || {
+  const taskDetails = { ...(TASK_DESCRIPTIONS[taskTypeParam] || {
     title: taskTypeParam.replace(/-/g, " "),
     desc: "Browse and practice official PTE-style tasks.",
-  };
+  }) };
+
+  if (moduleParam === "listening" && taskTypeParam === "multiple-choice-multiple") {
+    taskDetails.desc = "Listen to the recording and answer the multiple-choice question by selecting the correct responses. More than one response is correct.";
+  }
 
   return (
     <QuestionListClient
