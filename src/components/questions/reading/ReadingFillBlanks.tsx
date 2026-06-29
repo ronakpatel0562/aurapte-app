@@ -34,6 +34,16 @@ function DraggableWord({ word, disabled, isSelected, onClick }: any) {
     }
     : undefined;
 
+  const getStyles = () => {
+    if (disabled) {
+      return "opacity-30 border-gray-200 text-gray-400 cursor-not-allowed";
+    }
+    if (isSelected) {
+      return "border-[#1C415A] bg-[#FAF9F6] text-zinc-900 ring-2 ring-[#1C415A]/20 cursor-pointer";
+    }
+    return "border-gray-300 hover:border-gray-400 text-gray-700 cursor-grab active:cursor-grabbing";
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -41,12 +51,7 @@ function DraggableWord({ word, disabled, isSelected, onClick }: any) {
       {...(!disabled ? listeners : {})}
       {...(!disabled ? attributes : {})}
       onClick={!disabled ? onClick : undefined}
-      className={`px-3 py-1.5 bg-canvas border rounded font-mono text-xs font-semibold select-none transition shadow-vercel-card ${disabled
-          ? "opacity-30 border-hairline text-mute cursor-not-allowed"
-          : isSelected
-            ? "border-primary bg-canvas-soft-2 text-ink ring-2 ring-primary ring-opacity-20 cursor-pointer"
-            : "border-hairline hover:border-hairline-strong text-body cursor-grab active:cursor-grabbing"
-        } ${isDragging ? "opacity-50" : ""}`}
+      className={`px-3 py-1 bg-white border rounded text-[13px] font-sans select-none transition shadow-sm ${getStyles()} ${isDragging ? "opacity-50" : ""}`}
     >
       {word}
     </div>
@@ -69,28 +74,30 @@ function DroppableBlank({
   const getStyles = () => {
     if (isSubmitted) {
       return isCorrect
-        ? "border-success/30 bg-success/5 text-success font-semibold"
-        : "border-error/30 bg-error/5 text-error-deep font-semibold";
+        ? "border-emerald-500 bg-emerald-50/50 text-emerald-800 font-semibold"
+        : "border-red-500 bg-red-50/50 text-red-800 font-semibold";
     }
     if (isOver) {
-      return "border-primary bg-canvas-soft-2 text-ink scale-102";
+      return "border-[#1C415A] bg-[#FAF9F6] text-zinc-900 scale-102";
     }
     return filledWord
-      ? "border-hairline-strong bg-canvas-soft text-ink font-semibold"
-      : "border-hairline border-dashed bg-canvas text-mute";
+      ? "border-gray-400 bg-white text-gray-800 font-semibold"
+      : "border-dashed border-gray-300 bg-[#EAECEF] text-gray-400";
   };
 
   return (
-    <span
-      ref={setNodeRef}
-      onClick={!isSubmitted ? onClick : undefined}
-      className={`inline-flex items-center justify-center min-w-[120px] h-7 mx-1 border rounded px-2.5 text-xs align-middle transition duration-150 ${!isSubmitted ? "cursor-pointer hover:border-hairline-strong" : ""
-        } ${getStyles()}`}
-    >
-      {filledWord || <span className="font-normal text-3xs uppercase tracking-wider">Select</span>}
+    <span className="inline-block relative mx-2.5 align-middle">
+      <span
+        ref={setNodeRef}
+        onClick={!isSubmitted ? onClick : undefined}
+        className={`inline-flex items-center justify-center min-w-[100px] h-[26px] border rounded px-3 text-[13px] transition duration-150 ${!isSubmitted ? "cursor-pointer hover:border-gray-500" : ""
+          } ${getStyles()}`}
+      >
+        {filledWord || <span className="font-semibold text-[10px] text-gray-400 uppercase tracking-wider select-none">Select</span>}
+      </span>
       {isSubmitted && !isCorrect && (
-        <span className="inline-flex items-center gap-0.5 ml-1.5 px-2 py-0.5 rounded-full bg-success/10 text-success text-[10px] font-mono font-semibold border border-success/20 shadow-sm align-middle select-text">
-          ✓ {correctAnswer}
+        <span className="text-emerald-600 text-xs font-bold ml-1.5 align-middle select-text">
+          (✓ {correctAnswer})
         </span>
       )}
     </span>
@@ -227,105 +234,103 @@ export default function ReadingFillBlanks({
     <DndContext onDragEnd={handleDragEnd}>
       <div className="space-y-6">
         {/* Interaction Panel */}
-        <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-6">
-          <div className="flex justify-between items-center pb-4 border-b border-hairline">
-            <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-              Fill in the Blanks (Drag and Drop)
-            </span>
+        <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
+          {/* Instruction Paragraph */}
+          <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+            In the text below some words are missing. Drag words from the box below to the appropriate place in the text. To undo an answer choice, drag the word back to the box below the text.
+          </div>
+
+          {/* Workspace Area */}
+          <div className="p-8 bg-white space-y-6">
             {submitted && result && (
-              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+              <div className="flex justify-end select-none">
+                <ScoreBadge score={result.score} maxScore={result.maxScore} />
+              </div>
+            )}
+
+            {/* Passage rendering */}
+            <div className="text-[15px] text-gray-800 leading-loose font-sans select-text pr-2 py-2">
+              {parts.map((part, index) => {
+                const match = part.match(/\[(blank_\d+)\]/);
+                if (match) {
+                  const blankId = match[1];
+                  const filledWord = userAnswers[blankId];
+                  const correctAnswer = correctAnswers[blankId];
+                  const isCorrect =
+                    filledWord?.trim().toLowerCase() ===
+                    correctAnswer?.trim().toLowerCase();
+
+                  return (
+                    <React.Fragment key={blankId}>
+                      {" "}
+                      <DroppableBlank
+                        id={blankId}
+                        filledWord={filledWord}
+                        isSubmitted={submitted}
+                        isCorrect={isCorrect}
+                        correctAnswer={correctAnswer}
+                        onClick={() => handleBlankClick(blankId)}
+                      />
+                      {" "}
+                    </React.Fragment>
+                  );
+                }
+                return <span key={index}>{part}</span>;
+              })}
+            </div>
+
+            {/* Word Bank */}
+            {!submitted && (
+              <div className="pt-6 border-t border-gray-200">
+                <div className="flex flex-wrap gap-2.5 p-4 bg-[#F3F4F6] border border-gray-200 rounded">
+                  {word_bank.map((word) => {
+                    const isPlaced = placedWords.includes(word);
+                    const isSelected = selectedWord === word;
+                    return (
+                      <DraggableWord
+                        key={word}
+                        word={word}
+                        disabled={isPlaced}
+                        isSelected={isSelected}
+                        onClick={() => handleWordClick(word)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Validation Error */}
+            {validationError && (
+              <div className="p-3 text-xs bg-red-50 text-red-700 border border-red-100 rounded-md flex items-center gap-2 animate-fade-in font-medium select-none">
+                <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>{validationError}</span>
+              </div>
             )}
           </div>
 
-          {/* Passage rendering */}
-          <div className="text-body-md text-ink leading-loose font-geist select-text pr-2 py-2">
-            {parts.map((part, index) => {
-              const match = part.match(/\[(blank_\d+)\]/);
-              if (match) {
-                const blankId = match[1];
-                const filledWord = userAnswers[blankId];
-                const correctAnswer = correctAnswers[blankId];
-                const isCorrect =
-                  filledWord?.trim().toLowerCase() ===
-                  correctAnswer?.trim().toLowerCase();
-
-                return (
-                  <DroppableBlank
-                    key={blankId}
-                    id={blankId}
-                    filledWord={filledWord}
-                    isSubmitted={submitted}
-                    isCorrect={isCorrect}
-                    correctAnswer={correctAnswer}
-                    onClick={() => handleBlankClick(blankId)}
-                  />
-                );
-              }
-              return <span key={index}>{part}</span>;
-            })}
-          </div>
-
-          {/* Word Bank */}
-          {!submitted && (
-            <div className="space-y-3 pt-4 border-t border-hairline">
-              <span className="text-3xs font-semibold text-mute font-mono uppercase tracking-wider">
-                Word Bank (Drag a chip or click a chip then click a blank)
-              </span>
-              <div className="flex flex-wrap gap-2.5">
-                {word_bank.map((word) => {
-                  const isPlaced = placedWords.includes(word);
-                  const isSelected = selectedWord === word;
-                  return (
-                    <DraggableWord
-                      key={word}
-                      word={word}
-                      disabled={isPlaced}
-                      isSelected={isSelected}
-                      onClick={() => handleWordClick(word)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          {validationError && (
-            <div className="p-3 text-xs bg-red-50 text-red-700 border border-red-100 rounded-md flex items-center gap-2 animate-fade-in font-medium select-none">
-              <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>{validationError}</span>
-            </div>
-          )}
-
-          <div className="flex gap-4 pt-4 border-t border-hairline">
+          {/* Silver-grey Practice Footer Panel */}
+          <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
             {!submitted ? (
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-95 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99] disabled:opacity-50"
+                className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit Answers
+                {isSubmitting ? "Submitting..." : "SUBMIT & CHECK"}
               </button>
             ) : (
               <button
                 onClick={handleReset}
-                className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99]"
+                className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
               >
-                Try Again
+                TRY AGAIN
               </button>
             )}
           </div>
         </div>
-
-        {/* Model Answer (shows on submit) */}
-        {submitted && (
-          <ModelAnswer
-            answer={getHighlightedModelPassage()}
-            title="Completed Text Passage"
-          />
-        )}
       </div>
     </DndContext>
   );

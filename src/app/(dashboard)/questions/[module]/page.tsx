@@ -97,27 +97,27 @@ const MODULE_METADATA: Record<
       {
         dbType: "rw_fill_in_the_blanks",
         title: "Reading & Writing: Fill in the Blanks",
-        desc: "Select the correct option from inline dropdown menus for each blank. Tests reading and writing grammar.",
+        desc: "Below is a text with blanks. Click on each blank and select the appropriate answer choice.",
       },
       {
         dbType: "reading_mcq_multiple",
         title: "Multiple Choice, Multiple Answers",
-        desc: "Read a passage and select all correct options. Negative marking applies for wrong answers.",
+        desc: "Read the text and select all correct responses. More than one response is correct.",
       },
       {
         dbType: "reorder_paragraphs",
         title: "Re-order Paragraphs",
-        desc: "Drag and drop shuffled paragraphs to restore the original logical flow. Tests reading cohesion and logic.",
+        desc: "Restore the original paragraph order by dragging the text boxes from the left panel to the right panel.",
       },
       {
         dbType: "reading_fill_in_the_blanks",
         title: "Reading: Fill in the Blanks",
-        desc: "Select the best words from a drag-and-drop word bank to complete a passage. Tests reading grammar.",
+        desc: "Drag words from the box below to the appropriate blank space to complete the text.",
       },
       {
         dbType: "reading_mcq_single",
         title: "Multiple Choice, Single Answer",
-        desc: "Read a text and select the single correct option from a choice of four. Tests general comprehension.",
+        desc: "Read the text and select the single correct option. Only one response is correct.",
       },
     ],
   },

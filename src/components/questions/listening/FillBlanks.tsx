@@ -303,22 +303,26 @@ export default function FillBlanks({
                   };
 
                   return (
-                    <span key={blankId} className="inline-block relative">
-                      <input
-                        type="text"
-                        value={typedVal}
-                        onChange={(e) => handleChange(blankId, e.target.value)}
-                        disabled={submitted}
-                        placeholder=""
-                        className={`h-7 w-28 mx-1.5 border rounded text-xs px-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400 transition ${getInputStyles()}`}
-                      />
-                      
-                      {submitted && !isCorrect && (
-                        <span className="inline-flex items-center gap-0.5 ml-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-mono font-semibold border border-emerald-200 shadow-sm align-middle select-text">
-                          ✓ {correctAnswer}
-                        </span>
-                      )}
-                    </span>
+                    <React.Fragment key={blankId}>
+                      {" "}
+                      <span className="inline-block relative align-middle mx-3">
+                        <input
+                          type="text"
+                          value={typedVal}
+                          onChange={(e) => handleChange(blankId, e.target.value)}
+                          disabled={submitted}
+                          placeholder=""
+                          className={`h-7 w-28 mx-1 border rounded text-xs px-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400 transition ${getInputStyles()}`}
+                        />
+                        
+                        {submitted && !isCorrect && (
+                          <span className="text-emerald-600 text-xs font-bold ml-1.5 align-middle select-text">
+                            (✓ {correctAnswer})
+                          </span>
+                        )}
+                      </span>
+                      {" "}
+                    </React.Fragment>
                   );
                 }
                 return <span key={index}>{part}</span>;

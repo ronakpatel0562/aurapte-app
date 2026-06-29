@@ -8,15 +8,9 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  useDraggable,
+  useDroppable,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Check } from "lucide-react";
 import ScoreBadge from "../shared/ScoreBadge";
 import { scoreReorderParagraphs } from "@/lib/scoring/reading";
 
@@ -39,74 +33,104 @@ interface ReorderParagraphsProps {
   isSubmitting: boolean;
 }
 
-function SortableTile({ id, text, index, isSubmitted, correctIndex, onRemove }: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, disabled: isSubmitted });
+function DraggableTile({ id, text, index, isSubmitted, correctIndex, onRemove, onClick, type }: any) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id,
+    disabled: isSubmitted,
+  });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : "auto",
-  };
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 50,
+      }
+    : undefined;
 
-  const getBorderColor = () => {
-    if (isSubmitted) {
+  const getStyles = () => {
+    if (isSubmitted && type === "target") {
       return index === correctIndex
-        ? "border-success/30 bg-success/5 text-success font-semibold"
-        : "border-error/30 bg-error/5 text-error-deep";
+        ? "border-emerald-500 bg-emerald-50/50 text-emerald-800 font-semibold"
+        : "border-red-500 bg-red-50/50 text-red-800";
     }
-    return "border-hairline hover:border-hairline-strong bg-canvas";
+    return "border-gray-300 bg-white text-gray-700 hover:border-gray-400";
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3.5 border rounded-lg text-xs relative flex items-start gap-3 transition shadow-vercel-card ${getBorderColor()} ${
-        isDragging ? "opacity-40" : ""
+      onClick={!isSubmitted ? onClick : undefined}
+      className={`p-3.5 border rounded text-[13px] relative flex items-start gap-3 transition shadow-sm bg-white select-none ${getStyles()} ${
+        isDragging ? "opacity-50" : ""
       }`}
     >
       {!isSubmitted && (
         <div
           {...listeners}
           {...attributes}
-          className="cursor-grab active:cursor-grabbing p-1 -m-1 text-mute hover:text-ink shrink-0 font-bold select-none text-sm"
-          title="Drag to sort"
+          className="cursor-grab active:cursor-grabbing p-1 -m-1 text-gray-400 hover:text-gray-700 shrink-0 font-bold select-none text-[16px] leading-none"
+          title="Drag to move"
         >
           ⠿
         </div>
       )}
-      <div className="flex-1 font-geist select-text pr-2 leading-relaxed">
+      <div className="flex-1 font-sans select-text pr-2 leading-relaxed">
         {text}
       </div>
-      {!isSubmitted && (
+      {!isSubmitted && type === "target" && (
         <button
-          onClick={onRemove}
-          className="text-3xs font-mono text-mute hover:text-error-deep transition shrink-0 cursor-pointer self-center"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="text-[11px] font-bold text-red-600 hover:text-red-800 transition shrink-0 cursor-pointer self-center"
         >
-          Remove
+          ✕
         </button>
+      )}
+      {isSubmitted && type === "target" && (
+        <span className={`text-[11px] font-bold font-mono uppercase tracking-wider shrink-0 self-center ${index === correctIndex ? "text-emerald-700" : "text-red-700"}`}>
+          {index === correctIndex ? "✓" : "✗"}
+        </span>
       )}
     </div>
   );
 }
 
-function ShuffledBlock({ id, text, onAdd }: any) {
+function DroppableSourceContainer({ children, isSubmitted }: any) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: "source-pool",
+    disabled: isSubmitted,
+  });
   return (
     <div
-      onClick={onAdd}
-      className="p-3.5 border border-hairline hover:border-hairline-strong bg-canvas hover:bg-canvas-soft transition rounded-lg text-xs font-geist cursor-pointer select-none leading-relaxed flex items-start justify-between shadow-vercel-card group"
+      ref={setNodeRef}
+      className={`space-y-3 p-4 overflow-y-auto flex-1 max-h-[450px] transition duration-150 rounded-lg ${
+        isOver ? "bg-blue-50/60 border-2 border-dashed border-[#0b7ca5]/30" : ""
+      }`}
     >
-      <span className="flex-1 pr-4">{text}</span>
-      <span className="text-3xs font-mono text-mute group-hover:text-primary transition shrink-0 font-bold">
-        ADD +
-      </span>
+      {children}
+    </div>
+  );
+}
+
+function DroppableTargetSlot({ index, children, isSubmitted }: any) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `slot-${index}`,
+    disabled: isSubmitted,
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[58px] rounded transition duration-150 ${
+        isOver ? "bg-blue-50/80 border-2 border-dashed border-[#0b7ca5]" : ""
+      }`}
+    >
+      {children || (
+        <div className="h-[52px] border border-dashed border-gray-300 rounded bg-[#EAECEF] flex items-center justify-center text-[12px] text-gray-400 font-bold select-none font-sans">
+          Place {index + 1}
+        </div>
+      )}
     </div>
   );
 }
@@ -123,14 +147,13 @@ export default function ReorderParagraphs({
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ score: number; maxScore: number } | null>(null);
 
-  // Initialize pool — prefer DB-provided shuffled_order if present, else random
+  // Initialize pool
   useEffect(() => {
     let pool: Paragraph[];
     if (Array.isArray(shuffled_order) && shuffled_order.length === paragraphs.length) {
       pool = shuffled_order
         .map((id: string) => paragraphs.find((p) => p.id === id))
         .filter((p: Paragraph | undefined): p is Paragraph => Boolean(p));
-      // Fallback if any id was missing
       if (pool.length !== paragraphs.length) pool = [...paragraphs];
     } else {
       pool = [...paragraphs];
@@ -152,13 +175,59 @@ export default function ReorderParagraphs({
   const handleDragEnd = (event: DragEndEvent) => {
     if (submitted) return;
     const { active, over } = event;
+    if (!over || !active) return;
 
-    if (over && active.id !== over.id) {
-      setOrderedList((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // 1. Drag back to source pool
+    if (overId === "source-pool") {
+      const found = paragraphs.find((p) => p.id === activeId);
+      if (found) {
+        setOrderedList((prev) => prev.filter((p) => p.id !== activeId));
+        setShuffledPool((prev) => {
+          if (prev.some((p) => p.id === activeId)) return prev;
+          return [...prev, found];
+        });
+      }
+      return;
+    }
+
+    // 2. Drop on a slot
+    const slotMatch = overId.match(/^slot-(\d+)$/);
+    if (slotMatch) {
+      const targetIdx = parseInt(slotMatch[1], 10);
+      const found = paragraphs.find((p) => p.id === activeId);
+      if (found) {
+        setShuffledPool((prev) => prev.filter((p) => p.id !== activeId));
+        setOrderedList((prev) => {
+          const filtered = prev.filter((p) => p.id !== activeId);
+          const result = [...filtered];
+          result.splice(targetIdx, 0, found);
+          return result;
+        });
+      }
+      return;
+    }
+
+    // 3. Drop on another paragraph
+    const isOverParagraph = paragraphs.some((p) => p.id === overId);
+    if (isOverParagraph) {
+      const found = paragraphs.find((p) => p.id === activeId);
+      if (found) {
+        setShuffledPool((prev) => prev.filter((p) => p.id !== activeId));
+        setOrderedList((prev) => {
+          const filtered = prev.filter((p) => p.id !== activeId);
+          const targetIdx = filtered.findIndex((p) => p.id === overId);
+          const result = [...filtered];
+          if (targetIdx !== -1) {
+            result.splice(targetIdx, 0, found);
+          } else {
+            result.push(found);
+          }
+          return result;
+        });
+      }
     }
   };
 
@@ -195,97 +264,104 @@ export default function ReorderParagraphs({
   return (
     <div className="space-y-6">
       {/* Interaction Board */}
-      <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-6">
-        <div className="flex justify-between items-center pb-4 border-b border-hairline">
-          <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-            Re-order Paragraphs
-          </span>
-          {submitted && result && (
-            <ScoreBadge score={result.score} maxScore={result.maxScore} />
-          )}
+      <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
+        {/* Instruction Paragraph */}
+        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+          The text boxes in the left panel placed in a random order. Restore the original order by dragging the text boxes from the left panel to the right panel.
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[280px]">
-          {/* Shuffled pool (Left) */}
-          <div className="space-y-3">
-            <span className="text-3xs font-semibold text-mute font-mono uppercase tracking-wider block">
-              Source Paragraphs
-            </span>
-            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-              {shuffledPool.length > 0 ? (
-                shuffledPool.map((para) => (
-                  <ShuffledBlock
-                    key={para.id}
-                    id={para.id}
-                    text={para.text}
-                    onAdd={() => handleAdd(para)}
-                  />
-                ))
-              ) : (
-                <div className="py-12 text-center text-3xs text-mute border border-dashed border-hairline rounded-lg bg-canvas-soft-2 font-mono uppercase">
-                  All blocks added
-                </div>
-              )}
+        {/* Workspace Columns */}
+        <div className="p-8 bg-white space-y-6">
+          {submitted && result && (
+            <div className="flex justify-end select-none">
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
             </div>
-          </div>
+          )}
 
-          {/* Sorted Dropzone (Right) */}
-          <div className="space-y-3">
-            <span className="text-3xs font-semibold text-mute font-mono uppercase tracking-wider block">
-              Your Ordered Sequence
-            </span>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={orderedList.map((o) => o.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3 p-4 border border-dashed border-hairline rounded-lg bg-canvas-soft min-h-[240px] flex flex-col justify-start">
-                  {orderedList.length > 0 ? (
-                    orderedList.map((para, index) => {
-                      const correctIndex = correct_order.indexOf(para.id);
-                      return (
-                        <SortableTile
-                          key={para.id}
-                          id={para.id}
-                          text={para.text}
-                          index={index}
-                          correctIndex={correctIndex}
-                          isSubmitted={submitted}
-                          onRemove={() => handleRemove(para)}
-                        />
-                      );
-                    })
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[300px]">
+              {/* Shuffled pool (Left) */}
+              <div className="border border-gray-300 rounded overflow-hidden flex flex-col bg-[#F3F4F6] pb-4 shadow-sm">
+                <div className="bg-[#0b7ca5] text-white text-[13px] font-bold text-center py-2 select-none uppercase tracking-wider mb-2">
+                  Source
+                </div>
+                <DroppableSourceContainer isSubmitted={submitted}>
+                  {shuffledPool.length > 0 ? (
+                    shuffledPool.map((para) => (
+                      <DraggableTile
+                        key={para.id}
+                        id={para.id}
+                        text={para.text}
+                        isSubmitted={submitted}
+                        onClick={() => handleAdd(para)}
+                        type="source"
+                      />
+                    ))
                   ) : (
-                    <div className="my-auto text-center py-12 text-3xs text-mute font-mono uppercase">
-                      Select paragraphs on the left to build order
+                    <div className="py-12 text-center text-xs text-gray-400 font-medium uppercase font-mono bg-white border border-dashed border-gray-300 rounded-lg">
+                      All blocks added
                     </div>
                   )}
+                </DroppableSourceContainer>
+              </div>
+
+              {/* Sorted Dropzone (Right) */}
+              <div className="border border-gray-300 rounded overflow-hidden flex flex-col bg-[#F3F4F6] pb-4 shadow-sm">
+                <div className="bg-[#0b7ca5] text-white text-[13px] font-bold text-center py-2 select-none uppercase tracking-wider mb-2">
+                  Target
                 </div>
-              </SortableContext>
-            </DndContext>
-          </div>
+                <div className="p-4 flex-1 space-y-3 max-h-[450px] overflow-y-auto">
+                  {Array.from({ length: paragraphs.length }).map((_, index) => {
+                    const para = orderedList[index];
+                    const slotChild = para ? (
+                      <DraggableTile
+                        key={para.id}
+                        id={para.id}
+                        text={para.text}
+                        index={index}
+                        correctIndex={correct_order.indexOf(para.id)}
+                        isSubmitted={submitted}
+                        onRemove={() => handleRemove(para)}
+                        type="target"
+                      />
+                    ) : null;
+
+                    return (
+                      <DroppableTargetSlot
+                        key={`slot-${index}`}
+                        index={index}
+                        isSubmitted={submitted}
+                      >
+                        {slotChild}
+                      </DroppableTargetSlot>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </DndContext>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-4 pt-4 border-t border-hairline">
+        {/* Silver-grey Practice Footer Panel */}
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
           {!submitted ? (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || orderedList.length === 0}
-              className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-95 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99] disabled:opacity-50"
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Sequence
+              {isSubmitting ? "Submitting..." : "SUBMIT & CHECK"}
             </button>
           ) : (
             <button
               onClick={handleReset}
-              className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99]"
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
             >
-              Try Again
+              TRY AGAIN
             </button>
           )}
         </div>
@@ -293,20 +369,19 @@ export default function ReorderParagraphs({
 
       {/* Correct Sequence (shown on submit) */}
       {submitted && (
-        <div className="bg-canvas border border-success/30 rounded-lg shadow-vercel-card overflow-hidden">
+        <div className="bg-white border border-emerald-500 rounded-lg shadow-sm overflow-hidden font-sans">
           {/* Header */}
-          <div className="flex items-center gap-2 p-4 border-b border-hairline bg-success/5">
-            <Check className="w-4 h-4 text-success" />
-            <span className="text-body-sm-strong font-semibold text-ink">
+          <div className="flex items-center gap-2 p-4 border-b border-emerald-100 bg-emerald-50/50 select-none">
+            <span className="text-[14px] font-bold text-emerald-800">
               Correct Sequence
             </span>
-            <span className="text-3xs font-mono text-mute uppercase tracking-wider ml-auto">
+            <span className="text-[11px] font-bold font-mono text-emerald-600 uppercase tracking-wider ml-auto">
               {correct_order.length} paragraphs
             </span>
           </div>
 
           {/* Ordered numbered cards */}
-          <div className="p-4 space-y-3 bg-canvas-soft-2">
+          <div className="p-6 space-y-3 bg-[#FAF9F6]">
             {correct_order.map((id, idx) => {
               const para = paragraphs.find((p) => p.id === id);
               const wasPlacedAt = orderedList.findIndex((p) => p.id === id);
@@ -316,32 +391,32 @@ export default function ReorderParagraphs({
               return (
                 <div
                   key={id}
-                  className={`p-3.5 border rounded-lg text-xs leading-relaxed flex items-start gap-3 bg-canvas shadow-vercel-card ${
+                  className={`p-3.5 border rounded text-[13px] leading-relaxed flex items-start gap-3 bg-white shadow-sm ${
                     correctlyPlaced
-                      ? "border-success/40"
-                      : "border-error/40"
+                      ? "border-emerald-500 text-emerald-800"
+                      : "border-red-500 text-red-800"
                   }`}
                 >
                   {/* Step number badge */}
                   <div
-                    className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center font-mono font-semibold text-3xs ${
+                    className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center font-mono font-bold text-xs ${
                       correctlyPlaced
-                        ? "bg-success text-on-primary"
-                        : "bg-error text-on-primary"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-red-500 text-white"
                     }`}
                   >
                     {idx + 1}
                   </div>
 
                   {/* Paragraph text */}
-                  <div className="flex-1 font-geist select-text pr-2">
+                  <div className="flex-1 font-sans select-text pr-2 leading-relaxed">
                     {para?.text || `Paragraph ${id}`}
                   </div>
 
                   {/* Placement indicator */}
                   <span
-                    className={`text-3xs font-mono font-semibold uppercase tracking-wider shrink-0 ${
-                      correctlyPlaced ? "text-success" : "text-error-deep"
+                    className={`text-[11px] font-bold font-mono uppercase tracking-wider shrink-0 self-center ${
+                      correctlyPlaced ? "text-emerald-700" : "text-red-700"
                     }`}
                   >
                     {wasPlacedAt === -1

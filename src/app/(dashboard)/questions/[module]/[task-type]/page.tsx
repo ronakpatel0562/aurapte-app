@@ -181,6 +181,18 @@ export default async function QuestionListPage({ params }: PageProps) {
     } else if (taskTypeParam === "write-from-dictation") {
       taskDetails.desc = "You will hear a sentence. Type the sentence in the box below exactly as you hear it. Write as much of the sentence as you can. You will hear the sentence only once.";
     }
+  } else if (moduleParam === "reading") {
+    if (taskTypeParam === "rw-fill-in-the-blanks") {
+      taskDetails.desc = "Below is a text with blanks. Click on each blank, a list of choices will appear. Select the appropriate answer choice for each blank.";
+    } else if (taskTypeParam === "multiple-choice-multiple") {
+      taskDetails.desc = "Read the text and answer the multiple - choice question by selecting the correct responses. More than one response is correct.";
+    } else if (taskTypeParam === "reorder-paragraphs") {
+      taskDetails.desc = "The text boxes in the left panel placed in a random order. Restore the original order by dragging the text boxes from the left panel to the right panel.";
+    } else if (taskTypeParam === "reading-fill-in-the-blanks") {
+      taskDetails.desc = "In the text below some words are missing. Drag words from the box below to the appropriate place in the text. To undo an answer choice, drag the word back to the box below the text.";
+    } else if (taskTypeParam === "multiple-choice-single") {
+      taskDetails.desc = "Read the text and answer the multiple-choice question by selecting the correct response. Only one response is correct.";
+    }
   }
 
   return (

@@ -93,111 +93,113 @@ export default function RWFillBlanks({
   return (
     <div className="space-y-6">
       {/* Interactive Board */}
-      <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-6">
-        <div className="flex justify-between items-center pb-4 border-b border-hairline">
-          <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-            Fill in the Blanks (Dropdown choices)
-          </span>
+      <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
+        {/* Instruction Paragraph */}
+        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+          Below is a text with blanks. Click on each blank, a list of choices will appear. Select the appropriate answer choice for each blank.
+        </div>
+
+        {/* Workspace Area */}
+        <div className="p-8 bg-white space-y-6">
           {submitted && result && (
-            <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            <div className="flex justify-end select-none">
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            </div>
+          )}
+
+          {/* Inline passage with dropdown selectors */}
+          <div className="text-[15px] text-gray-800 leading-loose font-sans select-text pr-2 py-2">
+            {parts.map((part, index) => {
+              const match = part.match(/\[(blank_\d+)\]/);
+              if (match) {
+                const blankId = match[1];
+                const choices = dropdown_choices[blankId] || [];
+                const selectedVal = userAnswers[blankId] || "";
+                const correctAnswer = correctAnswers[blankId];
+                const isCorrect =
+                  selectedVal.trim().toLowerCase() ===
+                  correctAnswer.trim().toLowerCase();
+
+                const getSelectStyles = () => {
+                  if (submitted) {
+                    return isCorrect
+                      ? "border-emerald-500 bg-emerald-50/50 text-emerald-800 font-semibold opacity-100 cursor-default"
+                      : "border-red-500 bg-red-50/50 text-red-800 font-semibold opacity-100 cursor-default";
+                  }
+                  return selectedVal
+                    ? "border-gray-400 bg-gray-50 text-gray-800"
+                    : "border-gray-300 bg-white text-gray-500";
+                };
+
+                return (
+                  <React.Fragment key={blankId}>
+                    {" "}
+                    <span className="inline-block relative align-middle mx-2.5">
+                      <select
+                        value={selectedVal}
+                        onChange={(e) => handleChange(blankId, e.target.value)}
+                        disabled={submitted}
+                        className={`h-7 border rounded text-[13px] font-semibold px-2.5 pr-6 focus:outline-none cursor-pointer transition select-none appearance-none ${getSelectStyles()}`}
+                      >
+                        <option value="">— Select —</option>
+                        {choices.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                      {/* Dropdown narrow arrow icon */}
+                      {!submitted && (
+                        <span className="absolute right-2.5 top-1.5 pointer-events-none text-gray-500 text-[8px] font-mono">
+                          ▼
+                        </span>
+                      )}
+
+                      {submitted && !isCorrect && (
+                        <span className="text-emerald-600 text-xs font-bold ml-1.5 align-middle select-text">
+                          (✓ {correctAnswer})
+                        </span>
+                      )}
+                    </span>
+                    {" "}
+                  </React.Fragment>
+                );
+              }
+              return <span key={index}>{part}</span>;
+            })}
+          </div>
+
+          {/* Validation Error */}
+          {validationError && (
+            <div className="p-3 text-xs bg-red-50 text-red-700 border border-red-100 rounded-md flex items-center gap-2 animate-fade-in font-medium select-none">
+              <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>{validationError}</span>
+            </div>
           )}
         </div>
 
-        {/* Inline passage with dropdown selectors */}
-        <div className="text-body-md text-ink leading-loose font-geist select-text pr-2 py-2">
-          {parts.map((part, index) => {
-            const match = part.match(/\[(blank_\d+)\]/);
-            if (match) {
-              const blankId = match[1];
-              const choices = dropdown_choices[blankId] || [];
-              const selectedVal = userAnswers[blankId] || "";
-              const correctAnswer = correctAnswers[blankId];
-              const isCorrect =
-                selectedVal.trim().toLowerCase() ===
-                correctAnswer.trim().toLowerCase();
-
-              const getSelectStyles = () => {
-                if (submitted) {
-                  return isCorrect
-                    ? "border-success/30 bg-success/5 text-success font-semibold opacity-100 cursor-default"
-                    : "border-error/30 bg-error/5 text-error-deep font-semibold opacity-100 cursor-default";
-                }
-                return selectedVal
-                  ? "border-hairline-strong bg-canvas-soft text-ink"
-                  : "border-hairline bg-canvas text-mute";
-              };
-
-              return (
-                <span key={blankId} className="inline-block relative align-middle">
-                  <select
-                    value={selectedVal}
-                    onChange={(e) => handleChange(blankId, e.target.value)}
-                    disabled={submitted}
-                    className={`h-7 mx-1 border rounded text-xs font-semibold px-2.5 pr-6 focus:outline-none cursor-pointer transition select-none appearance-none ${getSelectStyles()}`}
-                  >
-                    <option value="">— Select —</option>
-                    {choices.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  {/* Dropdown narrow arrow icon */}
-                  {!submitted && (
-                    <span className="absolute right-2.5 top-1.5 pointer-events-none text-mute text-[8px] font-mono">
-                      ▼
-                    </span>
-                  )}
-
-                  {submitted && !isCorrect && (
-                    <span className="inline-flex items-center gap-0.5 ml-1.5 px-2 py-0.5 rounded-full bg-success/10 text-success text-[10px] font-mono font-semibold border border-success/20 shadow-sm align-middle select-text">
-                      ✓ {correctAnswer}
-                    </span>
-                  )}
-                </span>
-              );
-            }
-            return <span key={index}>{part}</span>;
-          })}
-        </div>
-
-        {/* Actions */}
-        {validationError && (
-          <div className="p-3 text-xs bg-red-50 text-red-700 border border-red-100 rounded-md flex items-center gap-2 animate-fade-in font-medium select-none">
-            <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span>{validationError}</span>
-          </div>
-        )}
-
-        <div className="flex gap-4 pt-4 border-t border-hairline">
+        {/* Silver-grey Practice Footer Panel */}
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
           {!submitted ? (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-95 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99] disabled:opacity-50"
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Answers
+              {isSubmitting ? "Submitting..." : "SUBMIT & CHECK"}
             </button>
           ) : (
             <button
               onClick={handleReset}
-              className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99]"
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
             >
-              Try Again
+              TRY AGAIN
             </button>
           )}
         </div>
       </div>
-
-      {/* Model Answer */}
-      {submitted && (
-        <ModelAnswer
-          answer={getHighlightedModelPassage()}
-          title="Completed Text Passage"
-        />
-      )}
     </div>
   );
 }

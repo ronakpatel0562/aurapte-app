@@ -167,6 +167,19 @@ export function transformQuestionContent(question: any): any {
   // normalisation runs, so downstream consumers see the final URL.
   if (content.audio_url) content.audio_url = rewriteAudioUrl(content.audio_url);
 
+  // Swap correction: If content has both a passage and a question, and the passage is shorter than the question, they are swapped.
+  if (
+    content.passage &&
+    content.question &&
+    typeof content.passage === "string" &&
+    typeof content.question === "string" &&
+    content.passage.length < content.question.length
+  ) {
+    const temp = content.passage;
+    content.passage = content.question;
+    content.question = temp;
+  }
+
   // Normalise the model-answer field. Some sources (third-party question
   // dumps) store the absolute answer under `sample_answer`; the rest of the
   // app only knows about `model_answer`. Prefer the canonical name, fall
@@ -208,6 +221,45 @@ export function transformQuestionContent(question: any): any {
 
   // 2. Reading Fill in the Blanks (stored as reading_fill_in_the_blanks)
   if (type === "reading_fill_in_the_blanks" || type === "reading-fill-in-the-blanks") {
+    // Check if word_bank contains comma-separated strings inside a single array item
+    if (content.word_bank && Array.isArray(content.word_bank)) {
+      let cleanedBank: string[] = [];
+      content.word_bank.forEach((item: string) => {
+        if (typeof item === "string" && item.includes(",")) {
+          const split = item.split(",").map((s) => s.trim()).filter((s) => s.length > 0 && s !== "...");
+          cleanedBank.push(...split);
+        } else {
+          cleanedBank.push(item);
+        }
+      });
+      content.word_bank = cleanedBank;
+    }
+
+    if (content.options && Array.isArray(content.options)) {
+      let cleanedOpts: string[] = [];
+      content.options.forEach((item: string) => {
+        if (typeof item === "string" && item.includes(",")) {
+          const split = item.split(",").map((s) => s.trim()).filter((s) => s.length > 0 && s !== "...");
+          cleanedOpts.push(...split);
+        } else {
+          cleanedOpts.push(item);
+        }
+      });
+      content.options = cleanedOpts;
+    }
+
+    // Populate correct answers for empty ones
+    if (question.id === "bf48082e-3a4d-4fdd-a931-f566f8071c10" && (!content.correct_answers || content.correct_answers.length === 0)) {
+      content.correct_answers = ["debts", "affordability", "flexibility"];
+    } else if (question.id === "41d40600-5041-483b-a646-f8fbcc751ce5" && (!content.correct_answers || content.correct_answers.length === 0)) {
+      content.correct_answers = ["debts", "flexibility", "affordability"];
+    }
+
+    // Replace () blanks with ### if present in passage_with_blanks
+    if (typeof content.passage_with_blanks === "string" && content.passage_with_blanks.includes("()")) {
+      content.passage_with_blanks = content.passage_with_blanks.replace(/\(\)/g, "###");
+    }
+
     if (content.correct_answers && Array.isArray(content.correct_answers)) {
       const answers: Record<string, string> = {};
       content.correct_answers.forEach((ans: string, index: number) => {
@@ -429,8 +481,44 @@ export function transformQuestionContent(question: any): any {
 
   return {
     ...question,
-    content,
+    content: recursivelyCleanEllipsis(content),
   };
+}
+
+function cleanEllipsis(str: string): string {
+  if (typeof str !== "string") return str;
+  return str
+    // 1. Trailing dots/ellipses/underscores with optional spaces (2 or more)
+    .replace(/(?:\s*[\.\u2026_]){2,}\s*$/g, "")
+    // 2. Middle dots/ellipses/underscores with optional spaces (3 or more)
+    .replace(/(?:\s*[\.\u2026_]){3,}\s*/g, " ")
+    // 3. Single unicode ellipsis character
+    .replace(/\s*\u2026\s*/g, " ")
+    .trim();
+}
+
+function recursivelyCleanEllipsis(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === "string") {
+    // Exclude R2 CDN urls or media filenames from having dots cleaned
+    if (obj.startsWith("http://") || obj.startsWith("https://") || obj.includes("/storage/v1/")) {
+      return obj;
+    }
+    return cleanEllipsis(obj);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(recursivelyCleanEllipsis);
+  }
+  if (typeof obj === "object") {
+    const res: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        res[key] = recursivelyCleanEllipsis(obj[key]);
+      }
+    }
+    return res;
+  }
+  return obj;
 }
 
 // Strip HTML tags and decode the entities we actually see in stored model
