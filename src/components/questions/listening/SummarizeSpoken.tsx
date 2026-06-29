@@ -55,8 +55,8 @@ export default function SummarizeSpoken({
   } = question.content;
 
   // Resolve limits with defaults matching standard PTE and screenshot details
-  const limitMin = word_limit_min ?? 20;
-  const limitMax = word_limit_max ?? 30;
+  const limitMin = 20;
+  const limitMax = 30;
   const totalTimeSeconds = 480; // Force 8 minutes = 480s
 
   const [text, setText] = useState("");
@@ -476,10 +476,14 @@ export default function SummarizeSpoken({
         <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || wordCount === 0}
+            disabled={isSubmitting || wordCount === 0 || (audio_url ? audioStatus !== "Audio Finished" : false)}
             className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Submitting..." : "SUBMIT & CHECK"}
+            {isSubmitting
+              ? "Submitting..."
+              : audioStatus !== "Audio Finished" && audio_url
+              ? "Wait for Audio to Finish"
+              : "SUBMIT & CHECK"}
           </button>
         </div>
       </div>
@@ -489,11 +493,29 @@ export default function SummarizeSpoken({
   // 2. SUBMITTED FEEDBACK & REVIEW SCREEN (Vercel Style - Simplified)
   return (
     <div className="space-y-6">
+      {/* Sample Correct Answers card */}
+      {sampleAnswersList.length > 0 && (
+        <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-4 reveal-up">
+          <div className="flex justify-between items-center pb-4 border-b border-hairline select-none">
+            <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
+              Sample Correct Answer(s)
+            </span>
+          </div>
+          <div className="space-y-3 text-sm text-ink leading-relaxed select-text font-geist">
+            {sampleAnswersList.map((ans, aIdx) => (
+              <p key={aIdx} className="leading-relaxed">
+                {ans}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Answer Board */}
-      <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-5">
+      <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-5 reveal-up">
         <div className="flex justify-between items-center pb-4 border-b border-hairline select-none">
           <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-            Your Submission
+            Your Attempt & Feedback
           </span>
           {submitted && (
             <span className="text-2xs font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
@@ -502,14 +524,16 @@ export default function SummarizeSpoken({
           )}
         </div>
 
-        {/* User typed response */}
-        <div className="space-y-2">
-          <div className="w-full min-h-[100px] p-4 bg-canvas-soft-2 border border-hairline rounded-md text-sm text-ink leading-relaxed font-geist whitespace-pre-wrap select-text">
-            {text}
-          </div>
-          <div className="flex justify-between items-center text-3xs font-mono text-mute select-none">
-            <span>
-              Words: {wordCount} (Target: 20-30)
+        {/* User response with in-line spelling/grammar highlights */}
+        <div className="space-y-4">
+          <HighlightedFeedback
+            analysis={analysis}
+            loading={analysisLoading}
+            rawText={text}
+          />
+          <div className="flex justify-between items-center select-none pt-2">
+            <span className="px-2.5 py-1 rounded-full text-2xs font-semibold bg-success/10 border border-success/20 text-success uppercase tracking-wider font-mono">
+              Word Count: {wordCount} (Target: {limitMin}-{limitMax})
             </span>
           </div>
         </div>
@@ -524,24 +548,6 @@ export default function SummarizeSpoken({
           </button>
         </div>
       </div>
-
-      {/* Sample Correct Answers card */}
-      {sampleAnswersList.length > 0 && (
-        <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-4">
-          <div className="flex justify-between items-center pb-4 border-b border-hairline select-none">
-            <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-              Sample Correct Answer(s)
-            </span>
-          </div>
-          <div className="space-y-3 text-sm text-ink leading-relaxed select-text">
-            {sampleAnswersList.map((ans, aIdx) => (
-              <p key={aIdx} className="leading-relaxed">
-                {ans}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

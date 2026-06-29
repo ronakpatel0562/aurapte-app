@@ -16,7 +16,9 @@ export interface AnnotatedToken {
   kind: TokenKind;
   /** True only when the underlying spell-checker flags the word. */
   misspelled?: boolean;
-  /** Up to three spelling suggestions (only populated when misspelled). */
+  /** The type of issue detected for this token (if any). */
+  issueType?: "spelling" | "capitalization" | "punctuation" | "duplication" | "grammar";
+  /** Up to three spelling suggestions (only populated when misspelled or grammar issue). */
   suggestions?: string[];
 }
 
@@ -26,10 +28,10 @@ export interface LinguisticIssue {
   /** Sentence-level position of the offending token. */
   index: number;
   /** What we detected. */
-  type: "spelling" | "capitalization" | "punctuation" | "duplication";
+  type: "spelling" | "capitalization" | "punctuation" | "duplication" | "grammar";
   /** Human-readable explanation shown in tooltips and lists. */
   message: string;
-  /** Up to three spelling suggestions for `spelling` issues. */
+  /** Up to three suggestions for spelling/grammar issues. */
   suggestions?: string[];
 }
 
@@ -107,6 +109,171 @@ function countTerminalPunctuation(text: string): number {
   return matches ? matches.length : 0;
 }
 
+const IRREGULAR_PAST_MAP: Record<string, string> = {
+  came: "come",
+  went: "go",
+  saw: "see",
+  ate: "eat",
+  wrote: "write",
+  gave: "give",
+  took: "take",
+  done: "do",
+  had: "have",
+  said: "say",
+  made: "make",
+  kept: "keep",
+  thought: "think",
+  brought: "bring",
+  bought: "buy",
+  told: "tell",
+  felt: "feel",
+  found: "find",
+  heard: "hear",
+  left: "leave",
+  lost: "lose",
+  met: "meet",
+  slept: "sleep",
+  spent: "spend",
+  stood: "stand",
+  understood: "understand",
+  spoke: "speak",
+  broke: "break",
+  chose: "choose",
+  forgot: "forget",
+  froze: "freeze",
+  shook: "shake",
+  stole: "steal",
+  woke: "wake",
+  blew: "blow",
+  drew: "draw",
+  grew: "grow",
+  knew: "know",
+  threw: "throw",
+  flew: "fly",
+  fell: "fall",
+  rode: "ride",
+  rang: "ring",
+  sang: "sing",
+  sank: "sink",
+  sprang: "spring",
+  swam: "swim",
+  began: "begin",
+  ran: "run",
+  won: "win",
+};
+
+const DO_VERBS = new Set(["do", "does", "did", "don't", "doesn't", "didn't", "dont", "doesnt", "didnt"]);
+
+function getBaseFormFromIng(word: string, speller?: any): string {
+  const lower = word.toLowerCase();
+  if (lower === "coming") return "come";
+  if (lower === "having") return "have";
+  if (lower === "making") return "make";
+  if (lower === "taking") return "take";
+  if (lower === "giving") return "give";
+  if (lower === "writing") return "write";
+  if (lower === "running") return "run";
+  if (lower === "getting") return "get";
+  if (lower === "sitting") return "sit";
+  if (lower === "swimming") return "swim";
+  if (lower === "putting") return "put";
+  if (lower === "stopping") return "stop";
+  if (lower === "beginning") return "begin";
+  if (lower === "planning") return "plan";
+
+  if (/(.)\1ing$/i.test(lower)) {
+    return word.slice(0, -4);
+  }
+  if (/[bcdfghjklmnpqrstvwxyz]ing$/i.test(lower)) {
+    const stripped = word.slice(0, -3);
+    const withE = stripped + "e";
+    if (speller && !speller.correct(stripped) && speller.correct(withE)) {
+      return withE;
+    }
+    return stripped;
+  }
+  return word.slice(0, -3);
+}
+
+function getBaseFormFromEd(word: string, speller?: any): string {
+  const lower = word.toLowerCase();
+  if (lower.endsWith("ied")) {
+    return word.slice(0, -3) + "y";
+  }
+  if (lower.endsWith("ed")) {
+    const stripped = word.slice(0, -2);
+    if (speller && !speller.correct(stripped) && speller.correct(stripped + "e")) {
+      return stripped + "e";
+    }
+    return stripped;
+  }
+  return word;
+}
+
+function getBaseFormFromS(word: string, speller?: any): string {
+  const lower = word.toLowerCase();
+  if (lower.endsWith("ies")) {
+    return word.slice(0, -3) + "y";
+  }
+  if (lower.endsWith("es")) {
+    const stripped = word.slice(0, -2);
+    if (speller && speller.correct(stripped)) return stripped;
+    const strippedS = word.slice(0, -1);
+    if (speller && speller.correct(strippedS)) return strippedS;
+    return stripped;
+  }
+  if (lower.endsWith("s") && !lower.endsWith("ss") && !lower.endsWith("us") && !lower.endsWith("is") && !lower.endsWith("as")) {
+    return word.slice(0, -1);
+  }
+  return word;
+}
+
+const SINGULAR_PRONOUNS = new Set(["he", "she", "it"]);
+const PLURAL_PRONOUNS = new Set(["they", "we", "you", "i"]);
+
+const COMMON_BASE_VERBS: Record<string, string> = {
+  have: "has",
+  do: "does",
+  go: "goes",
+  want: "wants",
+  need: "needs",
+  like: "likes",
+  love: "loves",
+  see: "sees",
+  say: "says",
+  think: "thinks",
+  know: "knows",
+  make: "makes",
+  take: "takes",
+  get: "gets",
+  come: "comes",
+  give: "gives",
+  find: "finds",
+  tell: "tells",
+  feel: "feels",
+  try: "tries",
+  work: "works",
+  study: "studies",
+  play: "plays",
+  run: "runs",
+  speak: "speaks",
+  write: "writes",
+  read: "reads",
+  use: "uses",
+  create: "creates",
+  help: "helps",
+};
+
+const COMMON_SINGULAR_VERBS: Record<string, string> = {};
+for (const [base, sing] of Object.entries(COMMON_BASE_VERBS)) {
+  COMMON_SINGULAR_VERBS[sing] = base;
+}
+
+const MODAL_VERBS = new Set(["should", "would", "could", "can", "will", "shall", "may", "might", "must"]);
+
+const DOUBLE_NEGATIVES = new Set(["no", "nothing", "nobody", "never"]);
+const NEGATIVE_WORDS = new Set(["not", "n't", "don't", "doesn't", "didn't", "cannot", "can't", "won't", "wouldn't", "never"]);
+
 /**
  * Analyse free-text for PTE writing tasks.
  *
@@ -156,12 +323,13 @@ export async function analyzeLinguistics(
             : s;
         suggestions = rawSuggestions.slice(0, 3).map(preserveCase);
         tok.misspelled = true;
+        tok.issueType = "spelling";
         tok.suggestions = suggestions;
         issues.push({
           token: original,
           index: wordIndex,
           type: "spelling",
-          message: `Possible spelling: "${original}"`,
+          message: "Possible spelling mistake found.",
           suggestions,
         });
       }
@@ -169,6 +337,7 @@ export async function analyzeLinguistics(
 
     // First word should be capitalised.
     if (wordIndex === 0 && !startsWithCapital) {
+      tok.issueType = "capitalization";
       issues.push({
         token: original,
         index: 0,
@@ -180,14 +349,250 @@ export async function analyzeLinguistics(
     wordIndex++;
   }
 
+  // Detect grammar issues & duplicates on the clean word tokens array
+  const wordTokens = annotatedTokens.filter((t) => t.kind === "word");  for (let i = 0; i < wordTokens.length; i++) {
+    const tok = wordTokens[i];
+    if (tok.issueType) continue;
+    const wordLower = tok.text.toLowerCase();
+
+    // 1. Auxiliary 'do/does/did' check
+    if (i > 0) {
+      const prevWord = wordTokens[i - 1].text.toLowerCase();
+      let hasAuxDo = false;
+      let aux = "";
+
+      if (DO_VERBS.has(prevWord)) {
+        hasAuxDo = true;
+        aux = wordTokens[i - 1].text;
+      } else if (prevWord === "not" && i > 1) {
+        const prevPrevWord = wordTokens[i - 2].text.toLowerCase();
+        if (DO_VERBS.has(prevPrevWord)) {
+          hasAuxDo = true;
+          aux = wordTokens[i - 2].text;
+        }
+      }
+
+      if (hasAuxDo) {
+        let isGrammarError = false;
+        let baseFormSuggestion = "";
+
+        if (wordLower.endsWith("ing")) {
+          isGrammarError = true;
+          baseFormSuggestion = getBaseFormFromIng(tok.text, speller);
+        } else if (wordLower.endsWith("ed") || IRREGULAR_PAST_MAP[wordLower]) {
+          isGrammarError = true;
+          baseFormSuggestion = IRREGULAR_PAST_MAP[wordLower] || getBaseFormFromEd(tok.text, speller);
+        } else if (wordLower.endsWith("s") && !wordLower.endsWith("ss") && !wordLower.endsWith("us") && !wordLower.endsWith("is") && !wordLower.endsWith("as")) {
+          const exclude = new Set(["has", "is", "was", "does", "its", "his", "this", "us", "thus", "as"]);
+          if (!exclude.has(wordLower)) {
+            isGrammarError = true;
+            baseFormSuggestion = getBaseFormFromS(tok.text, speller);
+          }
+        }
+
+        if (isGrammarError) {
+          const original = tok.text;
+          const suggestions = baseFormSuggestion ? [baseFormSuggestion] : [];
+          tok.issueType = "grammar";
+          tok.suggestions = suggestions;
+          issues.push({
+            token: original,
+            index: i,
+            type: "grammar",
+            message: `The auxiliary verb '${aux}' requires the base form of the verb.`,
+            suggestions,
+          });
+        }
+      }
+    }
+
+    // 2. 'a' vs 'an' check
+    if (i > 0) {
+      const prevWord = wordTokens[i - 1].text.toLowerCase();
+      const VOWELS = new Set(["a", "e", "i", "o", "u"]);
+
+      if (prevWord === "a") {
+        if (VOWELS.has(wordLower[0])) {
+          const isException = wordLower.startsWith("uni") || wordLower.startsWith("use") || wordLower.startsWith("one");
+          if (!isException) {
+            wordTokens[i - 1].issueType = "grammar";
+            wordTokens[i - 1].suggestions = ["an"];
+            issues.push({
+              token: wordTokens[i - 1].text,
+              index: i - 1,
+              type: "grammar",
+              message: 'Use "an" instead of "a" before a vowel sound.',
+              suggestions: ["an"],
+            });
+          }
+        }
+      } else if (prevWord === "an") {
+        if (!VOWELS.has(wordLower[0])) {
+          const isException = wordLower.startsWith("hour") || wordLower.startsWith("honest") || wordLower.startsWith("honor");
+          if (!isException) {
+            wordTokens[i - 1].issueType = "grammar";
+            wordTokens[i - 1].suggestions = ["a"];
+            issues.push({
+              token: wordTokens[i - 1].text,
+              index: i - 1,
+              type: "grammar",
+              message: 'Use "a" instead of "an" before a consonant sound.',
+              suggestions: ["a"],
+            });
+          }
+        }
+      }
+    }
+
+    // 3. Subject-verb agreement (singular/plural pronouns)
+    if (i > 0) {
+      const prevWord = wordTokens[i - 1].text.toLowerCase();
+      if (SINGULAR_PRONOUNS.has(prevWord) && COMMON_BASE_VERBS[wordLower]) {
+        const suggestion = COMMON_BASE_VERBS[wordLower];
+        tok.issueType = "grammar";
+        tok.suggestions = [suggestion];
+        issues.push({
+          token: tok.text,
+          index: i,
+          type: "grammar",
+          message: `Subject-verb agreement: "${prevWord}" requires the third-person singular verb form "${suggestion}".`,
+          suggestions: [suggestion],
+        });
+      } else if (PLURAL_PRONOUNS.has(prevWord) && COMMON_SINGULAR_VERBS[wordLower]) {
+        const suggestion = COMMON_SINGULAR_VERBS[wordLower];
+        tok.issueType = "grammar";
+        tok.suggestions = [suggestion];
+        issues.push({
+          token: tok.text,
+          index: i,
+          type: "grammar",
+          message: `Subject-verb agreement: "${prevWord}" requires the plural verb form "${suggestion}".`,
+          suggestions: [suggestion],
+        });
+      }
+    }
+
+    // 4. Modal verbs base form validation
+    if (i > 0) {
+      const prevWord = wordTokens[i - 1].text.toLowerCase();
+      let hasModal = false;
+      let modal = "";
+
+      if (MODAL_VERBS.has(prevWord)) {
+        hasModal = true;
+        modal = wordTokens[i - 1].text;
+      } else if (prevWord === "not" && i > 1) {
+        const prevPrevWord = wordTokens[i - 2].text.toLowerCase();
+        if (MODAL_VERBS.has(prevPrevWord)) {
+          hasModal = true;
+          modal = wordTokens[i - 2].text;
+        }
+      }
+
+      if (hasModal) {
+        let isGrammarError = false;
+        let baseFormSuggestion = "";
+
+        if (wordLower.endsWith("ing")) {
+          isGrammarError = true;
+          baseFormSuggestion = getBaseFormFromIng(tok.text, speller);
+        } else if (wordLower.endsWith("ed") || IRREGULAR_PAST_MAP[wordLower]) {
+          isGrammarError = true;
+          baseFormSuggestion = IRREGULAR_PAST_MAP[wordLower] || getBaseFormFromEd(tok.text, speller);
+        } else if (wordLower.endsWith("s") && !wordLower.endsWith("ss") && !wordLower.endsWith("us") && !wordLower.endsWith("is") && !wordLower.endsWith("as")) {
+          const exclude = new Set(["has", "is", "was", "does", "its", "his", "this", "us", "thus", "as"]);
+          if (!exclude.has(wordLower)) {
+            isGrammarError = true;
+            baseFormSuggestion = getBaseFormFromS(tok.text, speller);
+          }
+        }
+
+        if (isGrammarError) {
+          const original = tok.text;
+          const suggestions = baseFormSuggestion ? [baseFormSuggestion] : [];
+          tok.issueType = "grammar";
+          tok.suggestions = suggestions;
+          issues.push({
+            token: original,
+            index: i,
+            type: "grammar",
+            message: `The modal verb '${modal}' requires the base form of the verb.`,
+            suggestions,
+          });
+        }
+      }
+    }
+
+    // 5. Infinitive 'to' validation
+    if (i > 0) {
+      const prevWord = wordTokens[i - 1].text.toLowerCase();
+      if (prevWord === "to") {
+        let isGrammarError = false;
+        let baseFormSuggestion = "";
+
+        if (wordLower.endsWith("ed") || IRREGULAR_PAST_MAP[wordLower]) {
+          isGrammarError = true;
+          baseFormSuggestion = IRREGULAR_PAST_MAP[wordLower] || getBaseFormFromEd(tok.text, speller);
+        }
+
+        if (isGrammarError) {
+          const original = tok.text;
+          const suggestions = baseFormSuggestion ? [baseFormSuggestion] : [];
+          tok.issueType = "grammar";
+          tok.suggestions = suggestions;
+          issues.push({
+            token: original,
+            index: i,
+            type: "grammar",
+            message: `The infinitive 'to' requires the base form of the verb.`,
+            suggestions,
+          });
+        }
+      }
+    }
+
+    // 6. Double negatives check
+    if (DOUBLE_NEGATIVES.has(wordLower)) {
+      let foundDoubleNegative = false;
+      let negWord = "";
+      for (let j = Math.max(0, i - 3); j < i; j++) {
+        const checkWord = wordTokens[j].text.toLowerCase();
+        if (NEGATIVE_WORDS.has(checkWord)) {
+          foundDoubleNegative = true;
+          negWord = wordTokens[j].text;
+          break;
+        }
+      }
+
+      if (foundDoubleNegative) {
+        let suggestion = "";
+        if (wordLower === "nothing") suggestion = "anything";
+        else if (wordLower === "no") suggestion = "any";
+        else if (wordLower === "nobody") suggestion = "anybody";
+        else if (wordLower === "never") suggestion = "ever";
+
+        const suggestions = suggestion ? [suggestion] : [];
+        tok.issueType = "grammar";
+        tok.suggestions = suggestions;
+        issues.push({
+          token: tok.text,
+          index: i,
+          type: "grammar",
+          message: `Avoid double negatives (combining '${negWord}' with '${tok.text}').`,
+          suggestions,
+        });
+      }
+    }
+  }
+
   // Detect repeated adjacent words (e.g. "the the").
-  const wordTokens = annotatedTokens.filter((t) => t.kind === "word");
   const duplicates: string[] = [];
   for (let i = 1; i < wordTokens.length; i++) {
     const prev = wordTokens[i - 1].text.toLowerCase();
     const cur = wordTokens[i].text.toLowerCase();
     if (prev === cur && /[a-zA-Z]/.test(prev)) {
       duplicates.push(wordTokens[i].text);
+      wordTokens[i].issueType = "duplication";
       issues.push({
         token: wordTokens[i].text,
         index: i,

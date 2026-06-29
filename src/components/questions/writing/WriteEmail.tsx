@@ -235,6 +235,7 @@ export default function WriteEmail({
           <HighlightedFeedback
             analysis={analysis}
             loading={analysisLoading}
+            rawText={body}
           />
         </div>
       )}

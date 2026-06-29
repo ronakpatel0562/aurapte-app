@@ -178,6 +178,7 @@ export default function SummarizeText({
           <HighlightedFeedback
             analysis={analysis}
             loading={analysisLoading}
+            rawText={text}
           />
         </div>
       )}
