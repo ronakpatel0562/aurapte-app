@@ -11,6 +11,7 @@ interface SpeakingPlaceholderProps {
     id: string;
     title: string;
     content: {
+      audio_url?: string;
       passage?: string;
       sentence?: string;
       image_url?: string;
@@ -75,8 +76,8 @@ export default function SpeakingPlaceholder({
 
         {type === "repeat-sentence" && content.sentence && (
           <div className="space-y-4">
-            <p className="text-xs text-body">Listen to the sentence below, then repeat it.</p>
-            <AudioPlayer transcript={content.sentence} />
+            <p className="text-xs text-body">Listen to the sentence, then repeat it.</p>
+            <AudioPlayer audioUrl={content.audio_url} transcript={content.sentence} hasSubmitted={hasRecorded} />
           </div>
         )}
 
@@ -112,8 +113,9 @@ export default function SpeakingPlaceholder({
         )}
 
         {type === "answer-short-question" && content.question && (
-          <div className="text-body-md-strong font-semibold text-ink leading-relaxed py-2">
-            {content.question}
+          <div className="space-y-4">
+            <p className="text-xs text-body">Listen to the question, then give a simple answer.</p>
+            <AudioPlayer audioUrl={content.audio_url} transcript={content.question} hasSubmitted={hasRecorded} />
           </div>
         )}
       </div>

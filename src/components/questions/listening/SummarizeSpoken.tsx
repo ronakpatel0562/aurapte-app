@@ -104,7 +104,7 @@ export default function SummarizeSpoken({
   };
 
   // Clean and parse item code
-  const cleanTitle = question.title.replace(/\s*#\d+/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const cleanTitle = question.title.replace(/\s*#\d+/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const itemCode = `#imp-listening-question-${questionNumber}`;
 
   // Word count helper

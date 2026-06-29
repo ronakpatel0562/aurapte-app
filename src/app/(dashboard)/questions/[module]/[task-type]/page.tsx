@@ -167,8 +167,20 @@ export default async function QuestionListPage({ params }: PageProps) {
     desc: "Browse and practice official PTE-style tasks.",
   }) };
 
-  if (moduleParam === "listening" && taskTypeParam === "multiple-choice-multiple") {
-    taskDetails.desc = "Listen to the recording and answer the multiple-choice question by selecting the correct responses. More than one response is correct.";
+  if (moduleParam === "listening") {
+    if (taskTypeParam === "multiple-choice-multiple") {
+      taskDetails.desc = "Listen to the recording and answer the multiple-choice question by selecting the correct responses. More than one response is correct.";
+    } else if (taskTypeParam === "multiple-choice-single") {
+      taskDetails.desc = "Listen to the recording and answer the multiple-choice question by selecting the correct response. Only one response is correct.";
+    } else if (taskTypeParam === "fill-in-the-blanks") {
+      taskDetails.desc = "You will hear a recording. Type the missing words in each blank.";
+    } else if (taskTypeParam === "select-missing-word") {
+      taskDetails.desc = "You will hear a recording. At the end of the recording the last word or group of words has replaced by a beep. Select the correct option to complete the recording.";
+    } else if (taskTypeParam === "highlight-incorrect-words") {
+      taskDetails.desc = "You will hear a recording. Below is a transcript of the recording. Some words in the transcription differ from what the speaker(s) said. Please click on the words that are different.";
+    } else if (taskTypeParam === "write-from-dictation") {
+      taskDetails.desc = "You will hear a sentence. Type the sentence in the box below exactly as you hear it. Write as much of the sentence as you can. You will hear the sentence only once.";
+    }
   }
 
   return (

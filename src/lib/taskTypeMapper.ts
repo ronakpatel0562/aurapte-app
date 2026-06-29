@@ -398,6 +398,35 @@ export function transformQuestionContent(question: any): any {
     }
   }
 
+  // 10. Repeat Sentence (stored as repeat_sentence)
+  if (type === "repeat_sentence" || type === "repeat-sentence") {
+    if (typeof content.transcript === "string" && !content.sentence) {
+      content.sentence = content.transcript;
+    }
+  }
+
+  // 11. Answer Short Question (stored as answer_short_question)
+  if (type === "answer_short_question" || type === "answer-short-question") {
+    let qText = content.question_text || "";
+    let ansVal = content.correct_answer || "";
+    
+    if (!ansVal && qText.includes("?")) {
+      const lastQIndex = qText.lastIndexOf("?");
+      const questionPart = qText.substring(0, lastQIndex + 1).trim();
+      const answerPart = qText.substring(lastQIndex + 1).trim();
+      if (answerPart) {
+        qText = questionPart;
+        ansVal = answerPart;
+      }
+    }
+    
+    content.question = qText;
+    content.correct_answer = ansVal;
+    if (!content.audio_transcript) {
+      content.audio_transcript = qText + (ansVal ? ` (Answer: ${ansVal})` : "");
+    }
+  }
+
   return {
     ...question,
     content,

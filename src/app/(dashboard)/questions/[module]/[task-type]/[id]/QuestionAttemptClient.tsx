@@ -261,7 +261,10 @@ export default function QuestionAttemptClient({
 
   const isPremium = plan === "premium";
 
-  const displayTitle = question.title.replace(/\s*#\d+/, "");
+  const isWFD = question.task_type === "write_from_dictation" || question.task_type === "write-from-dictation";
+  const displayTitle = isWFD
+    ? "Write from Dictation"
+    : question.title.replace(/\s*#\d+/g, "");
 
   return (
     <div className="space-y-6">

@@ -256,7 +256,10 @@ export default function QuestionListClient({
             const attempt = attemptMap[q.id];
             const numMatch = q.title.match(/#(\d+)/);
             const srNo = numMatch ? numMatch[1] : (idx + 1).toString();
-            const displayTitle = q.title.replace(/\s*#\d+/, "");
+            const isWFD = taskTypeName === "write-from-dictation";
+            const displayTitle = isWFD
+              ? "Write from Dictation"
+              : q.title.replace(/\s*#\d+/g, "");
             return (
               <div
                 key={q.id}

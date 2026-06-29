@@ -131,7 +131,7 @@ const MODULE_METADATA: Record<
       {
         dbType: "summarize_spoken_text",
         title: "Summarize Spoken Text",
-        desc: "Listen to a spoken report and write a 20-30 word summary within 8 minutes.",
+        desc: "You will hear a short report. Write a 20-30 word summary in 8 minutes based on the key points.",
       },
       {
         dbType: "listening_mcq_multiple",
@@ -141,27 +141,27 @@ const MODULE_METADATA: Record<
       {
         dbType: "listening_fill_in_the_blanks",
         title: "Fill in the Blanks",
-        desc: "Listen to a recording and type the missing words in the transcript blanks. Tests spelling and listening.",
+        desc: "You will hear a recording. Type the missing words in each blank.",
       },
       {
         dbType: "listening_mcq_single",
         title: "Multiple Choice, Single Answer",
-        desc: "Listen to a text and select the single correct option from a choice of four. Tests general comprehension.",
+        desc: "Listen to the recording and answer the multiple-choice question by selecting the correct response. Only one response is correct.",
       },
       {
         dbType: "select_missing_word",
         title: "Select Missing Word",
-        desc: "Listen to a recording that ends abruptly with a beep. Select the option that best completes the sentence.",
+        desc: "You will hear a recording. At the end, the last word or words is replaced by a beep. Select the option that completes the recording.",
       },
       {
         dbType: "highlight_incorrect_words",
         title: "Highlight Incorrect Words",
-        desc: "Listen to a recording and click words in the transcript that do not match what is spoken. Negative marking applies.",
+        desc: "You will hear a recording. Click on the words in the transcript that are different from what the speaker says.",
       },
       {
         dbType: "write_from_dictation",
         title: "Write from Dictation",
-        desc: "Listen to a short sentence and type it exactly as spoken. Tests spelling, memory, and listening.",
+        desc: "You will hear a sentence. Type the sentence exactly as you hear it in the box below. You will hear it only once.",
       },
     ],
   },
