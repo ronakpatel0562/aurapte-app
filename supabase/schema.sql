@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   avatar_url TEXT,
   plan TEXT DEFAULT 'free' CHECK (plan IN ('free','premium')),
   plan_expiry TIMESTAMPTZ,
+  theme TEXT DEFAULT NULL CHECK (theme IN ('light', 'dark')),
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

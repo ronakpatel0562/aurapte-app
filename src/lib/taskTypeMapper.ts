@@ -190,7 +190,12 @@ export function transformQuestionContent(question: any): any {
     (typeof content.model_answer === "string" && content.model_answer.trim()) ||
     (typeof content.sample_answer === "string" && content.sample_answer.trim()) ||
     "";
-  if (rawAnswer) content.model_answer = stripHtml(rawAnswer);
+  if (rawAnswer) {
+    let cleaned = stripHtml(rawAnswer);
+    // Strip leading "Sample Answer:-", "Sample Answer:", "Model Answer:-" etc.
+    cleaned = cleaned.replace(/^(sample|model)\s+answer\s*:[-\s]*/i, "").trim();
+    content.model_answer = cleaned;
+  }
 
   // 1. Reading & Writing Fill in the Blanks (stored as rw_fill_in_the_blanks)
   if (type === "rw_fill_in_the_blanks" || type === "rw-fill-in-the-blanks") {

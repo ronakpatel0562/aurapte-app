@@ -5,7 +5,6 @@ import { LogOut, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/auth/actions";
 import { PLANS, planName, type PlanId } from "@/lib/plans";
-import ThemeToggle from "@/components/providers/ThemeToggle";
 
 interface UserProfile {
   fullName: string;
@@ -77,12 +76,6 @@ export default function Header() {
 
       {/* Right cluster */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Theme toggle — hidden on the smallest screens to save space;
-            it's still reachable via the dropdown menu. */}
-        <div className="hidden sm:block">
-          <ThemeToggle />
-        </div>
-
         {profile ? (
           <>
             {/* Plan badge — pill showing the friendly name. Premium gets a
@@ -136,15 +129,6 @@ export default function Header() {
                       <div className="text-sm font-semibold text-ink truncate">
                         {profile.email}
                       </div>
-                    </div>
-
-                    {/* Mobile-only theme switch (the toggle is hidden on
-                        small screens to keep the header compact) */}
-                    <div className="sm:hidden px-4 py-3 border-b border-hairline">
-                      <div className="text-xs text-mute font-mono uppercase tracking-wider mb-2">
-                        Appearance
-                      </div>
-                      <ThemeToggle />
                     </div>
 
                     {/* Plan switcher (dev convenience — same as before but

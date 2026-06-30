@@ -1,21 +1,15 @@
 "use client";
 
 import React from "react";
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
-/**
- * Three-state toggle: Light / Dark / System. Matches the modern macOS /
- * iOS pattern. Renders a compact pill on small screens, a labelled group
- * on larger ones. Always icon + tooltip so it's usable on mobile.
- */
 export default function ThemeToggle() {
-  const { mode, setMode, resolved } = useTheme();
+  const { mode, setMode } = useTheme();
 
-  const options: { id: "light" | "dark" | "system"; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  const options: { id: "light" | "dark"; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "light", label: "Light", icon: Sun },
     { id: "dark", label: "Dark", icon: Moon },
-    { id: "system", label: "System", icon: Monitor },
   ];
 
   return (
@@ -33,7 +27,7 @@ export default function ThemeToggle() {
             role="radio"
             aria-checked={active}
             onClick={() => setMode(id)}
-            title={`${label}${id === "system" && resolved ? ` (resolves to ${resolved})` : ""}`}
+            title={label}
             className={`flex items-center justify-center w-8 h-8 rounded-md text-xs font-medium transition ${
               active
                 ? "bg-canvas text-ink shadow-sm"

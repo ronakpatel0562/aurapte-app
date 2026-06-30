@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
-import ComingSoonBanner from "../shared/ComingSoonBanner";
+import { scoreFluency, scoreAccuracy } from "@/lib/scoring/speaking";
 
 interface RepeatSentenceProps {
   question: {
@@ -21,6 +21,22 @@ const RECORD_SECONDS = 15;
 
 type Phase = "audio" | "recording" | "done" | "submitted";
 
+function PercentBadge({ label, value }: { label: string; value: number }) {
+  const color =
+    value >= 80
+      ? "bg-success/10 text-success border-success/20"
+      : value >= 50
+      ? "bg-warning-soft text-warning-deep border-warning-deep/20"
+      : "bg-error-soft text-error-deep border-error/20";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-xs font-semibold border ${color}`}
+    >
+      {label}: {value}%
+    </span>
+  );
+}
+
 export default function RepeatSentence({
   question,
   onSubmitAttempt,
@@ -28,21 +44,25 @@ export default function RepeatSentence({
 }: RepeatSentenceProps) {
   const { content } = question;
 
-  // Phase state machine
   const [phase, setPhase] = useState<Phase>("audio");
   const [recordCount, setRecordCount] = useState(RECORD_SECONDS);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [transcript, setTranscript] = useState("");
+  const [result, setResult] = useState<{ accuracy: number } | null>(null);
 
-  // Audio state — mirrors listening components exactly
+  // Audio state
   const [prepSeconds, setPrepSeconds] = useState<number | null>(3);
-  const [audioStatus, setAudioStatus] = useState<string>("Ready");
+  const [audioStatus, setAudioStatus] = useState("Ready");
   const [audioProgress, setAudioProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1.0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Persist volume preference
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const latestTranscriptRef = useRef("");
+  const recordingStartRef = useRef(0);
+
   useEffect(() => {
     const saved = localStorage.getItem("portal_audio_volume");
     if (saved !== null) {
@@ -62,7 +82,7 @@ export default function RepeatSentence({
     localStorage.setItem("portal_audio_volume", String(val));
   };
 
-  // Prep countdown — identical to listening components
+  // Prep countdown before audio plays
   useEffect(() => {
     if (phase !== "audio") return;
     let prepInterval: NodeJS.Timeout;
@@ -78,15 +98,30 @@ export default function RepeatSentence({
         audioRef.current.play().catch(() => setAudioStatus("Click to Play"));
       }
     }
-    return () => { if (prepInterval) clearInterval(prepInterval); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      if (prepInterval) clearInterval(prepInterval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prepSeconds, phase, volume]);
 
-  // Recording countdown
+  const stopRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+  };
+
+  // Recording countdown + STT
   useEffect(() => {
     if (phase !== "recording") return;
+
     if (intervalRef.current) clearInterval(intervalRef.current);
     setRecordCount(RECORD_SECONDS);
+    recordingStartRef.current = Date.now();
+    latestTranscriptRef.current = "";
+    setTranscript("");
+
     intervalRef.current = setInterval(() => {
       setRecordCount((prev) => {
         if (prev <= 1) {
@@ -98,27 +133,70 @@ export default function RepeatSentence({
         return prev - 1;
       });
     }, 1000);
+
+    const SR =
+      typeof window !== "undefined"
+        ? (window as any).SpeechRecognition ||
+          (window as any).webkitSpeechRecognition
+        : null;
+    if (SR) {
+      const recognition = new SR();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+      recognitionRef.current = recognition;
+
+      recognition.onresult = (event: any) => {
+        let final = "";
+        let interim = "";
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript + " ";
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        const full = (final + interim).trim();
+        latestTranscriptRef.current = full;
+        setTranscript(full);
+      };
+
+      recognition.onerror = () => {};
+
+      recognition.onend = () => {
+        if (recognitionRef.current === recognition) {
+          try {
+            recognition.start();
+          } catch {}
+        }
+      };
+
+      recognition.start();
+    }
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      stopRecognition();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  // Reset on question change
   useEffect(() => {
     handleReset();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.id]);
 
   useEffect(
     () => () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      stopRecognition();
     },
     []
   );
 
   const handleReset = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    stopRecognition();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -130,6 +208,10 @@ export default function RepeatSentence({
     setCurrentTime(0);
     setDuration(0);
     setRecordCount(RECORD_SECONDS);
+    setTranscript("");
+    setResult(null);
+    latestTranscriptRef.current = "";
+    recordingStartRef.current = 0;
   };
 
   const handleAudioEnded = () => {
@@ -152,8 +234,13 @@ export default function RepeatSentence({
   };
 
   const handleAudioBoxClick = () => {
-    if (audioStatus === "Click to Play" && audioRef.current && prepSeconds === null) {
-      audioRef.current.play()
+    if (
+      audioStatus === "Click to Play" &&
+      audioRef.current &&
+      prepSeconds === null
+    ) {
+      audioRef.current
+        .play()
         .then(() => setAudioStatus("Playing"))
         .catch(() => setAudioStatus("Click to Play"));
     }
@@ -166,10 +253,78 @@ export default function RepeatSentence({
   };
 
   const handleSubmit = () => {
-    onSubmitAttempt(0, 0, { recorded: true, sentence: content.sentence });
+    stopRecognition();
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    const elapsedSeconds =
+      recordingStartRef.current > 0
+        ? Math.max(1, (Date.now() - recordingStartRef.current) / 1000)
+        : RECORD_SECONDS;
+
+    const finalTranscript = latestTranscriptRef.current || transcript;
+    const accuracy = scoreAccuracy(finalTranscript, content.sentence || "");
+
+    setResult({ accuracy });
     setPhase("submitted");
+    onSubmitAttempt(accuracy, 100, {
+      transcript: finalTranscript,
+      sentence: content.sentence,
+      accuracy,
+    });
   };
 
+  // ── RESULT VIEW ──────────────────────────────────────────────────────────
+  if (phase === "submitted" && result) {
+    const finalTranscript = latestTranscriptRef.current || transcript;
+    return (
+      <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-5 reveal-up">
+        <div className="flex justify-between items-center pb-4 border-b border-hairline select-none flex-wrap gap-2">
+          <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
+            Your Attempt &amp; Feedback
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
+              Submitted ✓
+            </span>
+            <PercentBadge label="Accuracy" value={result.accuracy} />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
+              Your Transcript
+            </p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-[14px] text-gray-800 leading-relaxed min-h-[48px]">
+              {finalTranscript || (
+                <span className="text-gray-400 italic">No speech detected</span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
+              Correct Sentence
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-[14px] text-gray-800 leading-relaxed">
+              {content.sentence || "No sentence provided."}
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-hairline select-none">
+          <button
+            onClick={handleReset}
+            className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center cursor-pointer active:scale-[0.99]"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── QUESTION VIEW ─────────────────────────────────────────────────────────
   const circleLabel = phase === "recording" ? recordCount : "✓";
   const circleClass =
     phase === "recording"
@@ -177,7 +332,7 @@ export default function RepeatSentence({
       : "border-green-500 text-green-600";
   const statusText =
     phase === "recording"
-      ? `Recording: ${recordCount} seconds remaining`
+      ? `Recording: ${recordCount}s remaining`
       : phase === "done"
       ? "Recording complete — ready to submit"
       : "Response submitted";
@@ -185,7 +340,7 @@ export default function RepeatSentence({
     phase === "recording" ? "text-red-600" : "text-green-700";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <style>{`
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none; height: 12px; width: 12px;
@@ -217,23 +372,22 @@ export default function RepeatSentence({
         )}
 
         {/* Content area */}
-        <div className="flex justify-center items-center py-10 bg-white select-none">
+        <div className="flex flex-col items-center py-8 bg-white select-none gap-6">
           {phase === "audio" ? (
             <div
               onClick={handleAudioBoxClick}
               className={`w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 ${
-                audioStatus === "Click to Play" ? "cursor-pointer hover:bg-[#5284A3]" : ""
+                audioStatus === "Click to Play"
+                  ? "cursor-pointer hover:bg-[#5284A3]"
+                  : ""
               }`}
             >
-              {/* Progress bar */}
               <div className="w-full h-[6px] bg-[#3B6C8A]/40 rounded-full overflow-hidden mt-1">
                 <div
                   className="h-full bg-[#1C415A] transition-all duration-300 ease-linear rounded-full"
                   style={{ width: `${audioProgress}%` }}
                 />
               </div>
-
-              {/* Time / countdown */}
               <div className="text-white text-xs font-semibold px-1 mt-1 flex justify-start">
                 {prepSeconds !== null ? (
                   <span>Beginning in {prepSeconds}s</span>
@@ -243,8 +397,6 @@ export default function RepeatSentence({
                   </span>
                 )}
               </div>
-
-              {/* Volume control */}
               <div className="flex items-center justify-center gap-3 mb-1">
                 <Volume2 className="w-5 h-5 text-white" />
                 <input
@@ -253,10 +405,14 @@ export default function RepeatSentence({
                   max="1"
                   step="0.05"
                   value={volume}
-                  onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                  onChange={(e) =>
+                    handleVolumeChange(parseFloat(e.target.value))
+                  }
                   className="w-48 h-[3px] bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
                   style={{
-                    background: `linear-gradient(to right, white ${volume * 100}%, rgba(255,255,255,0.3) ${volume * 100}%)`,
+                    background: `linear-gradient(to right, white ${
+                      volume * 100
+                    }%, rgba(255,255,255,0.3) ${volume * 100}%)`,
                   }}
                 />
               </div>
@@ -273,25 +429,38 @@ export default function RepeatSentence({
               </span>
             </div>
           )}
+
+          {/* Live transcript during recording */}
+          {phase === "recording" && (
+            <div className="w-full max-w-lg px-4">
+              <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
+                Live Transcript
+              </p>
+              <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 min-h-[40px] text-[14px] text-gray-700 leading-relaxed">
+                {transcript || (
+                  <span className="text-gray-400 italic">Listening…</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
           <button
             onClick={handleReset}
-            disabled={phase === "submitted"}
-            className="px-6 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-[13px] uppercase rounded shadow transition"
           >
             RESTART
           </button>
 
-          {(phase === "audio" || phase === "recording") && (
+          {phase === "audio" && (
             <span className="text-[13px] text-gray-600 font-medium">
-              {phase === "audio" ? "Listen carefully…" : "Recording in progress…"}
+              Listen carefully…
             </span>
           )}
 
-          {phase === "done" && (
+          {(phase === "recording" || phase === "done") && (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
@@ -300,16 +469,8 @@ export default function RepeatSentence({
               {isSubmitting ? "Submitting…" : "SUBMIT"}
             </button>
           )}
-
-          {phase === "submitted" && (
-            <span className="text-[13px] font-bold text-gray-700 uppercase">
-              Submitted
-            </span>
-          )}
         </div>
       </div>
-
-      <ComingSoonBanner message="Microphone capture is mock-simulated. Voice analysis and pronunciation scoring are coming soon in Phase 2." />
     </div>
   );
 }

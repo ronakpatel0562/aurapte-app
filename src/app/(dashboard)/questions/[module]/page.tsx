@@ -301,7 +301,11 @@ export default async function ModuleCategoriesPage({ params }: PageProps) {
             const completed =
               (task.dbType === "summarize_spoken_text" ||
                task.dbType === "summarize_written_text" ||
-               task.dbType === "write_an_email")
+               task.dbType === "write_an_email" ||
+               task.dbType === "describe_image" ||
+               task.dbType === "responding_to_situation" ||
+               task.dbType === "answer_short_question" ||
+               task.dbType === "read_aloud")
               ? (attemptedCountsByTaskType[task.dbType] || 0)
               : (completedCountsByTaskType[task.dbType] || 0);
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
