@@ -27,33 +27,33 @@ const TASK_DESCRIPTIONS: Record<
   // Speaking
   "read-aloud": {
     title: "Read Aloud",
-    desc: "Read a short text aloud. Tests speaking and reading integration, pronunciation, and oral fluency.",
+    desc: "",
     summary:
-      "Read the text aloud as naturally and fluently as possible. You have 40 seconds to prepare and 40 seconds to record.",
+      "Look at the text below. In 35 seconds, you must read this text aloud as naturally and clearly as possible. You have 40 seconds to read aloud. Read the text aloud and record your response.",
   },
   "repeat-sentence": {
     title: "Repeat Sentence",
-    desc: "Listen to a sentence and repeat it exactly as heard. Tests speaking and listening integration, memory, and pronunciation.",
+    desc: "",
     summary:
-      "You will hear a sentence. Repeat it exactly as you heard it. You have 15 seconds to respond.",
+      "You will hear a sentence. Please repeat the sentence exactly as you hear it. You will hear the sentence only once.",
   },
   "describe-image": {
     title: "Describe Image",
-    desc: "Describe an image, chart, or graph shown on screen. Tests speaking skills, structured analysis, and oral fluency.",
+    desc: "",
     summary:
-      "Look at the image below and describe it in detail. You have 25 seconds to prepare and 40 seconds to record.",
+      "Look at the graph below. In 25 seconds, please speak into the microphone and describe in detail what the graph is showing. You will have 40 seconds to give your response.",
   },
   "responding-to-situation": {
     title: "Responding to Situation",
-    desc: "Listen to or read a social situation, then record a spoken response. Tests speaking skills in conversational contexts.",
+    desc: "",
     summary:
-      "You will hear or read a situation. Respond appropriately in a clear, natural register. You have 40 seconds to record.",
+      "Listen to and read a description of a situation. You will have 20 seconds to think about your answer. Then you will hear a beep. You will have 40 seconds to answer the question. Please answer as completely as you can.",
   },
   "answer-short-question": {
     title: "Answer Short Question",
-    desc: "Answer a question with a single word or few words. Tests vocabulary, general knowledge, and quick listening.",
+    desc: "",
     summary:
-      "You will hear a question. Answer with a single word or a short phrase. You have 10 seconds to respond.",
+      "You will hear a question. Please give a simple and short answer. Often just one or a few words are enough.",
   },
   // Writing
   "summarize-written-text": {

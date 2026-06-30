@@ -44,27 +44,27 @@ const MODULE_METADATA: Record<
       {
         dbType: "read_aloud",
         title: "Read Aloud",
-        desc: "Read a short text aloud. Tests speaking and reading integration, pronunciation, and oral fluency.",
+        desc: "Look at the text below. Read it aloud naturally and clearly. You have 35 seconds to prepare and 40 seconds to record your response.",
       },
       {
         dbType: "repeat_sentence",
         title: "Repeat Sentence",
-        desc: "Listen to a sentence and repeat it exactly as heard. Tests speaking and listening integration, memory, and pronunciation.",
+        desc: "You will hear a sentence. Please repeat the sentence exactly as you hear it. You will hear the sentence only once.",
       },
       {
         dbType: "describe_image",
         title: "Describe Image",
-        desc: "Describe an image, chart, or graph shown on screen. Tests speaking skills, structured analysis, and oral fluency.",
+        desc: "Look at a graph and describe it in detail. You have 25 seconds to prepare, then 40 seconds to give your response.",
       },
       {
         dbType: "responding_to_situation",
         title: "Responding to Situation",
-        desc: "Listen to or read a social situation, then record a spoken response. Tests speaking skills in conversational contexts.",
+        desc: "Listen to and read a situation. You have 20 seconds to think, then 40 seconds to answer as completely as you can.",
       },
       {
         dbType: "answer_short_question",
         title: "Answer Short Question",
-        desc: "Answer a question with a single word or few words. Tests vocabulary, general knowledge, and quick listening.",
+        desc: "You will hear a question. Please give a simple and short answer. Often just one or a few words are enough.",
       },
     ],
   },

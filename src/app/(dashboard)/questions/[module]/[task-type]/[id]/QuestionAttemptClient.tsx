@@ -24,6 +24,11 @@ import WriteDictation from "@/components/questions/listening/WriteDictation";
 
 // Import Speaking / Writing components
 import SpeakingPlaceholder from "@/components/questions/speaking/SpeakingPlaceholder";
+import ReadAloud from "@/components/questions/speaking/ReadAloud";
+import RepeatSentence from "@/components/questions/speaking/RepeatSentence";
+import DescribeImage from "@/components/questions/speaking/DescribeImage";
+import RespondingToSituation from "@/components/questions/speaking/RespondingToSituation";
+import AnswerShortQuestion from "@/components/questions/speaking/AnswerShortQuestion";
 import SummarizeText from "@/components/questions/writing/SummarizeText";
 import WriteEmail from "@/components/questions/writing/WriteEmail";
 
@@ -103,6 +108,51 @@ export default function QuestionAttemptClient({
     const mod = question.module;
 
     if (mod === "speaking") {
+      if (type === "read-aloud" || type === "read_aloud") {
+        return (
+          <ReadAloud
+            question={question}
+            onSubmitAttempt={handleSubmitAttempt}
+            isSubmitting={submitting}
+          />
+        );
+      }
+      if (type === "repeat-sentence" || type === "repeat_sentence") {
+        return (
+          <RepeatSentence
+            question={question}
+            onSubmitAttempt={handleSubmitAttempt}
+            isSubmitting={submitting}
+          />
+        );
+      }
+      if (type === "describe-image" || type === "describe_image") {
+        return (
+          <DescribeImage
+            question={question}
+            onSubmitAttempt={handleSubmitAttempt}
+            isSubmitting={submitting}
+          />
+        );
+      }
+      if (type === "responding-to-situation" || type === "responding_to_situation") {
+        return (
+          <RespondingToSituation
+            question={question}
+            onSubmitAttempt={handleSubmitAttempt}
+            isSubmitting={submitting}
+          />
+        );
+      }
+      if (type === "answer-short-question" || type === "answer_short_question") {
+        return (
+          <AnswerShortQuestion
+            question={question}
+            onSubmitAttempt={handleSubmitAttempt}
+            isSubmitting={submitting}
+          />
+        );
+      }
       return <SpeakingPlaceholder question={question} type={type} />;
     }
 
@@ -262,8 +312,14 @@ export default function QuestionAttemptClient({
   const isPremium = plan === "premium";
 
   const isWFD = question.task_type === "write_from_dictation" || question.task_type === "write-from-dictation";
+  const isASQ = question.task_type === "answer_short_question" || question.task_type === "answer-short-question";
+  const isRS = question.task_type === "repeat_sentence" || question.task_type === "repeat-sentence";
   const displayTitle = isWFD
     ? "Write from Dictation"
+    : isASQ
+    ? "Answer Short Question"
+    : isRS
+    ? "Repeat Sentence"
     : question.title.replace(/\s*#\d+/g, "");
 
   return (

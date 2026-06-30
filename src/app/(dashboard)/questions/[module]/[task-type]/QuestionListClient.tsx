@@ -261,8 +261,14 @@ export default function QuestionListClient({
             const numMatch = q.title.match(/#(\d+)/);
             const srNo = numMatch ? numMatch[1] : (idx + 1).toString();
             const isWFD = taskTypeName === "write-from-dictation";
+            const isASQ = taskTypeName === "answer-short-question";
+            const isRS = taskTypeName === "repeat-sentence";
             const displayTitle = isWFD
               ? "Write from Dictation"
+              : isASQ
+              ? "Answer Short Question"
+              : isRS
+              ? "Repeat Sentence"
               : q.title.replace(/\s*#\d+/g, "");
             return (
               <div
@@ -292,9 +298,11 @@ export default function QuestionListClient({
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-mute line-clamp-1">
-                      {getQuestionPreview(q.content)}
-                    </p>
+                    {!isASQ && !isRS && (
+                      <p className="text-xs text-mute line-clamp-1">
+                        {getQuestionPreview(q.content)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
