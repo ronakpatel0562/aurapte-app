@@ -78,12 +78,12 @@ const MODULE_METADATA: Record<
       {
         dbType: "summarize_written_text",
         title: "Summarize Written Text",
-        desc: "Read a passage and write a one-sentence summary of 5 to 75 words. Tests reading comprehension and summary writing.",
+        desc: "Read the passage and summarize it using one sentence. You have 10 minutes to finish this task.",
       },
       {
         dbType: "write_an_email",
         title: "Write an Email",
-        desc: "Draft a professional email responding to a given prompt and instructions. Tests written discourse and vocabulary.",
+        desc: "Read the situation and write an email to resolve the issue. You have 10 minutes to finish this task.",
       },
     ],
   },
@@ -298,7 +298,10 @@ export default async function ModuleCategoriesPage({ params }: PageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {metadata.tasks.map((task) => {
             const total = totalQuestionsByTaskType[task.dbType] || 0;
-            const completed = task.dbType === "summarize_spoken_text"
+            const completed =
+              (task.dbType === "summarize_spoken_text" ||
+               task.dbType === "summarize_written_text" ||
+               task.dbType === "write_an_email")
               ? (attemptedCountsByTaskType[task.dbType] || 0)
               : (completedCountsByTaskType[task.dbType] || 0);
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;

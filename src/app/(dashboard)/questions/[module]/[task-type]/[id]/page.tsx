@@ -14,7 +14,7 @@ interface PageProps {
 }
 
 export default async function QuestionAttemptPage({ params }: PageProps) {
-  const moduleParam = params.module;
+  const moduleParam = params.module.toLowerCase();
   const taskTypeParam = params["task-type"];
   const idParam = params.id;
 

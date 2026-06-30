@@ -4,9 +4,7 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Search,
-  Filter,
   CheckCircle,
-  HelpCircle,
   ArrowLeft,
   ArrowRight,
   ChevronRight,
@@ -31,6 +29,12 @@ interface QuestionListClientProps {
   taskTypeName: string;
   title: string;
   description: string;
+  /**
+   * Short one-line PTE Pearson-style instruction. Rendered under the task
+   * title in a smaller font and reused as the default `instruction` for
+   * individual question cards that don't supply one.
+   */
+  summary: string;
   initialQuestions: Question[];
   attemptMap: Record<string, AttemptInfo>;
 }
@@ -40,6 +44,7 @@ export default function QuestionListClient({
   taskTypeName,
   title,
   description,
+  summary,
   initialQuestions,
   attemptMap,
 }: QuestionListClientProps) {
@@ -68,18 +73,10 @@ export default function QuestionListClient({
 
       // 3. Attempt Status Filter Match
       const attempt = attemptMap[q.id];
-      const isComplete =
-        taskTypeName !== "summarize-spoken-text" &&
-        attempt &&
-        (attempt.is_correct ||
-          (attempt.score === attempt.max_score && attempt.max_score > 0));
-      const isDone = attempt && !isComplete;
-
       const statusMatch =
         statusFilter === "all" ||
         (statusFilter === "unattempted" && !attempt) ||
-        (statusFilter === "attempted" && isDone) ||
-        (statusFilter === "completed" && isComplete);
+        (statusFilter === "attempted" && Boolean(attempt));
 
       return searchMatch && difficultyMatch && statusMatch;
     });
@@ -122,6 +119,7 @@ export default function QuestionListClient({
       content?.audio_transcript ||
       content?.audio_transcript_with_blanks ||
       content?.scenario ||
+      content?.prompt ||
       "";
 
     // Clean up ### and [blank_0] placeholders into a clean underline "_____"
@@ -164,9 +162,16 @@ export default function QuestionListClient({
                 {moduleName}
               </span>
             </div>
-            <p className="text-body-sm text-mute max-w-3xl leading-relaxed">
-              {description}
-            </p>
+            {description && (
+              <p className="text-body-sm text-mute max-w-3xl leading-relaxed">
+                {description}
+              </p>
+            )}
+            {summary && summary !== description && (
+              <p className="text-body-sm text-mute max-w-3xl leading-relaxed">
+                {summary}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-3 self-start md:self-auto">
             <span className="text-xs font-mono bg-canvas-soft-2 border border-hairline px-3 py-1.5 rounded text-body font-medium">
@@ -231,7 +236,6 @@ export default function QuestionListClient({
                 { id: "all", label: "All" },
                 { id: "unattempted", label: "New" },
                 { id: "attempted", label: "Done" },
-                ...(taskTypeName !== "summarize-spoken-text" ? [{ id: "completed", label: "Complete" }] : []),
               ].map((status) => (
                 <button
                   key={status.id}
@@ -282,17 +286,10 @@ export default function QuestionListClient({
                         {q.difficulty}
                       </span>
                       {attempt && (
-                        attempt.score === attempt.max_score && attempt.max_score > 0 && taskTypeName !== "summarize-spoken-text" ? (
-                          <div className="flex items-center gap-1 text-emerald-600 text-2xs font-medium font-mono uppercase bg-emerald-50 border border-emerald-200/50 px-2 py-0.5 rounded-full">
-                            <CheckCircle className="w-3 h-3 text-emerald-500" />
-                            <span>Complete</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 text-success text-2xs font-medium font-mono uppercase bg-success/5 border border-success/10 px-2 py-0.5 rounded-full">
-                            <CheckCircle className="w-3 h-3" />
-                            <span>Done</span>
-                          </div>
-                        )
+                        <div className="flex items-center gap-1 text-success text-2xs font-medium font-mono uppercase bg-success/5 border border-success/10 px-2 py-0.5 rounded-full">
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Done</span>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-mute line-clamp-1">
@@ -302,7 +299,7 @@ export default function QuestionListClient({
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-hairline">
-                  {attempt && taskTypeName !== "summarize-spoken-text" && (
+                  {attempt && taskTypeName !== "summarize-spoken-text" && taskTypeName !== "summarize-written-text" && taskTypeName !== "write-an-email" && (
                     <div className="flex flex-col items-start md:items-end">
                       <span className="text-3xs font-mono text-mute uppercase">
                         Best Score
