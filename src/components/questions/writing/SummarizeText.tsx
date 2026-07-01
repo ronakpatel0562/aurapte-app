@@ -20,12 +20,14 @@ interface SummarizeTextProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 export default function SummarizeText({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: SummarizeTextProps) {
   const { passage, instruction } = question.content;
 
@@ -172,26 +174,26 @@ export default function SummarizeText({
     return (
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         {/* Instruction */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200">
           {headerInstruction}
         </div>
 
         {/* White inner card containing the passage */}
-        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200">
-          <div className="border border-gray-300 rounded p-5 text-[15px] leading-[1.65] text-gray-800 font-sans bg-white select-text">
+        <div className="px-7 pt-7 pb-5 bg-white border-b border-gray-200">
+          <div className="border border-gray-300 rounded p-6 text-[17px] leading-[1.8] text-gray-800 font-sans bg-white select-text">
             {passage}
           </div>
         </div>
 
         {/* Time tracker line (only the timer — word count lives below) */}
-        <div className="flex justify-end gap-6 text-sm font-sans font-bold text-gray-700 mt-2 mb-2 px-6 select-none">
+        <div className="flex justify-end gap-6 text-base font-sans font-bold text-gray-700 mt-2 mb-2 px-7 select-none">
           <span className="tabular-nums">
             {formatTime(elapsedTime)} / {formatTime(totalTimeSeconds)}
           </span>
         </div>
 
         {/* Textarea editor box */}
-        <div className="px-6 pb-6 bg-white">
+        <div className="px-7 pb-7 bg-white">
           <textarea
             ref={textareaRef}
             value={text}
@@ -204,7 +206,7 @@ export default function SummarizeText({
             autoCorrect="off"
             autoCapitalize="off"
             autoComplete="off"
-            className="w-full h-36 p-4 border border-[#bfdbfe]/70 bg-white rounded text-[15px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800"
+            className="w-full h-44 p-5 border border-[#bfdbfe]/70 bg-white rounded text-[17px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800"
           />
 
           <div className="flex justify-between items-center mt-3 select-none">
@@ -232,7 +234,7 @@ export default function SummarizeText({
               </button>
             </div>
 
-            <span className="text-sm font-sans font-bold text-gray-700">
+            <span className="text-base font-sans font-bold text-gray-700">
               Word Count:{" "}
               <span className="text-[#0284c7]">{wordCount}</span>
             </span>

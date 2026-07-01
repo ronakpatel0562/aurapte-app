@@ -19,18 +19,20 @@ interface MCQMultipleProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 /**
  * Listening: Multiple Choice, Multiple Answers.
  *
- * Negative marking applies. Features custom PTE-styled audio box and 
+ * Negative marking applies. Features custom PTE-styled audio box and
  * inline correctness feedback in the submitted state.
  */
 export default function MCQMultiple({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: MCQMultipleProps) {
   const { audio_url, audio_transcript, question: stem, options, correct_answers } = question.content;
 
@@ -219,7 +221,7 @@ export default function MCQMultiple({
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           Listen to the recording and answer the multiple-choice question by selecting the correct responses. More than one response is correct.
         </div>
 
@@ -277,19 +279,19 @@ export default function MCQMultiple({
 
         {/* Question & Options Area */}
         {!submitted ? (
-          <div className="px-8 pb-6 bg-white space-y-6">
-            <h3 className="text-[15px] font-bold text-gray-800 leading-snug">
+          <div className="px-9 pb-7 bg-white space-y-8">
+            <h3 className="text-[18px] font-bold text-gray-800 leading-normal">
               {stem}
             </h3>
 
-            <div className="bg-error-soft/30 border border-error/15 rounded-md p-3.5 flex items-start gap-2.5">
+            <div className="bg-error-soft/30 border border-error/15 rounded-md p-4 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-error-deep mt-0.5 shrink-0" />
-              <p className="text-3xs text-error-deep leading-relaxed font-sans">
+              <p className="text-xs text-error-deep leading-relaxed font-sans">
                 <strong>Negative marking applies:</strong> Incorrect choices deduct 1 point. Correct choices add 1 point. Minimum score is 0.
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {options.map((option) => {
                 const isSel = selected.includes(option);
                 const isInteractionDisabled = audioStatus !== "Audio Finished";
@@ -299,20 +301,20 @@ export default function MCQMultiple({
                     key={option}
                     onClick={() => handleToggle(option)}
                     disabled={submitted || isInteractionDisabled}
-                    className={`w-full text-left flex items-start gap-3 group transition duration-150 select-none py-1 ${
+                    className={`w-full text-left flex items-start gap-3.5 group transition duration-150 select-none py-1.5 ${
                       isInteractionDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer active:scale-[0.99]"
                     }`}
                   >
                     <div
-                      className={`w-[18px] h-[18px] rounded border flex items-center justify-center shrink-0 mt-0.5 transition ${
+                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition ${
                         isSel
                           ? "bg-[#1C415A] border-[#1C415A] text-white"
                           : "border-gray-400 bg-white group-hover:border-gray-600"
                       }`}
                     >
-                      {isSel && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                      {isSel && <Check className="w-4 h-4 text-white stroke-[3]" />}
                     </div>
-                    <span className={`text-[14px] text-gray-700 font-sans leading-relaxed select-text ${isInteractionDisabled ? "text-gray-400" : ""}`}>
+                    <span className={`text-[16px] text-gray-700 font-sans leading-relaxed select-text ${isInteractionDisabled ? "text-gray-400" : ""}`}>
                       {option}
                     </span>
                   </button>
@@ -321,15 +323,15 @@ export default function MCQMultiple({
             </div>
           </div>
         ) : (
-          <div className="px-8 pb-6 bg-white space-y-6">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-100 select-none">
-              <h3 className="text-[15px] font-bold text-gray-800 leading-snug select-text">
+          <div className="px-9 pb-7 bg-white space-y-8">
+            <div className="flex justify-between items-center pb-3 border-b border-gray-100 select-none">
+              <h3 className="text-[18px] font-bold text-gray-800 leading-normal select-text">
                 {stem}
               </h3>
               {result && <ScoreBadge score={result.score} maxScore={result.maxScore} />}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {options.map((option) => {
                 const letter = option[0];
                 const isSel = selected.includes(option);
@@ -375,11 +377,11 @@ export default function MCQMultiple({
                 return (
                   <div
                     key={option}
-                    className={`w-full text-left p-4 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
+                    className={`w-full text-left p-5 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
                   >
-                    <div className="flex items-center gap-3 pr-4 select-text text-[14px]">
+                    <div className="flex items-center gap-3.5 pr-4 select-text text-[16px]">
                       <div
-                        className={`w-[18px] h-[18px] rounded border flex items-center justify-center shrink-0 transition ${checkboxClass}`}
+                        className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition ${checkboxClass}`}
                       >
                         {iconToRender}
                       </div>
@@ -420,13 +422,13 @@ export default function MCQMultiple({
 
       {/* Audio Transcript Card (shows below player on submit) */}
       {submitted && audio_transcript && (
-        <div className="bg-canvas border border-hairline rounded-lg p-6 shadow-vercel-card space-y-4">
+        <div className="bg-canvas border border-hairline rounded-lg p-7 shadow-vercel-card space-y-4">
           <div className="flex justify-between items-center pb-4 border-b border-hairline select-none">
             <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
               Audio Transcript
             </span>
           </div>
-          <div className="text-sm text-ink leading-relaxed select-text font-sans text-gray-700">
+          <div className="text-base text-ink leading-relaxed select-text font-sans text-gray-700">
             {audio_transcript}
           </div>
         </div>

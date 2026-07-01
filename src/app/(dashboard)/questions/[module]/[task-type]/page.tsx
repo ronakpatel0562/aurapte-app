@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
 import QuestionListClient from "./QuestionListClient";
 import { mapUrlToDbTaskType, transformQuestionContent } from "@/lib/taskTypeMapper";
+import { isPremiumPlan } from "@/lib/plans";
 
 interface PageProps {
   params: {
@@ -147,39 +148,29 @@ export default async function QuestionListPage({ params }: PageProps) {
 
   const dbTaskType = mapUrlToDbTaskType(moduleParam, taskTypeParam);
 
-  // Fetch user profile, attempts, and the question list in parallel. The
-  // previous code did these sequentially, costing three Supabase round-
-  // trips per click. On a slow network that added 1–2 seconds of freeze
-  // before the page could redirect for free-plan users.
-  const [{ data: profile }, { data: attempts }, { data: questions }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("plan")
-        .eq("id", user.id)
-        .maybeSingle(),
-      supabase
-        .from("user_attempts")
-        .select("question_id, score, max_score, is_correct")
-        .eq("user_id", user.id),
-      supabase
-        .from("questions")
-        .select("id, title, content, difficulty, created_at")
-        .eq("module", moduleParam)
-        .eq("task_type", dbTaskType)
-        .eq("is_active", true)
-        .order("created_at", { ascending: true }),
-    ]);
-  const plan = profile?.plan || "free";
+  // Fetch attempts, the question list, and the plan in parallel so every plan
+  // can see the full list view and jump straight to any question, the same
+  // way Pro-plan users already could — plan only gates the filter controls.
+  const [{ data: attempts }, { data: questions }, { data: profile }] = await Promise.all([
+    supabase
+      .from("user_attempts")
+      .select("question_id, score, max_score, is_correct")
+      .eq("user_id", user.id),
+    supabase
+      .from("questions")
+      .select("id, title, content, difficulty, created_at")
+      .eq("module", moduleParam)
+      .eq("task_type", dbTaskType)
+      .eq("is_active", true)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
 
-  // If user is on Plan 1 (free), redirect to the first unattempted question in this category
-  if (plan === "free" && questions && questions.length > 0) {
-    const attemptedIds = new Set(attempts?.map((a) => a.question_id) || []);
-    const unattempted = questions.find((q) => !attemptedIds.has(q.id));
-    const targetId = unattempted ? unattempted.id : questions[0].id;
-    
-    redirect(`/questions/${moduleParam}/${taskTypeParam}/${targetId}`);
-  }
+  const isPremium = isPremiumPlan(profile?.plan);
 
   const transformedQuestions = (questions || []).map(transformQuestionContent);
 
@@ -192,12 +183,15 @@ export default async function QuestionListPage({ params }: PageProps) {
     transformedQuestions.find((q) => q?.content?.instruction)?.content
       ?.instruction || "";
 
-  // Map attempt status by question_id (aggregating to keep the best attempt)
+  // Map attempt status by question_id (aggregating to keep the best attempt).
+  // Starter/free users never get a score persisted (see QuestionAttemptClient),
+  // but guard here too so any pre-existing rows for a since-downgraded user
+  // don't resurface a "Best Score" / "Done" badge in the list view.
   const attemptMap: Record<
     string,
     { score: number; max_score: number; is_correct: boolean }
   > = {};
-  attempts?.forEach((att) => {
+  (isPremium ? attempts : [])?.forEach((att) => {
     const existing = attemptMap[att.question_id];
     const isThisBetter =
       !existing ||
@@ -236,7 +230,7 @@ export default async function QuestionListPage({ params }: PageProps) {
       taskDetails.desc = "You will hear a recording. Type the missing words in each blank.";
       taskDetails.summary = "You will hear a recording. Type the missing words in each blank.";
     } else if (taskTypeParam === "select-missing-word") {
-      taskDetails.desc = "You will hear a recording. At the end of the recording the last word or group of words has replaced by a beep. Select the correct option to complete the recording.";
+      taskDetails.desc = "You will hear a recording. At the end of the recording the last word or group of words has been replaced by a beep. Select the correct option to complete the recording.";
       taskDetails.summary = "You will hear a recording. At the end of the recording the last word or group of words has been replaced by a beep. Select the correct option to complete the recording.";
     } else if (taskTypeParam === "highlight-incorrect-words") {
       taskDetails.desc = "You will hear a recording. Below is a transcript of the recording. Some words in the transcription differ from what the speaker(s) said. Please click on the words that are different.";
@@ -250,10 +244,10 @@ export default async function QuestionListPage({ params }: PageProps) {
       taskDetails.desc = "Below is a text with blanks. Click on each blank, a list of choices will appear. Select the appropriate answer choice for each blank.";
       taskDetails.summary = "Below is a text with blanks. Click on each blank, a list of choices will appear. Select the appropriate answer choice for each blank.";
     } else if (taskTypeParam === "multiple-choice-multiple") {
-      taskDetails.desc = "Read the text and answer the multiple - choice question by selecting the correct responses. More than one response is correct.";
+      taskDetails.desc = "Read the text and answer the multiple-choice question by selecting the correct responses. More than one response is correct.";
       taskDetails.summary = "Read the text and answer the multiple-choice question by selecting the correct responses. More than one response is correct.";
     } else if (taskTypeParam === "reorder-paragraphs") {
-      taskDetails.desc = "The text boxes in the left panel placed in a random order. Restore the original order by dragging the text boxes from the left panel to the right panel.";
+      taskDetails.desc = "The text boxes in the left panel have been placed in a random order. Restore the original order by dragging the text boxes from the left panel to the right panel.";
       taskDetails.summary = "The text boxes in the left panel have been placed in a random order. Restore the original order by dragging the text boxes from the left panel to the right panel.";
     } else if (taskTypeParam === "reading-fill-in-the-blanks") {
       taskDetails.desc = "In the text below some words are missing. Drag words from the box below to the appropriate place in the text. To undo an answer choice, drag the word back to the box below the text.";
@@ -287,6 +281,7 @@ export default async function QuestionListPage({ params }: PageProps) {
       summary={finalSummary}
       initialQuestions={transformedQuestions}
       attemptMap={attemptMap}
+      isPremium={isPremium}
     />
   );
 }

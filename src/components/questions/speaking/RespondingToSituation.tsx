@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { scoreFluency } from "@/lib/scoring/speaking";
+import LockedScoreBadge from "../shared/LockedScoreBadge";
 
 interface RespondingToSituationProps {
   question: {
@@ -17,6 +18,7 @@ interface RespondingToSituationProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 const THINK_SECONDS = 20;
@@ -44,6 +46,7 @@ export default function RespondingToSituation({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: RespondingToSituationProps) {
   const { content } = question;
 
@@ -314,7 +317,11 @@ export default function RespondingToSituation({
             <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
               Submitted ✓
             </span>
-            <PercentBadge label="Fluency" value={result.fluency} />
+            {isPremium ? (
+              <PercentBadge label="Fluency" value={result.fluency} />
+            ) : (
+              <LockedScoreBadge />
+            )}
           </div>
         </div>
 

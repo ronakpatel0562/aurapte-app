@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { scoreFluency, scoreAccuracy } from "@/lib/scoring/speaking";
+import LockedScoreBadge from "../shared/LockedScoreBadge";
 
 interface RepeatSentenceProps {
   question: {
@@ -15,6 +16,7 @@ interface RepeatSentenceProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 const RECORD_SECONDS = 15;
@@ -41,6 +43,7 @@ export default function RepeatSentence({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: RepeatSentenceProps) {
   const { content } = question;
 
@@ -286,7 +289,11 @@ export default function RepeatSentence({
             <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
               Submitted ✓
             </span>
-            <PercentBadge label="Accuracy" value={result.accuracy} />
+            {isPremium ? (
+              <PercentBadge label="Accuracy" value={result.accuracy} />
+            ) : (
+              <LockedScoreBadge />
+            )}
           </div>
         </div>
 

@@ -17,12 +17,14 @@ interface RWFillBlanksProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 export default function RWFillBlanks({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: RWFillBlanksProps) {
   const { passage_with_blanks, dropdown_choices, answers: correctAnswers } = question.content;
 
@@ -95,20 +97,14 @@ export default function RWFillBlanks({
       {/* Interactive Board */}
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           Below is a text with blanks. Click on each blank, a list of choices will appear. Select the appropriate answer choice for each blank.
         </div>
 
         {/* Workspace Area */}
-        <div className="p-8 bg-white space-y-6">
-          {submitted && result && (
-            <div className="flex justify-end select-none">
-              <ScoreBadge score={result.score} maxScore={result.maxScore} />
-            </div>
-          )}
-
+        <div className="p-9 bg-white space-y-8">
           {/* Inline passage with dropdown selectors */}
-          <div className="text-[15px] text-gray-800 leading-loose font-sans select-text pr-2 py-2">
+          <div className="text-[17px] text-gray-800 leading-loose font-sans select-text pr-2 py-3">
             {parts.map((part, index) => {
               const match = part.match(/\[(blank_\d+)\]/);
               if (match) {
@@ -134,29 +130,30 @@ export default function RWFillBlanks({
                 return (
                   <React.Fragment key={blankId}>
                     {" "}
-                    <span className="inline-block relative align-middle mx-2.5">
+                    <span className="inline-block relative align-middle mx-3">
                       <select
                         value={selectedVal}
                         onChange={(e) => handleChange(blankId, e.target.value)}
                         disabled={submitted}
-                        className={`h-7 border rounded text-[13px] font-semibold px-2.5 pr-6 focus:outline-none cursor-pointer transition select-none appearance-none ${getSelectStyles()}`}
+                        className={`h-10 border rounded text-[16px] font-semibold px-3 pr-8 focus:outline-none cursor-pointer transition select-none appearance-none ${getSelectStyles()}`}
+                        style={{ fontSize: "16px" }}
                       >
-                        <option value="">— Select —</option>
+                        <option value="" style={{ fontSize: "16px" }}>— Select —</option>
                         {choices.map((c) => (
-                          <option key={c} value={c}>
+                          <option key={c} value={c} style={{ fontSize: "16px" }}>
                             {c}
                           </option>
                         ))}
                       </select>
                       {/* Dropdown narrow arrow icon */}
                       {!submitted && (
-                        <span className="absolute right-2.5 top-1.5 pointer-events-none text-gray-500 text-[8px] font-mono">
+                        <span className="absolute right-3 top-3 pointer-events-none text-gray-500 text-[9px] font-mono">
                           ▼
                         </span>
                       )}
 
                       {submitted && !isCorrect && (
-                        <span className="text-emerald-600 text-xs font-bold ml-1.5 align-middle select-text">
+                        <span className="text-emerald-600 text-sm font-bold ml-1.5 align-middle select-text">
                           (✓ {correctAnswer})
                         </span>
                       )}
@@ -181,7 +178,12 @@ export default function RWFillBlanks({
         </div>
 
         {/* Silver-grey Practice Footer Panel */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+          <div>
+            {submitted && result && (
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            )}
+          </div>
           {!submitted ? (
             <button
               onClick={handleSubmit}

@@ -19,6 +19,7 @@ interface ReadingFillBlanksProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 function DraggableWord({ word, disabled, isSelected, onClick }: any) {
@@ -51,7 +52,7 @@ function DraggableWord({ word, disabled, isSelected, onClick }: any) {
       {...(!disabled ? listeners : {})}
       {...(!disabled ? attributes : {})}
       onClick={!disabled ? onClick : undefined}
-      className={`px-3 py-1 bg-white border rounded text-[13px] font-sans select-none transition shadow-sm ${getStyles()} ${isDragging ? "opacity-50" : ""}`}
+      className={`px-3.5 py-1.5 bg-white border rounded text-[15px] font-sans select-none transition shadow-sm ${getStyles()} ${isDragging ? "opacity-50" : ""}`}
     >
       {word}
     </div>
@@ -86,17 +87,17 @@ function DroppableBlank({
   };
 
   return (
-    <span className="inline-block relative mx-2.5 align-middle">
+    <span className="inline-block relative mx-3 align-middle">
       <span
         ref={setNodeRef}
         onClick={!isSubmitted ? onClick : undefined}
-        className={`inline-flex items-center justify-center min-w-[100px] h-[26px] border rounded px-3 text-[13px] transition duration-150 ${!isSubmitted ? "cursor-pointer hover:border-gray-500" : ""
+        className={`inline-flex items-center justify-center min-w-[120px] h-9 border rounded px-3.5 text-[15px] transition duration-150 ${!isSubmitted ? "cursor-pointer hover:border-gray-500" : ""
           } ${getStyles()}`}
       >
-        {filledWord || <span className="font-semibold text-[10px] text-gray-400 uppercase tracking-wider select-none">Select</span>}
+        {filledWord || <span className="font-semibold text-[11px] text-gray-400 uppercase tracking-wider select-none">Select</span>}
       </span>
       {isSubmitted && !isCorrect && (
-        <span className="text-emerald-600 text-xs font-bold ml-1.5 align-middle select-text">
+        <span className="text-emerald-600 text-sm font-bold ml-1.5 align-middle select-text">
           (✓ {correctAnswer})
         </span>
       )}
@@ -108,6 +109,7 @@ export default function ReadingFillBlanks({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: ReadingFillBlanksProps) {
   const { passage_with_blanks, word_bank, answers: correctAnswers } = question.content;
 
@@ -236,20 +238,14 @@ export default function ReadingFillBlanks({
         {/* Interaction Panel */}
         <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
           {/* Instruction Paragraph */}
-          <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+          <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
             In the text below some words are missing. Drag words from the box below to the appropriate place in the text. To undo an answer choice, drag the word back to the box below the text.
           </div>
 
           {/* Workspace Area */}
-          <div className="p-8 bg-white space-y-6">
-            {submitted && result && (
-              <div className="flex justify-end select-none">
-                <ScoreBadge score={result.score} maxScore={result.maxScore} />
-              </div>
-            )}
-
+          <div className="p-9 bg-white space-y-8">
             {/* Passage rendering */}
-            <div className="text-[15px] text-gray-800 leading-loose font-sans select-text pr-2 py-2">
+            <div className="text-[17px] text-gray-800 leading-loose font-sans select-text pr-2 py-3">
               {parts.map((part, index) => {
                 const match = part.match(/\[(blank_\d+)\]/);
                 if (match) {
@@ -281,8 +277,8 @@ export default function ReadingFillBlanks({
 
             {/* Word Bank */}
             {!submitted && (
-              <div className="pt-6 border-t border-gray-200">
-                <div className="flex flex-wrap gap-2.5 p-4 bg-[#F3F4F6] border border-gray-200 rounded">
+              <div className="pt-7 border-t border-gray-200">
+                <div className="flex flex-wrap gap-3 p-5 bg-[#F3F4F6] border border-gray-200 rounded">
                   {word_bank.map((word) => {
                     const isPlaced = placedWords.includes(word);
                     const isSelected = selectedWord === word;
@@ -312,7 +308,12 @@ export default function ReadingFillBlanks({
           </div>
 
           {/* Silver-grey Practice Footer Panel */}
-          <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
+          <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+            <div>
+              {submitted && result && (
+                <ScoreBadge score={result.score} maxScore={result.maxScore} />
+              )}
+            </div>
             {!submitted ? (
               <button
                 onClick={handleSubmit}

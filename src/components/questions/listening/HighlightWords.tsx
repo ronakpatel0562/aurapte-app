@@ -18,6 +18,7 @@ interface HighlightWordsProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 interface WordToken {
@@ -31,6 +32,7 @@ export default function HighlightWords({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: HighlightWordsProps) {
   const {
     audio_url,
@@ -252,7 +254,7 @@ export default function HighlightWords({
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           You will hear a recording. Below is a transcript of the recording. Some words in the transcription differ from what the speaker(s) said. Please click on the words that are different.
         </div>
 
@@ -309,19 +311,13 @@ export default function HighlightWords({
         </div>
 
         {/* Interactive Highlight Section */}
-        <div className="px-8 pb-6 bg-white space-y-6">
-          {submitted && result && (
-            <div className="flex justify-end items-center pb-2 border-b border-gray-100 select-none">
-              <ScoreBadge score={result.score} maxScore={result.maxScore} />
-            </div>
-          )}
-
+        <div className="px-9 pb-7 bg-white space-y-8">
           {hasInteractiveTranscript && (
-            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-[#FAF9F6] border border-gray-200 rounded-md select-none">
-              <span className="text-xs font-bold text-gray-500 font-mono uppercase tracking-wider">
+            <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-[#FAF9F6] border border-gray-200 rounded-md select-none">
+              <span className="text-sm font-bold text-gray-500 font-mono uppercase tracking-wider">
                 Words to find
               </span>
-              <span className="flex items-center gap-2 text-sm font-sans">
+              <span className="flex items-center gap-2 text-base font-sans">
                 <span className="font-bold text-gray-800 tabular-nums">
                   {selectedIndices.length}
                 </span>
@@ -335,7 +331,7 @@ export default function HighlightWords({
           )}
 
           {hasInteractiveTranscript ? (
-            <div className="text-[15px] text-gray-800 leading-loose font-sans py-5 px-6 border border-gray-200 rounded-lg bg-white select-text">
+            <div className="text-[17px] text-gray-800 leading-loose font-sans py-6 px-7 border border-gray-200 rounded-lg bg-white select-text">
               {tokens.map((token) => {
                 const isSel = selectedIndices.includes(token.index);
                 const isWordIncorrect = token.isTarget;
@@ -362,7 +358,7 @@ export default function HighlightWords({
                   <span
                     key={token.index}
                     onClick={() => handleToggle(token.index)}
-                    className={`inline-block mx-0.5 px-0.5 rounded cursor-pointer transition ${highlightClass}`}
+                    className={`inline-block mx-0.5 px-1 py-0.5 rounded cursor-pointer transition ${highlightClass}`}
                     title={
                       submitted && isWordIncorrect && !isSel
                         ? `You missed this word: "${token.text}"`
@@ -414,7 +410,12 @@ export default function HighlightWords({
         </div>
 
         {/* Silver-grey Practice Footer Panel */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+          <div>
+            {submitted && result && (
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            )}
+          </div>
           {!submitted ? (
             <button
               onClick={handleSubmit}

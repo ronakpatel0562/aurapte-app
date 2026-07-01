@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { scoreFluency, scorePronunciation } from "@/lib/scoring/speaking";
+import LockedScoreBadge from "../shared/LockedScoreBadge";
 
 interface ReadAloudProps {
   question: {
@@ -13,6 +14,7 @@ interface ReadAloudProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 const PREP_SECONDS = 35;
@@ -40,6 +42,7 @@ export default function ReadAloud({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: ReadAloudProps) {
   const { content } = question;
 
@@ -223,8 +226,14 @@ export default function ReadAloud({
             <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
               Submitted ✓
             </span>
-            <PercentBadge label="Fluency" value={result.fluency} />
-            <PercentBadge label="Pronunciation" value={result.pronunciation} />
+            {isPremium ? (
+              <>
+                <PercentBadge label="Fluency" value={result.fluency} />
+                <PercentBadge label="Pronunciation" value={result.pronunciation} />
+              </>
+            ) : (
+              <LockedScoreBadge />
+            )}
           </div>
         </div>
 
@@ -289,7 +298,7 @@ export default function ReadAloud({
 
   return (
     <div className="space-y-4">
-      <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans">
+      <div className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans">
         {/* Instructions */}
         <div className="px-6 py-5 text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           Look at the text below. In {PREP_SECONDS} seconds, you must read this
@@ -298,7 +307,7 @@ export default function ReadAloud({
         </div>
 
         {/* Countdown row */}
-        <div className="flex justify-center items-center gap-4 py-8 bg-[#FAF9F6] select-none">
+        <div className="flex justify-center items-center gap-4 py-8 select-none">
           <div
             className={`w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-semibold transition-colors duration-300 ${circleClass}`}
           >
@@ -310,7 +319,7 @@ export default function ReadAloud({
         </div>
 
         {/* Passage */}
-        <div className="px-8 pb-6 bg-white">
+        <div className="px-8 pb-6">
           <div className="border border-gray-300 rounded-lg p-5 bg-white leading-relaxed select-text">
             <p className="text-[15px] text-gray-800">
               {content.passage ?? "No passage content provided."}
@@ -320,7 +329,7 @@ export default function ReadAloud({
 
         {/* Live transcript during recording */}
         {phase === "recording" && (
-          <div className="px-8 pb-6 bg-white">
+          <div className="px-8 pb-6">
             <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
               Live Transcript
             </p>
@@ -333,7 +342,7 @@ export default function ReadAloud({
         )}
 
         {/* Footer */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+        <div className="border-t border-gray-200 p-4 flex justify-between items-center select-none rounded-b-lg">
           <button
             onClick={handleReset}
             disabled={phase === "submitted"}

@@ -18,12 +18,14 @@ interface SelectMissingProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 export default function SelectMissing({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: SelectMissingProps) {
   const { audio_url, options, correct_answers } = question.content;
 
@@ -208,7 +210,7 @@ export default function SelectMissing({
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           You will hear a recording. At the end of the recording the last word or group of words has replaced by a beep. Select the correct option to complete the recording.
         </div>
 
@@ -265,14 +267,8 @@ export default function SelectMissing({
         </div>
 
         {/* Options Area */}
-        <div className="px-8 pb-6 bg-white space-y-6">
-          {submitted && result && (
-            <div className="flex justify-end items-center pb-2 border-b border-gray-100 select-none">
-              <ScoreBadge score={result.score} maxScore={result.maxScore} />
-            </div>
-          )}
-
-          <div className="space-y-4">
+        <div className="px-9 pb-7 bg-white space-y-8">
+          <div className="space-y-5">
             {options.map((option) => {
               const letter = option[0]; // "A", "B", etc.
               const isSel = selected === option;
@@ -311,11 +307,11 @@ export default function SelectMissing({
                 return (
                   <div
                     key={option}
-                    className={`w-full text-left p-4 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
+                    className={`w-full text-left p-5 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
                   >
-                    <div className="flex items-center gap-3 pr-4 select-text text-[14px]">
+                    <div className="flex items-center gap-3.5 pr-4 select-text text-[16px]">
                       <div
-                        className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center shrink-0 transition ${checkboxClass}`}
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition ${checkboxClass}`}
                       >
                         {iconToRender}
                       </div>
@@ -331,20 +327,20 @@ export default function SelectMissing({
                   key={option}
                   onClick={() => handleSelect(option)}
                   disabled={isInteractionDisabled}
-                  className={`w-full text-left flex items-start gap-3 group transition duration-150 select-none py-1 ${
+                  className={`w-full text-left flex items-start gap-3.5 group transition duration-150 select-none py-1.5 ${
                     isInteractionDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer active:scale-[0.99]"
                   }`}
                 >
                   <div
-                    className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition ${
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition ${
                       isSel
                         ? "bg-[#1C415A] border-[#1C415A] text-white"
                         : "border-gray-400 bg-white group-hover:border-gray-600"
                     }`}
                   >
-                    {isSel && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                    {isSel && <Check className="w-3 h-3 text-white stroke-[3]" />}
                   </div>
-                  <span className={`text-[14px] text-gray-700 font-sans leading-relaxed select-text ${isInteractionDisabled ? "text-gray-400" : ""}`}>
+                  <span className={`text-[16px] text-gray-700 font-sans leading-relaxed select-text ${isInteractionDisabled ? "text-gray-400" : ""}`}>
                     {option}
                   </span>
                 </button>
@@ -354,7 +350,12 @@ export default function SelectMissing({
         </div>
 
         {/* Silver-grey Practice Footer Panel */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+          <div>
+            {submitted && result && (
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            )}
+          </div>
           {!submitted ? (
             <button
               onClick={handleSubmit}

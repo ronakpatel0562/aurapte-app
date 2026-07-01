@@ -17,7 +17,7 @@ export interface AnnotatedToken {
   /** True only when the underlying spell-checker flags the word. */
   misspelled?: boolean;
   /** The type of issue detected for this token (if any). */
-  issueType?: "spelling" | "capitalization" | "punctuation" | "duplication" | "grammar";
+  issueType?: "spelling" | "capitalization" | "punctuation" | "duplication" | "grammar" | "spacing";
   /** Up to three spelling suggestions (only populated when misspelled or grammar issue). */
   suggestions?: string[];
 }
@@ -28,7 +28,7 @@ export interface LinguisticIssue {
   /** Sentence-level position of the offending token. */
   index: number;
   /** What we detected. */
-  type: "spelling" | "capitalization" | "punctuation" | "duplication" | "grammar";
+  type: "spelling" | "capitalization" | "punctuation" | "duplication" | "grammar" | "spacing";
   /** Human-readable explanation shown in tooltips and lists. */
   message: string;
   /** Up to three suggestions for spelling/grammar issues. */
@@ -88,13 +88,20 @@ async function loadSpeller(): Promise<{
  */
 function tokenize(text: string): AnnotatedToken[] {
   const tokens: AnnotatedToken[] = [];
-  // Matches runs of letters/apostrophes, runs of whitespace, or single punctuation chars
-  const re = /[A-Za-z][A-Za-z'’]*|\s+|[^A-Za-z\s]/g;
+  // Order matters: email addresses and ordinal numbers ("27th") must be
+  // consumed as single units before the generic word/punct alternatives
+  // split them into separately-spellchecked fragments (e.g. "gmail", "th").
+  const re =
+    /[\w.+-]+@[\w-]+(?:\.[\w-]+)+|\d+(?:st|nd|rd|th)\b|[A-Za-z][A-Za-z'’]*|\s+|[^A-Za-z\s]/gi;
   let match: RegExpExecArray | null;
   while ((match = re.exec(text)) !== null) {
     const value = match[0];
     if (/^\s+$/.test(value)) {
       tokens.push({ text: value, kind: "whitespace" });
+    } else if (/@/.test(value) || /^\d+(?:st|nd|rd|th)$/i.test(value)) {
+      // Email addresses and ordinal suffixes aren't real dictionary words —
+      // treat them as opaque, non-spellcheckable tokens.
+      tokens.push({ text: value, kind: "punct" });
     } else if (/^[A-Za-z]/.test(value)) {
       tokens.push({ text: value, kind: "word" });
     } else {
@@ -274,6 +281,31 @@ const MODAL_VERBS = new Set(["should", "would", "could", "can", "will", "shall",
 const DOUBLE_NEGATIVES = new Set(["no", "nothing", "nobody", "never"]);
 const NEGATIVE_WORDS = new Set(["not", "n't", "don't", "doesn't", "didn't", "cannot", "can't", "won't", "wouldn't", "never"]);
 
+const SIGNOFF_PHRASES =
+  /^(best regards|kind regards|warm regards|regards|sincerely|yours sincerely|yours faithfully|yours truly|thanks|thank you|many thanks|cheers|best)[,]?$/i;
+
+/**
+ * Emails conventionally end with a closing line + signature name (e.g.
+ * "Best regards,\nAkshay Patel"), not a terminal period — so the generic
+ * "sentence must end with punctuation" check shouldn't apply to that block.
+ */
+function endsWithEmailSignature(trimmed: string): boolean {
+  const lines = trimmed
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length < 2) return false;
+
+  const lastLine = lines[lines.length - 1];
+  const secondLastLine = lines[lines.length - 2];
+
+  const looksLikeName =
+    !/[.!?]$/.test(lastLine) &&
+    /^[A-Z][A-Za-z'-]*(\s+[A-Z][A-Za-z'-]*){0,3}$/.test(lastLine);
+
+  return looksLikeName && SIGNOFF_PHRASES.test(secondLastLine);
+}
+
 /**
  * Analyse free-text for PTE writing tasks.
  *
@@ -287,7 +319,9 @@ export async function analyzeLinguistics(
   const tokens = tokenize(trimmed);
   const sentenceCount = countTerminalPunctuation(trimmed);
   const startsWithCapital = trimmed.length > 0 && /^[A-Z]/.test(trimmed);
-  const endsWithPunctuation = trimmed.length > 0 && /[.!?]$/.test(trimmed);
+  const endsWithPunctuation =
+    trimmed.length > 0 &&
+    (/[.!?]$/.test(trimmed) || endsWithEmailSignature(trimmed));
 
   const annotatedTokens: AnnotatedToken[] = tokens.map((t) => ({ ...t }));
   const issues: LinguisticIssue[] = [];
@@ -302,17 +336,29 @@ export async function analyzeLinguistics(
   }
 
   let wordIndex = 0;
+  // Tracks whether the next word token begins a new sentence, so capitalized
+  // words appearing mid-sentence (likely proper nouns — names, places) can be
+  // skipped by the spelling check instead of being flagged as typos.
+  let atSentenceStart = true;
   for (let i = 0; i < annotatedTokens.length; i++) {
     const tok = annotatedTokens[i];
+    if (tok.kind === "punct") {
+      if (/[.!?]/.test(tok.text)) atSentenceStart = true;
+      continue;
+    }
     if (tok.kind !== "word") continue;
 
     const original = tok.text;
     // Strip leading/trailing apostrophes so "don't" is checked as "don't".
     const stripped = original.replace(/^[’'‘]+|[’'‘]+$/g, "");
+    const isSentenceStart = atSentenceStart;
+    atSentenceStart = false;
+    const looksLikeProperNoun =
+      !isSentenceStart && stripped.length > 1 && /^[A-Z]/.test(stripped);
 
     let suggestions: string[] | undefined;
 
-    if (speller && stripped.length > 1 && /[a-zA-Z]/.test(stripped)) {
+    if (speller && stripped.length > 1 && /[a-zA-Z]/.test(stripped) && !looksLikeProperNoun) {
       const correct = speller.correct(stripped);
       const misspelled = !correct;
       if (misspelled) {
@@ -598,6 +644,30 @@ export async function analyzeLinguistics(
         index: i,
         type: "duplication",
         message: `Repeated word: "${wordTokens[i].text}"`,
+      });
+    }
+  }
+
+  // Flag punctuation marks preceded by a space (e.g. "Dani ,"). These marks
+  // should sit directly against the preceding word/token, with no space.
+  const ATTACHED_PUNCTUATION = new Set([",", ".", "!", "?", ";", ":", ")", "]", "}"]);
+  for (let i = 1; i < annotatedTokens.length - 1; i++) {
+    const tok = annotatedTokens[i];
+    if (tok.kind !== "whitespace") continue;
+    const prev = annotatedTokens[i - 1];
+    const next = annotatedTokens[i + 1];
+    if (
+      prev.kind !== "whitespace" &&
+      next.kind === "punct" &&
+      ATTACHED_PUNCTUATION.has(next.text) &&
+      !next.issueType
+    ) {
+      next.issueType = "spacing";
+      issues.push({
+        token: next.text,
+        index: i,
+        type: "spacing",
+        message: `Remove the space before "${next.text}".`,
       });
     }
   }

@@ -18,12 +18,14 @@ interface FillBlanksProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 export default function FillBlanks({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: FillBlanksProps) {
   const {
     audio_url,
@@ -215,7 +217,7 @@ export default function FillBlanks({
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           You will hear a recording. Type the missing words in each blank.
         </div>
 
@@ -272,15 +274,9 @@ export default function FillBlanks({
         </div>
 
         {/* Passage with Blanks Area */}
-        <div className="px-8 pb-6 bg-white space-y-6">
-          {submitted && result && (
-            <div className="flex justify-end items-center pb-2 border-b border-gray-100 select-none">
-              <ScoreBadge score={result.score} maxScore={result.maxScore} />
-            </div>
-          )}
-
-          <div className="border border-gray-200 rounded-lg p-6 bg-white select-text">
-            <div className="text-[14px] text-gray-700 leading-loose font-sans">
+        <div className="px-9 pb-7 bg-white space-y-8">
+          <div className="border border-gray-200 rounded-lg p-7 bg-white select-text">
+            <div className="text-[16px] text-gray-700 leading-loose font-sans">
               {parts.map((part, index) => {
                 const match = part.match(/\[(blank_\d+)\]/);
                 if (match) {
@@ -316,11 +312,11 @@ export default function FillBlanks({
                           autoCorrect="off"
                           autoCapitalize="off"
                           autoComplete="off"
-                          className={`h-7 w-28 mx-1 border rounded text-xs px-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400 transition ${getInputStyles()}`}
+                          className={`h-9 w-32 mx-1 border rounded text-sm px-3 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400 transition ${getInputStyles()}`}
                         />
-                        
+
                         {submitted && !isCorrect && (
-                          <span className="text-emerald-600 text-xs font-bold ml-1.5 align-middle select-text">
+                          <span className="text-emerald-600 text-sm font-bold ml-1.5 align-middle select-text">
                             (✓ {correctAnswer})
                           </span>
                         )}
@@ -336,7 +332,12 @@ export default function FillBlanks({
         </div>
 
         {/* Silver-grey Practice Footer Panel */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+          <div>
+            {submitted && result && (
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            )}
+          </div>
           {!submitted ? (
             <button
               onClick={handleSubmit}

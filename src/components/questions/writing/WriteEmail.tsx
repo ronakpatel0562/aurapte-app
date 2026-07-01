@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import ScoreBadge from "../shared/ScoreBadge";
 import HighlightedFeedback from "./HighlightedFeedback";
 import { scoreWriteEmail } from "@/lib/scoring/writing";
+import { parsePrompt } from "@/lib/linguistics/parsePrompt";
 import {
   analyzeLinguistics,
   LinguisticAnalysis,
@@ -22,18 +23,36 @@ interface WriteEmailProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 export default function WriteEmail({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: WriteEmailProps) {
   const { scenario, prompt, bullet_points, instruction } = question.content;
 
   const headerInstruction =
     instruction ||
     "Read the situation below and write an email to resolve the issue. Your response will be judged on the quality of your writing and how well you address the situation.";
+
+  // The situation description and the 3-4 points to cover can arrive in two
+  // shapes: an explicit `scenario` + `bullet_points` pair, or a single raw
+  // `prompt` string that mixes the situation paragraph with a themes clause
+  // (e.g. "...Your ideas must come from the following themes: Noise; Parking;
+  // Garbage."). When `scenario` is missing, recover both pieces from `prompt`
+  // so the situation text isn't silently dropped in favour of a bare bullet
+  // list.
+  const parsedFromPrompt = !scenario && prompt ? parsePrompt(prompt) : null;
+  const description = scenario || parsedFromPrompt?.instruction || "";
+
+  const cleanPoint = (s: string) => s.replace(/[;.,]+\s*$/, "").trim();
+  const points: string[] =
+    Array.isArray(bullet_points) && bullet_points.length > 0
+      ? bullet_points.map(cleanPoint).filter(Boolean)
+      : (parsedFromPrompt?.themes || []).map(cleanPoint).filter(Boolean);
 
   const totalTimeSeconds = 540; // 9 minutes
 
@@ -170,19 +189,24 @@ export default function WriteEmail({
   const timeRemaining = Math.max(0, totalTimeSeconds - elapsedTime);
   const timeLimitReached = elapsedTime >= totalTimeSeconds;
 
-  // Render the prompt content. Prefer an explicit bullet_points array from
-  // the DB (already structured); otherwise render the full raw prompt text
-  // as-is so no words are dropped or lines broken unexpectedly.
+  // Render the prompt content. Prefer the derived description + points
+  // (see above); if neither could be recovered, fall back to the full raw
+  // prompt text as-is so no words are dropped.
   const renderPromptBullets = () => {
-    if (Array.isArray(bullet_points) && bullet_points.length > 0) {
-      return bullet_points.map((bp, idx) => (
-        <p key={idx} className="text-[14px] text-gray-800 leading-relaxed">
-          {bp}
+    if (points.length > 0) {
+      return points.map((bp, idx) => (
+        <p
+          key={idx}
+          className="text-[16px] text-gray-800 leading-relaxed flex gap-2"
+        >
+          <span className="text-gray-400">•</span>
+          <span>{bp}</span>
         </p>
       ));
     }
+    if (description) return null;
     return (
-      <p className="text-[14px] text-gray-800 leading-relaxed whitespace-pre-wrap">
+      <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap">
         {prompt}
       </p>
     );
@@ -193,7 +217,7 @@ export default function WriteEmail({
     return (
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         {/* Instruction */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200">
           {headerInstruction}
         </div>
 
@@ -201,30 +225,33 @@ export default function WriteEmail({
             When no explicit bullet_points/themes are supplied, the entire
             prompt is shown as a single paragraph so nothing is lost or
             unintentionally line-wrapped. */}
-        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 space-y-4">
+        <div className="px-7 pt-7 pb-5 bg-white border-b border-gray-200 space-y-5">
           {/* Situation paragraph — prefer the scenario field; fall back to
-              the raw prompt so the user always sees the full question text. */}
-          {scenario ? (
-            <p className="text-[14px] text-gray-800 leading-relaxed font-sans whitespace-pre-wrap">
-              {scenario}
+              the situation text recovered from the raw prompt. */}
+          {description ? (
+            <p className="text-[16px] text-gray-800 leading-relaxed font-sans whitespace-pre-wrap">
+              {description}
             </p>
           ) : null}
 
-          {/* Bullet list (themes) or the full prompt as a single paragraph. */}
-          <div className="border border-gray-300 rounded p-5 bg-white space-y-2 select-text">
-            {renderPromptBullets()}
-          </div>
+          {/* Bullet list (themes) or, if none could be recovered, the full
+              prompt as a single paragraph. */}
+          {(points.length > 0 || !description) && (
+            <div className="border border-gray-300 rounded p-6 bg-white space-y-3 select-text">
+              {renderPromptBullets()}
+            </div>
+          )}
         </div>
 
         {/* Time tracker line (only the timer — word count lives below) */}
-        <div className="flex justify-end gap-6 text-sm font-sans font-bold text-gray-700 mt-2 mb-2 px-6 select-none">
+        <div className="flex justify-end gap-6 text-base font-sans font-bold text-gray-700 mt-2 mb-2 px-7 select-none">
           <span className="tabular-nums">
             {formatTime(elapsedTime)} / {formatTime(totalTimeSeconds)}
           </span>
         </div>
 
         {/* Textarea editor box */}
-        <div className="px-6 pb-6 bg-white">
+        <div className="px-7 pb-7 bg-white">
           <textarea
             ref={textareaRef}
             value={body}
@@ -237,7 +264,7 @@ export default function WriteEmail({
             autoCorrect="off"
             autoCapitalize="off"
             autoComplete="off"
-            className="w-full h-44 p-4 border border-[#bfdbfe]/70 bg-white rounded text-[15px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800"
+            className="w-full h-52 p-5 border border-[#bfdbfe]/70 bg-white rounded text-[17px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800"
           />
 
           <div className="flex justify-between items-center mt-3 select-none">
@@ -265,7 +292,7 @@ export default function WriteEmail({
               </button>
             </div>
 
-            <span className="text-sm font-sans font-bold text-gray-700">
+            <span className="text-base font-sans font-bold text-gray-700">
               Word Count:{" "}
               <span className="text-[#0284c7]">{wordCount}</span>
             </span>

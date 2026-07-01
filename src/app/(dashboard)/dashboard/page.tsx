@@ -14,6 +14,7 @@ import {
   Award,
   ArrowRight,
   Sparkles,
+  Lock,
 } from "lucide-react";
 import StatCard from "@/components/dashboard/StatCard";
 import RecentActivity from "@/components/dashboard/RecentActivity";
@@ -183,34 +184,55 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* Stats — single row on desktop, 2x2 on tablet, single column on phone */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <StatCard
-          title="Questions Attempted"
-          value={totalAttempts}
-          desc="Total practice submissions"
-          icon={<HelpCircle className="w-4 h-4 text-mute" />}
-        />
-        <StatCard
-          title="Correct Answers"
-          value={correctAttempts}
-          desc={`Out of ${totalAttempts} attempts`}
-          icon={<CheckCircle className="w-4 h-4 text-mute" />}
-        />
-        <StatCard
-          title="Accuracy Rate"
-          value={`${accuracy}%`}
-          desc="Correct vs total attempts"
-          icon={<TrendingUp className="w-4 h-4 text-mute" />}
-          trend={accuracy >= 70 ? { value: "On track", positive: true } : undefined}
-        />
-        <StatCard
-          title="Modules Practiced"
-          value={`${modulesPracticed}/4`}
-          desc="Coverage of PTE modules"
-          icon={<Award className="w-4 h-4 text-mute" />}
-        />
-      </div>
+      {/* Stats — single row on desktop, 2x2 on tablet, single column on phone.
+          Progress statistics are an Aura Pro perk; Starter sees a locked upsell instead. */}
+      {isPremium ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <StatCard
+            title="Questions Attempted"
+            value={totalAttempts}
+            desc="Total practice submissions"
+            icon={<HelpCircle className="w-4 h-4 text-mute" />}
+          />
+          <StatCard
+            title="Correct Answers"
+            value={correctAttempts}
+            desc={`Out of ${totalAttempts} attempts`}
+            icon={<CheckCircle className="w-4 h-4 text-mute" />}
+          />
+          <StatCard
+            title="Accuracy Rate"
+            value={`${accuracy}%`}
+            desc="Correct vs total attempts"
+            icon={<TrendingUp className="w-4 h-4 text-mute" />}
+            trend={accuracy >= 70 ? { value: "On track", positive: true } : undefined}
+          />
+          <StatCard
+            title="Modules Practiced"
+            value={`${modulesPracticed}/4`}
+            desc="Coverage of PTE modules"
+            icon={<Award className="w-4 h-4 text-mute" />}
+          />
+        </div>
+      ) : (
+        <Link
+          href="/billing"
+          className="card-hover flex items-center justify-between gap-4 bg-canvas border border-hairline rounded-xl p-6 shadow-vercel-card"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-canvas-soft-2 border border-hairline flex items-center justify-center shrink-0">
+              <Lock className="w-4 h-4 text-mute" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-ink">Progress statistics are a Pro feature</p>
+              <p className="text-xs text-mute mt-0.5">
+                Upgrade to Aura Pro to track attempts, accuracy, and module coverage.
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-mute shrink-0" />
+        </Link>
+      )}
 
       {/* Practice Modules grid */}
       <div className="space-y-4">
@@ -267,12 +289,32 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity — also an Aura Pro perk, matching the stats gate above. */}
       <div className="space-y-4">
         <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
           Recent Activity
         </h3>
-        <RecentActivity attempts={recentAttempts as any} />
+        {isPremium ? (
+          <RecentActivity attempts={recentAttempts as any} />
+        ) : (
+          <Link
+            href="/billing"
+            className="card-hover flex items-center justify-between gap-4 bg-canvas border border-hairline rounded-xl p-6 shadow-vercel-card"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-canvas-soft-2 border border-hairline flex items-center justify-center shrink-0">
+                <Lock className="w-4 h-4 text-mute" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-ink">Recent activity is a Pro feature</p>
+                <p className="text-xs text-mute mt-0.5">
+                  Upgrade to Aura Pro to see your last submissions across every module.
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-mute shrink-0" />
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isPremiumPlan } from "@/lib/plans";
 
 type Mode = "light" | "dark";
 
@@ -9,6 +10,8 @@ interface ThemeContextValue {
   mode: Mode;
   setMode: (m: Mode) => void;
   toggle: () => void;
+  /** Theme switching is an Aura Pro perk — Starter accounts stay on light mode. */
+  isPremium: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -54,6 +57,9 @@ export const themeInitScript = `
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<Mode>("light");
+  const [isPremium, setIsPremium] = useState(false);
+  const isPremiumRef = useRef(isPremium);
+  isPremiumRef.current = isPremium;
 
   useEffect(() => {
     // Step 1: resolve initial theme from localStorage or OS
@@ -79,17 +85,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
         const { data } = await supabase
           .from("profiles")
-          .select("theme")
+          .select("theme, plan")
           .eq("id", user.id)
           .maybeSingle();
 
+        const premium = isPremiumPlan(data?.plan);
+        setIsPremium(premium);
+
+        if (!premium) {
+          // Starter accounts don't get to keep a dark preference — force light,
+          // but leave any saved preference in the DB untouched in case they upgrade later.
+          setModeState("light");
+          applyClass("light");
+          return;
+        }
+
         if (data?.theme === "light" || data?.theme === "dark") {
           // DB preference wins — apply and sync locally
-          if (data.theme !== initial) {
-            setModeState(data.theme);
-            try { localStorage.setItem(STORAGE_KEY, data.theme); } catch (_) {}
-            applyClass(data.theme);
-          }
+          setModeState(data.theme);
+          try { localStorage.setItem(STORAGE_KEY, data.theme); } catch (_) {}
+          applyClass(data.theme);
         } else {
           // No DB preference yet — save the resolved initial value
           await supabase
@@ -101,9 +116,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     syncWithDB();
+
+    // Re-check plan when it changes elsewhere (e.g. the dev plan switcher in Header)
+    // so the lock reflects the new tier without a full page reload.
+    window.addEventListener("planChanged", syncWithDB);
+    return () => window.removeEventListener("planChanged", syncWithDB);
   }, []);
 
   const setMode = useCallback(async (next: Mode) => {
+    if (next === "dark" && !isPremiumRef.current) return;
     setModeState(next);
     try { localStorage.setItem(STORAGE_KEY, next); } catch (_) {}
     applyClass(next);
@@ -123,7 +144,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [mode, setMode]);
 
   return (
-    <ThemeContext.Provider value={{ mode, setMode, toggle }}>
+    <ThemeContext.Provider value={{ mode, setMode, toggle, isPremium }}>
       {children}
     </ThemeContext.Provider>
   );

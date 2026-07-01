@@ -13,12 +13,9 @@ import {
   BarChart3,
   Play,
   Pause,
-  Maximize2,
-  Minimize2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapDbToUrlTaskType } from "@/lib/taskTypeMapper";
-import { useFullscreen } from "@/hooks/useFullscreen";
 
 /**
  * QuestionRunner — the engine that powers both Practice Tests and full
@@ -170,7 +167,6 @@ export default function QuestionRunner({
   );
 
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   const currentQ = questions[state.currentIdx];
   const total = questions.length;
@@ -341,13 +337,6 @@ export default function QuestionRunner({
               </h2>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={toggleFullscreen}
-                title={isFullscreen ? "Exit full screen" : "Enter full screen"}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-hairline bg-canvas text-mute hover:text-ink hover:border-hairline-strong transition"
-              >
-                {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-              </button>
               <button
                 onClick={() => dispatch({ type: "FLAG", questionId: currentQ.id, flag: !state.flags[currentQ.id] })}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-2xs font-mono uppercase tracking-wider border transition ${

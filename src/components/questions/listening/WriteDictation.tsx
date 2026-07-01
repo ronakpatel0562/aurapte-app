@@ -16,12 +16,14 @@ interface WriteDictationProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 export default function WriteDictation({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: WriteDictationProps) {
   const { audio_url, sentence } = question.content;
 
@@ -294,7 +296,7 @@ export default function WriteDictation({
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           You will hear a sentence. Type the sentence in the box below exactly as you hear it. Write as much of the sentence as you can. You will hear the sentence only once.
         </div>
 
@@ -351,13 +353,7 @@ export default function WriteDictation({
         </div>
 
         {/* Textarea Editor Box */}
-        <div className="px-8 pb-6 bg-white space-y-6">
-          {submitted && result && (
-            <div className="flex justify-end items-center pb-2 border-b border-gray-100 select-none">
-              <ScoreBadge score={result.score} maxScore={result.maxScore} />
-            </div>
-          )}
-
+        <div className="px-9 pb-7 bg-white space-y-8">
           <div className="space-y-4">
             <textarea
               ref={textareaRef}
@@ -369,7 +365,7 @@ export default function WriteDictation({
               autoCorrect="off"
               autoCapitalize="off"
               autoComplete="off"
-              className="w-full h-32 p-4 border border-gray-300 bg-white rounded text-[15px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+              className="w-full h-40 p-5 border border-gray-300 bg-white rounded text-[17px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
             />
 
             <div className="flex justify-between items-center select-none">
@@ -399,7 +395,7 @@ export default function WriteDictation({
               </div>
 
               {/* Bottom-right word count */}
-              <span className="text-sm font-sans font-bold text-gray-700">
+              <span className="text-base font-sans font-bold text-gray-700">
                 Word Count: <span className="text-[#0284c7]">{wordCount}</span>
               </span>
             </div>
@@ -407,16 +403,16 @@ export default function WriteDictation({
 
           {/* Word-by-word highlights showing on submit */}
           {submitted && (
-            <div className="space-y-3 p-4 border border-gray-200 rounded-md bg-[#FAF9F6] font-sans select-text">
+            <div className="space-y-3 p-5 border border-gray-200 rounded-md bg-[#FAF9F6] font-sans select-text">
               <span className="text-xs font-bold font-mono text-gray-500 uppercase tracking-wider block select-none">
                 Typed Sentence Highlights
               </span>
-              <div className="flex flex-wrap gap-x-2.5 gap-y-1.5 text-sm">
+              <div className="flex flex-wrap gap-x-2.5 gap-y-1.5 text-base">
                 {analyzedUserWords.length > 0 ? (
                   analyzedUserWords.map((item, idx) => (
                     <span
                       key={idx}
-                      className={`px-1.5 py-0.5 rounded font-semibold ${
+                      className={`px-2 py-1 rounded font-semibold ${
                         item.isCorrect
                           ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                           : "bg-red-50 text-red-800 border border-red-200"
@@ -434,7 +430,12 @@ export default function WriteDictation({
         </div>
 
         {/* Silver-grey Practice Footer Panel */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+          <div>
+            {submitted && result && (
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            )}
+          </div>
           {!submitted ? (
             <button
               onClick={handleSubmit}
@@ -466,7 +467,7 @@ export default function WriteDictation({
               Correct Sentence Key
             </span>
           </div>
-          <div className="text-[15px] text-gray-800 leading-relaxed select-text font-sans font-medium">
+          <div className="text-[17px] text-gray-800 leading-relaxed select-text font-sans font-medium">
             {sentence}
           </div>
         </div>

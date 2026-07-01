@@ -18,6 +18,7 @@ interface MCQSingleProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 /**
@@ -79,6 +80,7 @@ export default function MCQSingle({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: MCQSingleProps) {
   const { passage, question: stem, options } = question.content;
   const rawCorrect = extractCorrectAnswer(question.content, options);
@@ -112,26 +114,26 @@ export default function MCQSingle({
       {/* Main Container */}
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           Read the text and answer the multiple-choice question by selecting the correct response. Only one response is correct.
         </div>
 
         {/* 2-Column Workspace */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 p-9 bg-white">
           {/* Left Column: Passage */}
-          <div className="space-y-3 md:border-r md:border-gray-200 md:pr-8">
-            <h4 className="text-[13px] font-bold text-gray-400 font-mono uppercase tracking-wider select-none">
+          <div className="space-y-4 md:border-r md:border-gray-200 md:pr-9">
+            <h4 className="text-[14px] font-bold text-gray-400 font-mono uppercase tracking-wider select-none">
               Read the text below
             </h4>
-            <div className="text-[14px] text-gray-800 leading-relaxed font-sans select-text max-h-[400px] overflow-y-auto pr-2">
+            <div className="text-[16px] text-gray-800 leading-relaxed font-sans select-text max-h-[460px] overflow-y-auto pr-2">
               {passage}
             </div>
           </div>
 
           {/* Right Column: Question & Options */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center select-none pb-2 border-b border-gray-100">
-              <h3 className="text-[15px] font-bold text-gray-800 leading-snug select-text">
+          <div className="space-y-8">
+            <div className="flex justify-between items-center select-none pb-3 border-b border-gray-100">
+              <h3 className="text-[18px] font-bold text-gray-800 leading-normal select-text">
                 {stem}
               </h3>
               {submitted && result && (
@@ -139,7 +141,7 @@ export default function MCQSingle({
               )}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {options.map((option, index) => {
                 const optionText = stripPrefix(option);
                 const isSel = selected === option;
@@ -150,18 +152,18 @@ export default function MCQSingle({
                     <button
                       key={`${index}-${optionText}`}
                       onClick={() => handleSelect(option)}
-                      className="w-full text-left flex items-start gap-3 group transition duration-150 select-none py-1.5 cursor-pointer active:scale-[0.99]"
+                      className="w-full text-left flex items-start gap-3.5 group transition duration-150 select-none py-2 cursor-pointer active:scale-[0.99]"
                     >
                       <div
-                        className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition ${
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition ${
                           isSel
                             ? "bg-[#1C415A] border-[#1C415A] text-white"
                             : "border-gray-400 bg-white group-hover:border-gray-600"
                         }`}
                       >
-                        {isSel && <Check className="w-2.5 h-2.5 text-white stroke-[3]" />}
+                        {isSel && <Check className="w-3 h-3 text-white stroke-[3]" />}
                       </div>
-                      <span className="text-[14px] text-gray-700 font-sans leading-relaxed select-text">
+                      <span className="text-[16px] text-gray-700 font-sans leading-relaxed select-text">
                         {getDisplayText(option, index)}
                       </span>
                     </button>
@@ -199,11 +201,11 @@ export default function MCQSingle({
                   return (
                     <div
                       key={`${index}-${optionText}`}
-                      className={`w-full text-left p-4 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
+                      className={`w-full text-left p-5 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
                     >
-                      <div className="flex items-center gap-3 pr-4 select-text text-[14px]">
+                      <div className="flex items-center gap-3.5 pr-4 select-text text-[16px]">
                         <div
-                          className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center shrink-0 transition ${radioClass}`}
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition ${radioClass}`}
                         >
                           {iconToRender}
                         </div>

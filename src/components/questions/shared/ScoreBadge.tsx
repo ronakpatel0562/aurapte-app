@@ -1,11 +1,16 @@
 import React from "react";
+import LockedScoreBadge from "./LockedScoreBadge";
 
 interface ScoreBadgeProps {
   score: number;
   maxScore: number;
+  /** Detailed per-question scoring is an Aura Pro perk — Starter sees a locked badge instead. */
+  locked?: boolean;
 }
 
-export default function ScoreBadge({ score, maxScore }: ScoreBadgeProps) {
+export default function ScoreBadge({ score, maxScore, locked = false }: ScoreBadgeProps) {
+  if (locked) return <LockedScoreBadge />;
+
   const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
   
   const getBadgeStyles = () => {

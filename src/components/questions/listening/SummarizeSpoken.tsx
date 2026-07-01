@@ -364,7 +364,7 @@ export default function SummarizeSpoken({
 
 
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200">
           You will hear a short report. Write a summary of 20-30 words. You have 8 minutes to finish this task. Your response will be judged on the quality of your writing and on how well your response presents the key points presented in the lecture.
         </div>
 
@@ -419,13 +419,13 @@ export default function SummarizeSpoken({
         </div>
 
         {/* Word and Time Tracker line */}
-        <div className="flex justify-end gap-6 text-sm font-sans font-bold text-gray-700 mb-2 px-6 select-none">
+        <div className="flex justify-end gap-6 text-base font-sans font-bold text-gray-700 mb-2 px-7 select-none">
           <span>{wordCount} / 30 words Limit</span>
           <span className="tabular-nums">{formatTime(elapsedTime)}</span>
         </div>
 
         {/* Textarea Editor Box */}
-        <div className="px-6 pb-6 bg-white">
+        <div className="px-7 pb-7 bg-white">
           <textarea
             ref={textareaRef}
             value={text}
@@ -440,7 +440,7 @@ export default function SummarizeSpoken({
             autoCorrect="off"
             autoCapitalize="off"
             autoComplete="off"
-            className="w-full h-36 p-4 border border-[#bfdbfe]/70 bg-white rounded text-[15px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800"
+            className="w-full h-44 p-5 border border-[#bfdbfe]/70 bg-white rounded text-[17px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800"
           />
 
           <div className="flex justify-between items-center mt-3 select-none">
@@ -470,7 +470,7 @@ export default function SummarizeSpoken({
             </div>
 
             {/* Bottom-right word count */}
-            <span className="text-sm font-sans font-bold text-gray-700">
+            <span className="text-base font-sans font-bold text-gray-700">
               Word Count: <span className="text-[#0284c7]">{wordCount}</span>
             </span>
           </div>
@@ -505,7 +505,7 @@ export default function SummarizeSpoken({
               Sample Correct Answer(s)
             </span>
           </div>
-          <div className="space-y-3 text-sm text-ink leading-relaxed select-text font-geist">
+          <div className="space-y-3 text-base text-ink leading-relaxed select-text font-geist">
             {sampleAnswersList.map((ans, aIdx) => (
               <p key={aIdx} className="leading-relaxed">
                 {ans}

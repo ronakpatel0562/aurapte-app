@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ChevronRight, ChevronLeft, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapDbToUrlTaskType, getTaskTypeFriendlyName } from "@/lib/taskTypeMapper";
-import { useFullscreen } from "@/hooks/useFullscreen";
 
 // Import Reading components
 import RWFillBlanks from "@/components/questions/reading/RWFillBlanks";
@@ -62,9 +61,6 @@ export default function QuestionAttemptClient({
   const [submitting, setSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
-  const { isFullscreen, toggleFullscreen } = useFullscreen();
-
-
 
   // Reset states on question change
   useEffect(() => {
@@ -79,6 +75,16 @@ export default function QuestionAttemptClient({
   ) => {
     setSubmitting(true);
     setHasSubmitted(true);
+
+    // Starter/free users get an instant, ephemeral score: it's shown on
+    // screen but never written to user_attempts, so it never resurfaces in
+    // the question list, dashboard, or anywhere else, and disappears the
+    // moment they hit "Try Again". Only Pro plans get persistent history.
+    if (!isPremium) {
+      setSubmitting(false);
+      return;
+    }
+
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
 
     try {
@@ -116,6 +122,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -125,6 +132,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -134,6 +142,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -143,6 +152,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -165,6 +175,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -174,6 +185,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -186,6 +198,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -195,6 +208,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -204,6 +218,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -213,6 +228,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -222,6 +238,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -246,6 +263,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -255,6 +273,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -264,6 +283,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -273,6 +293,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -282,6 +303,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -291,6 +313,7 @@ export default function QuestionAttemptClient({
             question={question}
             onSubmitAttempt={handleSubmitAttempt}
             isSubmitting={submitting}
+            isPremium={isPremium}
           />
         );
       }
@@ -343,13 +366,9 @@ export default function QuestionAttemptClient({
                 {question.module}
               </Link>
               <ChevronRight className="w-3.5 h-3.5" />
-              {isPremium ? (
-                <Link href={getModuleUrl()} className="hover:text-ink transition">
-                  {formatTaskType(question.task_type)}
-                </Link>
-              ) : (
-                <span className="text-mute">{formatTaskType(question.task_type)}</span>
-              )}
+              <Link href={getModuleUrl()} className="hover:text-ink transition">
+                {formatTaskType(question.task_type)}
+              </Link>
             </div>
 
       {/* Title Header */}
@@ -364,36 +383,13 @@ export default function QuestionAttemptClient({
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit full screen" : "Enter full screen"}
-            className="h-9 w-9 flex items-center justify-center border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-ink hover:bg-canvas-soft-2 transition cursor-pointer"
+          <Link
+            href={getModuleUrl()}
+            className="h-9 px-4 border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-xs font-medium text-ink hover:bg-canvas-soft-2 transition flex items-center gap-1.5 cursor-pointer"
           >
-            {isFullscreen ? (
-              <Minimize2 className="w-3.5 h-3.5" />
-            ) : (
-              <Maximize2 className="w-3.5 h-3.5" />
-            )}
-          </button>
-
-          {isPremium ? (
-            <Link
-              href={getModuleUrl()}
-              className="h-9 px-4 border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-xs font-medium text-ink hover:bg-canvas-soft-2 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-mute" />
-              <span>Back to List</span>
-            </Link>
-          ) : (
-            <Link
-              href={`/questions/${question.module.toLowerCase()}`}
-              className="h-9 px-4 border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-xs font-medium text-ink hover:bg-canvas-soft-2 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-mute" />
-              <span>Back to Module</span>
-            </Link>
-          )}
+            <ArrowLeft className="w-3.5 h-3.5 text-mute" />
+            <span>Back to List</span>
+          </Link>
         </div>
       </div>
 
@@ -429,10 +425,10 @@ export default function QuestionAttemptClient({
                     </Link>
                   ) : (
                     <Link
-                      href={isPremium ? getModuleUrl() : `/questions/${question.module.toLowerCase()}`}
+                      href={getModuleUrl()}
                       className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
                     >
-                      <span>Back to {isPremium ? "List" : "Module"}</span>
+                      <span>Back to List</span>
                     </Link>
                   )}
                 </div>

@@ -31,6 +31,7 @@ interface ReorderParagraphsProps {
   };
   onSubmitAttempt: (score: number, maxScore: number, answers: any) => void;
   isSubmitting: boolean;
+  isPremium?: boolean;
 }
 
 function DraggableTile({ id, text, index, isSubmitted, correctIndex, onRemove, onClick, type }: any) {
@@ -60,7 +61,7 @@ function DraggableTile({ id, text, index, isSubmitted, correctIndex, onRemove, o
       ref={setNodeRef}
       style={style}
       onClick={!isSubmitted ? onClick : undefined}
-      className={`p-3.5 border rounded text-[13px] relative flex items-start gap-3 transition shadow-sm bg-white select-none ${getStyles()} ${
+      className={`p-4 border rounded text-[15px] relative flex items-start gap-3.5 transition shadow-sm bg-white select-none ${getStyles()} ${
         isDragging ? "opacity-50" : ""
       }`}
     >
@@ -74,7 +75,7 @@ function DraggableTile({ id, text, index, isSubmitted, correctIndex, onRemove, o
           ⠿
         </div>
       )}
-      <div className="flex-1 font-sans select-text pr-2 leading-relaxed">
+      <div className="flex-1 font-sans select-text pr-2 leading-relaxed text-[15px]">
         {text}
       </div>
       {!isSubmitted && type === "target" && (
@@ -127,7 +128,7 @@ function DroppableTargetSlot({ index, children, isSubmitted }: any) {
       }`}
     >
       {children || (
-        <div className="h-[52px] border border-dashed border-gray-300 rounded bg-[#EAECEF] flex items-center justify-center text-[12px] text-gray-400 font-bold select-none font-sans">
+        <div className="h-[58px] border border-dashed border-gray-300 rounded bg-[#EAECEF] flex items-center justify-center text-[13px] text-gray-400 font-bold select-none font-sans">
           Place {index + 1}
         </div>
       )}
@@ -139,6 +140,7 @@ export default function ReorderParagraphs({
   question,
   onSubmitAttempt,
   isSubmitting,
+  isPremium = false,
 }: ReorderParagraphsProps) {
   const { paragraphs, correct_order, shuffled_order } = question.content;
 
@@ -266,27 +268,21 @@ export default function ReorderParagraphs({
       {/* Interaction Board */}
       <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans relative">
         {/* Instruction Paragraph */}
-        <div className="px-6 py-5 bg-[#FAF9F6] text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-7 py-6 bg-[#FAF9F6] text-[16px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
           The text boxes in the left panel placed in a random order. Restore the original order by dragging the text boxes from the left panel to the right panel.
         </div>
 
         {/* Workspace Columns */}
-        <div className="p-8 bg-white space-y-6">
-          {submitted && result && (
-            <div className="flex justify-end select-none">
-              <ScoreBadge score={result.score} maxScore={result.maxScore} />
-            </div>
-          )}
-
+        <div className="p-9 bg-white space-y-8">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[300px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 min-h-[300px]">
               {/* Shuffled pool (Left) */}
               <div className="border border-gray-300 rounded overflow-hidden flex flex-col bg-[#F3F4F6] pb-4 shadow-sm">
-                <div className="bg-[#0b7ca5] text-white text-[13px] font-bold text-center py-2 select-none uppercase tracking-wider mb-2">
+                <div className="bg-[#0b7ca5] text-white text-[14px] font-bold text-center py-2.5 select-none uppercase tracking-wider mb-2">
                   Source
                 </div>
                 <DroppableSourceContainer isSubmitted={submitted}>
@@ -311,10 +307,10 @@ export default function ReorderParagraphs({
 
               {/* Sorted Dropzone (Right) */}
               <div className="border border-gray-300 rounded overflow-hidden flex flex-col bg-[#F3F4F6] pb-4 shadow-sm">
-                <div className="bg-[#0b7ca5] text-white text-[13px] font-bold text-center py-2 select-none uppercase tracking-wider mb-2">
+                <div className="bg-[#0b7ca5] text-white text-[14px] font-bold text-center py-2.5 select-none uppercase tracking-wider mb-2">
                   Target
                 </div>
-                <div className="p-4 flex-1 space-y-3 max-h-[450px] overflow-y-auto">
+                <div className="p-4 flex-1 space-y-4 max-h-[450px] overflow-y-auto">
                   {Array.from({ length: paragraphs.length }).map((_, index) => {
                     const para = orderedList[index];
                     const slotChild = para ? (
@@ -347,7 +343,12 @@ export default function ReorderParagraphs({
         </div>
 
         {/* Silver-grey Practice Footer Panel */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+          <div>
+            {submitted && result && (
+              <ScoreBadge score={result.score} maxScore={result.maxScore} />
+            )}
+          </div>
           {!submitted ? (
             <button
               onClick={handleSubmit}
@@ -381,7 +382,7 @@ export default function ReorderParagraphs({
           </div>
 
           {/* Ordered numbered cards */}
-          <div className="p-6 space-y-3 bg-[#FAF9F6]">
+          <div className="p-7 space-y-4 bg-[#FAF9F6]">
             {correct_order.map((id, idx) => {
               const para = paragraphs.find((p) => p.id === id);
               const wasPlacedAt = orderedList.findIndex((p) => p.id === id);
@@ -391,7 +392,7 @@ export default function ReorderParagraphs({
               return (
                 <div
                   key={id}
-                  className={`p-3.5 border rounded text-[13px] leading-relaxed flex items-start gap-3 bg-white shadow-sm ${
+                  className={`p-4 border rounded text-[15px] leading-relaxed flex items-start gap-3.5 bg-white shadow-sm ${
                     correctlyPlaced
                       ? "border-emerald-500 text-emerald-800"
                       : "border-red-500 text-red-800"

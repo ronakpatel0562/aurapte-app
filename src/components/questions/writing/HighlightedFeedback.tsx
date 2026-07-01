@@ -35,7 +35,7 @@ export default function HighlightedFeedback({
   if (loading && !analysis) {
     return (
       <div className="space-y-4 reveal-up">
-        <div className="bg-canvas border border-hairline rounded-md p-4 font-geist text-sm leading-relaxed text-mute/60 whitespace-pre-wrap break-words select-text">
+        <div className="bg-canvas border border-hairline rounded-md p-5 font-geist text-base leading-relaxed text-mute/60 whitespace-pre-wrap break-words select-text">
           {rawText}
         </div>
         <div className="text-2xs font-mono text-mute uppercase tracking-wider flex items-center gap-2 select-none animate-pulse">
@@ -49,7 +49,7 @@ export default function HighlightedFeedback({
   if (!analysis) {
     if (rawText) {
       return (
-        <div className="bg-canvas border border-hairline rounded-md p-4 font-geist text-sm leading-relaxed text-ink whitespace-pre-wrap break-words select-text">
+        <div className="bg-canvas border border-hairline rounded-md p-5 font-geist text-base leading-relaxed text-ink whitespace-pre-wrap break-words select-text">
           {rawText}
         </div>
       );
@@ -62,7 +62,7 @@ export default function HighlightedFeedback({
   return (
     <div className="space-y-6 reveal-up">
       {/* Inline highlighted rendering of the original text */}
-      <div className="bg-canvas border border-hairline rounded-md p-5 font-geist text-[15px] leading-relaxed text-ink whitespace-pre-wrap break-words select-text">
+      <div className="bg-canvas border border-hairline rounded-md p-6 font-geist text-[17px] leading-relaxed text-ink whitespace-pre-wrap break-words select-text">
         {analysis.annotatedTokens.map((tok, idx) => (
           <Token key={idx} token={tok} />
         ))}
@@ -159,29 +159,31 @@ function IssueCard({
     typeLabel = "GRAMMAR (PUNCTUATION)";
   } else if (issue.type === "duplication") {
     typeLabel = "GRAMMAR (DUPLICATION)";
+  } else if (issue.type === "spacing") {
+    typeLabel = "GRAMMAR (SPACING)";
   }
 
   return (
     <div
-      className={`bg-canvas border border-hairline rounded-md p-4 border-l-[3.5px] ${borderClass} shadow-sm space-y-3 transition hover:shadow-md duration-150`}
+      className={`bg-canvas border border-hairline rounded-md p-5 border-l-[3.5px] ${borderClass} shadow-sm space-y-3 transition hover:shadow-md duration-150`}
     >
-      <div className="space-y-1.5">
-        <div className="text-[10px] font-bold text-mute uppercase tracking-widest select-none">
+      <div className="space-y-2">
+        <div className="text-[11px] font-bold text-mute uppercase tracking-widest select-none">
           Issue #{number} • {typeLabel}
         </div>
-        <div className="text-[13px] text-ink leading-relaxed font-sans">
+        <div className="text-[15px] text-ink leading-relaxed font-sans">
           {issue.message}
         </div>
       </div>
 
       {issue.suggestions && issue.suggestions.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-hairline/60 text-[10px] font-bold uppercase tracking-wider text-mute select-none">
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-hairline/60 text-[11px] font-bold uppercase tracking-wider text-mute select-none">
           <span>Suggestions:</span>
           <div className="flex flex-wrap gap-1.5">
             {issue.suggestions.map((s) => (
               <span
                 key={s}
-                className="px-2 py-0.5 rounded border border-[#9DD8B6] bg-[#E6F7EE] text-[#0E7A47] font-semibold normal-case text-[11px] font-geist cursor-default"
+                className="px-2.5 py-1 rounded border border-[#9DD8B6] bg-[#E6F7EE] text-[#0E7A47] font-semibold normal-case text-[13px] font-geist cursor-default"
               >
                 {s}
               </span>

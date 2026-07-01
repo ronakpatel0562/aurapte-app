@@ -37,6 +37,8 @@ interface QuestionListClientProps {
   summary: string;
   initialQuestions: Question[];
   attemptMap: Record<string, AttemptInfo>;
+  /** Search/difficulty/status filters are an Aura Pro perk — Starter browses the unfiltered list. */
+  isPremium?: boolean;
 }
 
 export default function QuestionListClient({
@@ -47,6 +49,7 @@ export default function QuestionListClient({
   summary,
   initialQuestions,
   attemptMap,
+  isPremium = false,
 }: QuestionListClientProps) {
   const [search, setSearch] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
@@ -189,69 +192,71 @@ export default function QuestionListClient({
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-canvas border border-hairline p-4 rounded-lg shadow-vercel-card flex flex-col md:flex-row gap-4 items-center justify-between">
-        {/* Search */}
-        <div className="relative w-full md:max-w-xs">
-          <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-mute" />
-          <input
-            type="text"
-            placeholder="Search questions..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-9 pl-9 pr-3 bg-canvas border border-hairline rounded-md text-xs text-ink focus:outline-none focus:border-hairline-strong transition"
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-          {/* Difficulty */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-              Difficulty
-            </span>
-            <div className="flex border border-hairline rounded-md overflow-hidden bg-canvas-soft-2">
-              {["all", "easy", "medium", "hard"].map((diff) => (
-                <button
-                  key={diff}
-                  onClick={() => setDifficultyFilter(diff)}
-                  className={`px-3 py-1 text-2xs font-medium capitalize transition cursor-pointer ${difficultyFilter === diff
-                      ? "bg-canvas text-ink font-semibold border-r border-l border-hairline first:border-l-0 last:border-r-0"
-                      : "text-body hover:text-ink"
-                    }`}
-                >
-                  {diff}
-                </button>
-              ))}
-            </div>
+      {/* Filter Bar — search/difficulty/status filters are an Aura Pro perk. */}
+      {isPremium && (
+        <div className="bg-canvas border border-hairline p-4 rounded-lg shadow-vercel-card flex flex-col md:flex-row gap-4 items-center justify-between">
+          {/* Search */}
+          <div className="relative w-full md:max-w-xs">
+            <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-mute" />
+            <input
+              type="text"
+              placeholder="Search questions..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-9 pl-9 pr-3 bg-canvas border border-hairline rounded-md text-xs text-ink focus:outline-none focus:border-hairline-strong transition"
+            />
           </div>
 
-          {/* Status */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
-              Status
-            </span>
-            <div className="flex border border-hairline rounded-md overflow-hidden bg-canvas-soft-2">
-              {[
-                { id: "all", label: "All" },
-                { id: "unattempted", label: "New" },
-                { id: "attempted", label: "Done" },
-              ].map((status) => (
-                <button
-                  key={status.id}
-                  onClick={() => setStatusFilter(status.id)}
-                  className={`px-3 py-1 text-2xs font-medium transition cursor-pointer ${statusFilter === status.id
-                      ? "bg-canvas text-ink font-semibold border-r border-l border-hairline first:border-l-0 last:border-r-0"
-                      : "text-body hover:text-ink"
-                    }`}
-                >
-                  {status.label}
-                </button>
-              ))}
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+            {/* Difficulty */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
+                Difficulty
+              </span>
+              <div className="flex border border-hairline rounded-md overflow-hidden bg-canvas-soft-2">
+                {["all", "easy", "medium", "hard"].map((diff) => (
+                  <button
+                    key={diff}
+                    onClick={() => setDifficultyFilter(diff)}
+                    className={`px-3 py-1 text-2xs font-medium capitalize transition cursor-pointer ${difficultyFilter === diff
+                        ? "bg-canvas text-ink font-semibold border-r border-l border-hairline first:border-l-0 last:border-r-0"
+                        : "text-body hover:text-ink"
+                      }`}
+                  >
+                    {diff}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-mute font-mono uppercase tracking-wider">
+                Status
+              </span>
+              <div className="flex border border-hairline rounded-md overflow-hidden bg-canvas-soft-2">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "unattempted", label: "New" },
+                  { id: "attempted", label: "Done" },
+                ].map((status) => (
+                  <button
+                    key={status.id}
+                    onClick={() => setStatusFilter(status.id)}
+                    className={`px-3 py-1 text-2xs font-medium transition cursor-pointer ${statusFilter === status.id
+                        ? "bg-canvas text-ink font-semibold border-r border-l border-hairline first:border-l-0 last:border-r-0"
+                        : "text-body hover:text-ink"
+                      }`}
+                  >
+                    {status.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Questions Card List */}
       <div className="space-y-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { LogOut, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/auth/actions";
@@ -17,6 +17,20 @@ export default function Header() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const onPointerDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [menuOpen]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -103,7 +117,7 @@ export default function Header() {
             </div>
 
             {/* Avatar dropdown */}
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen((o) => !o)}
                 className="flex items-center gap-1.5 group"
@@ -124,11 +138,6 @@ export default function Header() {
 
               {menuOpen && (
                 <>
-                  {/* Click-away overlay */}
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setMenuOpen(false)}
-                  />
                   <div
                     role="menu"
                     className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-hairline bg-canvas shadow-vercel-popover z-50 overflow-hidden"
