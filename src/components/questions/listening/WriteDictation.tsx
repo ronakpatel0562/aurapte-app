@@ -365,6 +365,10 @@ export default function WriteDictation({
               onChange={(e) => setTypedText(e.target.value)}
               disabled={submitted || isInteractionDisabled}
               placeholder="Type the sentence here..."
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              autoComplete="off"
               className="w-full h-32 p-4 border border-gray-300 bg-white rounded text-[15px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
             />
 

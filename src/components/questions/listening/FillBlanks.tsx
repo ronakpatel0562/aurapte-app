@@ -312,6 +312,10 @@ export default function FillBlanks({
                           onChange={(e) => handleChange(blankId, e.target.value)}
                           disabled={submitted}
                           placeholder=""
+                          spellCheck={false}
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          autoComplete="off"
                           className={`h-7 w-28 mx-1 border rounded text-xs px-2.5 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400 transition ${getInputStyles()}`}
                         />
                         

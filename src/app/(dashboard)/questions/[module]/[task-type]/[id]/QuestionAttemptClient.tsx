@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapDbToUrlTaskType, getTaskTypeFriendlyName } from "@/lib/taskTypeMapper";
+import { useFullscreen } from "@/hooks/useFullscreen";
 
 // Import Reading components
 import RWFillBlanks from "@/components/questions/reading/RWFillBlanks";
@@ -61,6 +62,7 @@ export default function QuestionAttemptClient({
   const [submitting, setSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
 
 
 
@@ -361,23 +363,38 @@ export default function QuestionAttemptClient({
           </p>
         </div>
 
-        {isPremium ? (
-          <Link
-            href={getModuleUrl()}
-            className="h-9 px-4 border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-xs font-medium text-ink hover:bg-canvas-soft-2 transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit full screen" : "Enter full screen"}
+            className="h-9 w-9 flex items-center justify-center border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-ink hover:bg-canvas-soft-2 transition cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-mute" />
-            <span>Back to List</span>
-          </Link>
-        ) : (
-          <Link
-            href={`/questions/${question.module.toLowerCase()}`}
-            className="h-9 px-4 border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-xs font-medium text-ink hover:bg-canvas-soft-2 transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-mute" />
-            <span>Back to Module</span>
-          </Link>
-        )}
+            {isFullscreen ? (
+              <Minimize2 className="w-3.5 h-3.5" />
+            ) : (
+              <Maximize2 className="w-3.5 h-3.5" />
+            )}
+          </button>
+
+          {isPremium ? (
+            <Link
+              href={getModuleUrl()}
+              className="h-9 px-4 border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-xs font-medium text-ink hover:bg-canvas-soft-2 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-mute" />
+              <span>Back to List</span>
+            </Link>
+          ) : (
+            <Link
+              href={`/questions/${question.module.toLowerCase()}`}
+              className="h-9 px-4 border border-hairline hover:border-hairline-strong bg-canvas rounded-md text-xs font-medium text-ink hover:bg-canvas-soft-2 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-mute" />
+              <span>Back to Module</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Interactive Render */}

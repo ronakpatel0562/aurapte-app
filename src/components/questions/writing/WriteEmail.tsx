@@ -233,6 +233,10 @@ export default function WriteEmail({
             }}
             disabled={timeLimitReached}
             placeholder="Type your email here..."
+            spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="off"
+            autoComplete="off"
             className="w-full h-44 p-4 border border-[#bfdbfe]/70 bg-white rounded text-[15px] font-sans focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/50 resize-y transition shadow-inner placeholder-gray-400 text-gray-800"
           />
 

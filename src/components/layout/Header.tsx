@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/auth/actions";
 import { PLANS, planName, type PlanId } from "@/lib/plans";
+import { useFullscreen } from "@/hooks/useFullscreen";
 
 interface UserProfile {
   fullName: string;
@@ -15,6 +16,7 @@ interface UserProfile {
 export default function Header() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -76,6 +78,15 @@ export default function Header() {
 
       {/* Right cluster */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <button
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Exit full screen" : "Enter full screen"}
+          aria-label={isFullscreen ? "Exit full screen" : "Enter full screen"}
+          className="h-8 w-8 flex items-center justify-center rounded-md border border-hairline bg-canvas text-mute hover:text-ink hover:border-hairline-strong transition"
+        >
+          {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+        </button>
+
         {profile ? (
           <>
             {/* Plan badge — pill showing the friendly name. Premium gets a

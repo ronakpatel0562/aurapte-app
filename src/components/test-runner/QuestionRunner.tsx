@@ -13,9 +13,12 @@ import {
   BarChart3,
   Play,
   Pause,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapDbToUrlTaskType } from "@/lib/taskTypeMapper";
+import { useFullscreen } from "@/hooks/useFullscreen";
 
 /**
  * QuestionRunner — the engine that powers both Practice Tests and full
@@ -167,6 +170,7 @@ export default function QuestionRunner({
   );
 
   const [state, dispatch] = useReducer(reducer, initialState);
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   const currentQ = questions[state.currentIdx];
   const total = questions.length;
@@ -336,17 +340,26 @@ export default function QuestionRunner({
                 {currentQ.title}
               </h2>
             </div>
-            <button
-              onClick={() => dispatch({ type: "FLAG", questionId: currentQ.id, flag: !state.flags[currentQ.id] })}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-2xs font-mono uppercase tracking-wider border transition ${
-                state.flags[currentQ.id]
-                  ? "bg-warning/10 text-warning-deep border-warning/30"
-                  : "bg-canvas text-mute border-hairline hover:border-hairline-strong"
-              }`}
-            >
-              <Flag className="w-3 h-3" />
-              {state.flags[currentQ.id] ? "Flagged" : "Flag"}
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit full screen" : "Enter full screen"}
+                className="h-8 w-8 flex items-center justify-center rounded-md border border-hairline bg-canvas text-mute hover:text-ink hover:border-hairline-strong transition"
+              >
+                {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => dispatch({ type: "FLAG", questionId: currentQ.id, flag: !state.flags[currentQ.id] })}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-2xs font-mono uppercase tracking-wider border transition ${
+                  state.flags[currentQ.id]
+                    ? "bg-warning/10 text-warning-deep border-warning/30"
+                    : "bg-canvas text-mute border-hairline hover:border-hairline-strong"
+                }`}
+              >
+                <Flag className="w-3 h-3" />
+                {state.flags[currentQ.id] ? "Flagged" : "Flag"}
+              </button>
+            </div>
           </div>
 
           {/* Question body — simplest reasonable representation. The full
@@ -657,6 +670,10 @@ function RunnerQuestionBody({
       disabled={disabled}
       rows={6}
       placeholder="Type your response here…"
+      spellCheck={false}
+      autoCorrect="off"
+      autoCapitalize="off"
+      autoComplete="off"
       className="w-full bg-canvas-soft-2 border border-hairline rounded-lg p-3.5 text-sm leading-relaxed font-geist focus:outline-none focus:border-primary focus:bg-canvas transition resize-y"
     />
   );
