@@ -92,6 +92,11 @@ export default function MockExamRunner({
   const [nextLocked, setNextLocked] = useState(false);
   const [showCannotSkip, setShowCannotSkip] = useState(false);
   const [finished, setFinished] = useState<"active" | "submitting" | "done">("active");
+  // Timed reveal for the Test Overview screen — Next stays disabled for a
+  // few seconds instead of auto-advancing, giving the background question
+  // fetch time to finish. Separate from `nextLocked` since it has no
+  // "Cannot Skip" modal.
+  const [overviewNextDisabled, setOverviewNextDisabled] = useState(true);
 
   // Optional 10-minute break offered after Part 2 (Reading) finishes.
   const [onBreak, setOnBreak] = useState(false);
@@ -187,6 +192,10 @@ export default function MockExamRunner({
 
   const persistAttempt = async (question: RunnerQuestion, mod: ModuleKey, answer: string) => {
     const { score, maxScore } = scoreAnswer(question, answer);
+    // Speaking has no deterministic scorer (see scoreAnswer.ts) — record it
+    // as "attempted" only, same as QuestionRunner does. Everything else is
+    // "correct" once it clears a 60% pass threshold.
+    const isCorrect = mod !== "speaking" && maxScore > 0 && score / maxScore >= 0.6;
     try {
       const supabase = createClient();
       await supabase.from("user_attempts").insert({
@@ -195,7 +204,7 @@ export default function MockExamRunner({
         user_answer: { transcript: answer },
         score,
         max_score: maxScore,
-        is_correct: false,
+        is_correct: isCorrect,
         time_taken_seconds: null,
         test_id: testId ?? null,
         module: mod,
@@ -286,12 +295,13 @@ export default function MockExamRunner({
         onSaveExit={() => setConfirmSaveExit(true)}
         onNext={handleNextClick}
         nextLabel={onBreak ? "Resume Now" : isLastStep ? "Submit Test" : "Next"}
+        nextDisabled={item.kind === "test-overview" && overviewNextDisabled}
       >
         {onBreak ? (
           <BreakScreen remainingSeconds={breakRemaining} />
         ) : (
           <>
-            {item.kind === "test-overview" && <TestOverviewScreen onAutoAdvance={advance} />}
+            {item.kind === "test-overview" && <TestOverviewScreen onLockChange={setOverviewNextDisabled} />}
             {item.kind === "test-introduction" && <TestIntroductionScreen />}
             {item.kind === "headset-check" && <HeadsetCheckScreen />}
             {item.kind === "mic-check" && <MicCheckScreen />}

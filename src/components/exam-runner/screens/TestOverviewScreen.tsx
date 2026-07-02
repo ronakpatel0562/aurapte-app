@@ -1,27 +1,55 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
-const AUTO_ADVANCE_SECONDS = 3;
+const NEXT_DELAY_MS = 3000;
 
 /**
  * First screen of a full Mock Test — the real PTE driver's "the test is
  * approximately 2 hours long" duration table, shown once before the
- * candidate ever sees Test Introduction / headset / mic checks.
+ * candidate ever sees Test Introduction / headset / mic checks. Next stays
+ * disabled for a few seconds (never auto-advances) so the exam shell has
+ * time to finish loading the test's questions in the background.
+ *
+ * This same component is also rendered by the route's loading.tsx (shown
+ * the instant "Start Test" is clicked, before the server has the questions
+ * loaded) and then again by the live MockExamRunner once data arrives —
+ * two separate mounts. The countdown deadline is anchored in
+ * sessionStorage (keyed by pathname) so the second mount picks up where
+ * the first left off instead of restarting a fresh 3s wait.
  */
-export default function TestOverviewScreen({ onAutoAdvance }: { onAutoAdvance: () => void }) {
-  const firedRef = useRef(false);
+export default function TestOverviewScreen({ onLockChange }: { onLockChange?: (locked: boolean) => void }) {
+  const pathname = usePathname();
+  const [remainingMs, setRemainingMs] = useState(NEXT_DELAY_MS);
 
   useEffect(() => {
-    const id = setTimeout(() => {
-      if (!firedRef.current) {
-        firedRef.current = true;
-        onAutoAdvance();
-      }
-    }, AUTO_ADVANCE_SECONDS * 1000);
-    return () => clearTimeout(id);
+    const storageKey = `exam-overview-deadline:${pathname}`;
+    const stored = Number(sessionStorage.getItem(storageKey));
+    const deadline = stored > 0 ? stored : Date.now() + NEXT_DELAY_MS;
+    if (!(stored > 0)) sessionStorage.setItem(storageKey, String(deadline));
+
+    const tick = () => {
+      const left = Math.max(0, deadline - Date.now());
+      setRemainingMs(left);
+      if (left <= 0) sessionStorage.removeItem(storageKey);
+    };
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [pathname]);
+
+  const remaining = Math.ceil(remainingMs / 1000);
+
+  // Kept free of side effects on the parent — calling `onLockChange` (the
+  // parent's setState) from inside the tick above would run during
+  // TestOverviewScreen's render phase and trigger React's "Cannot update a
+  // component while rendering a different component" warning, so the lock
+  // notification lives in its own effect.
+  useEffect(() => {
+    onLockChange?.(remainingMs > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [remainingMs > 0]);
 
   return (
     <div className="max-w-2xl w-full">
@@ -43,7 +71,9 @@ export default function TestOverviewScreen({ onAutoAdvance }: { onAutoAdvance: (
         </tbody>
       </table>
 
-      <p className="text-xs text-gray-500 italic">Wait for {AUTO_ADVANCE_SECONDS} seconds or click Next to proceed.</p>
+      <p className="text-xs text-gray-500 italic">
+        {remaining > 0 ? `Next will be available in ${remaining} second${remaining === 1 ? "" : "s"}.` : "Click Next to proceed."}
+      </p>
     </div>
   );
 }

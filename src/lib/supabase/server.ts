@@ -25,6 +25,17 @@ export function createClient() {
           }
         },
       },
+      global: {
+        // Next.js patches global fetch() to force-cache by default, and
+        // that cache is keyed on URL+method only (not on the Authorization
+        // header), so every PostgREST GET here — dashboard stats, recent
+        // activity, test progress — was served from a stale Data Cache
+        // entry from the first request after a server restart, no matter
+        // how fresh the underlying row was. no-store makes every Supabase
+        // request bypass that cache.
+        fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+          fetch(input, { ...init, cache: "no-store" }),
+      },
     }
   );
 }

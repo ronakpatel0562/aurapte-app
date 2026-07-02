@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
 import QuestionAttemptClient from "./QuestionAttemptClient";
 import { mapUrlToDbTaskType, transformQuestionContent } from "@/lib/taskTypeMapper";
+import { interleaveByDifficulty } from "@/lib/questionOrder";
 
 interface PageProps {
   params: {
@@ -50,11 +51,12 @@ export default async function QuestionAttemptPage({ params }: PageProps) {
         .maybeSingle(),
       supabase
         .from("questions")
-        .select("id, title")
+        .select("id, title, difficulty, created_at")
         .eq("module", moduleParam)
         .eq("task_type", dbTaskType)
         .eq("is_active", true)
-        .eq("pool", "shared"),
+        .eq("pool", "shared")
+        .order("created_at", { ascending: true }),
     ]);
   const plan = profile?.plan || "free";
 
@@ -62,41 +64,34 @@ export default async function QuestionAttemptPage({ params }: PageProps) {
     notFound();
   }
 
-  const getQuestionNumber = (title: string): number => {
-      const match = title.match(/#(\d+)/);
-      return match ? parseInt(match[1], 10) : Infinity;
-    };
+  // Same difficulty-interleave the list page uses for display order, so
+  // "Next Question" here matches the list's visual sequence instead of
+  // drifting to whatever question happens to share the next title number
+  // (title numbers encode difficulty rank, not list position).
+  const mixedQuestions = interleaveByDifficulty(questions || []);
+  const questionIds = mixedQuestions.map((q) => q.id);
+  const currentIndex = questionIds.indexOf(idParam);
 
-    const sortedQuestions = [...(questions || [])].sort((a, b) => {
-      const aNum = getQuestionNumber(a.title);
-      const bNum = getQuestionNumber(b.title);
-      if (aNum !== bNum) return aNum - bNum;
-      return a.title.localeCompare(b.title);
-    });
-
-    const questionIds = sortedQuestions.map((q) => q.id);
-    const currentIndex = questionIds.indexOf(idParam);
-
-    // Sequential navigation. When the user finishes the last question we
-    // wrap around to the first instead of dropping them on a "you did all
-    // of them" dead-end — this matches the rotation behaviour of every
-    // real PTE prep app and avoids the confusing "All Questions Done!"
-    // screen on tasks like Summarize Spoken Text where users expect to
-    // keep practising. If only one question exists in the DB (rare but
-    // possible during early seeding), nextQuestionId stays null and the
-    // standard "Return to Module" link is shown.
-    let nextQuestionId: string | null = null;
-    let prevQuestionId: string | null = null;
-    if (currentIndex !== -1 && questionIds.length > 1) {
-      nextQuestionId =
-        currentIndex < questionIds.length - 1
-          ? questionIds[currentIndex + 1]
-          : questionIds[0];
-      prevQuestionId =
-        currentIndex > 0
-          ? questionIds[currentIndex - 1]
-          : questionIds[questionIds.length - 1];
-    }
+  // Sequential navigation. When the user finishes the last question we
+  // wrap around to the first instead of dropping them on a "you did all
+  // of them" dead-end — this matches the rotation behaviour of every
+  // real PTE prep app and avoids the confusing "All Questions Done!"
+  // screen on tasks like Summarize Spoken Text where users expect to
+  // keep practising. If only one question exists in the DB (rare but
+  // possible during early seeding), nextQuestionId stays null and the
+  // standard "Return to Module" link is shown.
+  let nextQuestionId: string | null = null;
+  let prevQuestionId: string | null = null;
+  if (currentIndex !== -1 && questionIds.length > 1) {
+    nextQuestionId =
+      currentIndex < questionIds.length - 1
+        ? questionIds[currentIndex + 1]
+        : questionIds[0];
+    prevQuestionId =
+      currentIndex > 0
+        ? questionIds[currentIndex - 1]
+        : questionIds[questionIds.length - 1];
+  }
 
   const transformedQuestion = transformQuestionContent(question);
 

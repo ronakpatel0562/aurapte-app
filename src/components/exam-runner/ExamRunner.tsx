@@ -151,6 +151,10 @@ export default function ExamRunner({
 
   const persistAttempt = async (question: RunnerQuestion, answer: string) => {
     const { score, maxScore } = scoreAnswer(question, answer);
+    // Speaking has no deterministic scorer (see scoreAnswer.ts) — record it
+    // as "attempted" only, same as QuestionRunner does. Everything else is
+    // "correct" once it clears a 60% pass threshold.
+    const isCorrect = module !== "speaking" && maxScore > 0 && score / maxScore >= 0.6;
     try {
       const supabase = createClient();
       await supabase.from("user_attempts").insert({
@@ -159,7 +163,7 @@ export default function ExamRunner({
         user_answer: { transcript: answer },
         score,
         max_score: maxScore,
-        is_correct: false,
+        is_correct: isCorrect,
         time_taken_seconds: null,
         test_id: testId ?? null,
         module,

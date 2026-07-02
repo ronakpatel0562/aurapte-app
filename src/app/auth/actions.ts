@@ -30,30 +30,15 @@ export async function login(prevState: any, formData: FormData) {
     return { error: "Authentication failed. User not found." };
   }
 
-  // Check if an active session exists on another device
-  const { data: existingSession } = await supabase
-    .from("user_sessions")
-    .select("last_heartbeat")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (existingSession) {
-    const lastHeartbeat = new Date(existingSession.last_heartbeat).getTime();
-    const now = Date.now();
-    const differenceInMinutes = (now - lastHeartbeat) / (1000 * 60);
-
-    if (differenceInMinutes < 5) {
-      await supabase.auth.signOut();
-      return {
-        error: "A login session is already active on another device. Please log out from that device first.",
-      };
-    }
-  }
-
-  // 2. Generate new session_id (UUID)
+  // 2. Generate new session_id (UUID). Single-active-session is enforced
+  // by always overwriting `user_sessions` below rather than blocking this
+  // login — any device holding the old session_id gets logged out the next
+  // time its heartbeat (or a 401 it triggers) notices the mismatch. See
+  // SessionGuard/useHeartbeat for the kick-out side of this.
   const sessionId = crypto.randomUUID();
 
-  // 3. UPSERT into user_sessions
+  // 3. UPSERT into user_sessions — replaces any existing row for this user,
+  // terminating whatever session was previously active.
   const { error: sessionError } = await supabase
     .from("user_sessions")
     .upsert(

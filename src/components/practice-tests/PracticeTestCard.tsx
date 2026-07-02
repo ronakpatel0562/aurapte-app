@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Mic, PenTool, BookOpenCheck, Headphones, Lock, ChevronRight, CheckCircle2 } from "lucide-react";
+import { requestFullscreenOnNavigate } from "@/lib/fullscreen";
 
 interface ModuleRow {
   key: string;
@@ -25,16 +26,6 @@ interface PracticeTestCardProps {
   isLocked: boolean;
   /** Module keys the user has at least one recorded attempt for on this test. */
   attemptedModules?: string[];
-}
-
-// Fires the fullscreen request synchronously inside the click's user-gesture
-// window, before Next's client-side navigation swaps the page content — the
-// exam runner mounts already fullscreen, so no "enter full screen" prompt.
-function requestFullscreenOnNavigate() {
-  const el = document.documentElement;
-  if (!document.fullscreenElement && el.requestFullscreen) {
-    el.requestFullscreen().catch(() => {});
-  }
 }
 
 export default function PracticeTestCard({ id, testNumber, isLocked, attemptedModules = [] }: PracticeTestCardProps) {

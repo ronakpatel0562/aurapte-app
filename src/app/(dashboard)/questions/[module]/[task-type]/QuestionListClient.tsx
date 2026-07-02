@@ -10,6 +10,7 @@ import {
   ChevronRight,
   BookOpen,
 } from "lucide-react";
+import { interleaveByDifficulty } from "@/lib/questionOrder";
 
 interface Question {
   id: string;
@@ -63,31 +64,10 @@ export default function QuestionListClient({
   // initialQuestions — same order every time the user lands, no reshuffling
   // on each visit, and no server/client hydration mismatch since it doesn't
   // depend on Math.random().
-  const mixedQuestions = useMemo(() => {
-    const buckets: Record<string, Question[]> = {};
-    initialQuestions.forEach((q) => {
-      const key = q.difficulty || "medium";
-      (buckets[key] = buckets[key] || []).push(q);
-    });
-    const queues = ["easy", "medium", "hard"]
-      .concat(Object.keys(buckets).filter((k) => !["easy", "medium", "hard"].includes(k)))
-      .map((k) => buckets[k] || [])
-      .filter((q) => q.length > 0);
-
-    const mixed: Question[] = [];
-    let anyLeft = true;
-    while (anyLeft) {
-      anyLeft = false;
-      for (const queue of queues) {
-        const next = queue.shift();
-        if (next) {
-          mixed.push(next);
-          anyLeft = true;
-        }
-      }
-    }
-    return mixed;
-  }, [initialQuestions]);
+  const mixedQuestions = useMemo(
+    () => interleaveByDifficulty(initialQuestions),
+    [initialQuestions]
+  );
 
   const filteredQuestions = useMemo(() => {
     const filtered = mixedQuestions.filter((q) => {

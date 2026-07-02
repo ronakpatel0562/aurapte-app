@@ -4,6 +4,31 @@ const nextConfig = {
 
   /**
    * Why this block exists:
+   *   Test/question attempts are saved via client-side Supabase calls
+   *   (QuestionAttemptClient, ExamRunner, MockExamRunner), not Server
+   *   Actions. Next only auto-invalidates the client Router Cache after
+   *   a Server Action, so a plain client insert never tells the router
+   *   anything changed. Result: clicking "Back to Dashboard" after
+   *   finishing a test served the Router Cache's stale RSC payload from
+   *   before the attempt was written — dashboard stats / recent activity
+   *   looked frozen until the 30s dynamic staleTime lapsed (or forever on
+   *   back/forward nav). Setting dynamic staleTime to 0 makes every
+   *   soft navigation to a dynamic route (dashboard, mock-tests,
+   *   practice-tests — all cookie-driven, so already server-dynamic)
+   *   re-fetch from the server instead of trusting a time-based cache.
+   */
+  experimental: {
+    staleTimes: {
+      dynamic: 0,
+    },
+    serverComponentsExternalPackages: [
+      "@supabase/supabase-js",
+      "@supabase/ssr",
+    ],
+  },
+
+  /**
+   * Why this block exists:
    *   Aura's app imports the @supabase/* packages from both Server and
    *   Client Component trees (lib/supabase/server.ts, client.ts,
    *   middleware.ts, plus four API routes that need the service-role
@@ -26,11 +51,6 @@ const nextConfig = {
    *
    *   See: https://nextjs.org/docs/app/api-reference/config/next-config-js/serverExternalPackages
    */
-  serverExternalPackages: [
-    "@supabase/supabase-js",
-    "@supabase/ssr",
-  ],
-
   /**
    * Treat @supabase/* the same way on the client bundler so the browser
    * never ends up with a partial vendor-chunks split either. webpack-

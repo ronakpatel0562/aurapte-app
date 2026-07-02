@@ -1,10 +1,12 @@
 import React from "react";
 import Link from "next/link";
-import { Lock, Play, ChevronRight, Award, Clock, FileText, Sparkles, ShieldCheck } from "lucide-react";
+import { Lock, ChevronRight, Award, Clock, FileText, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PLANS, planName, hasAccessToTest, isPremiumPlan, type PlanId } from "@/lib/plans";
 import { allMockTests } from "@/lib/testDefinitions";
+import { summarizeTestProgress, isTestComplete } from "@/lib/testProgress";
+import StartExamButton from "@/components/mock-tests/StartExamButton";
 
 export default async function MockTestsPage() {
   const supabase = createClient();
@@ -27,16 +29,32 @@ export default async function MockTestsPage() {
   const defs = allMockTests();
   const total = defs.length;
 
+  // Real "Completed" status per test — attempt rows are stamped with
+  // test_id by MockExamRunner at submit time. A mock test is a single
+  // continuous session, so completion is all-or-nothing (unlike Practice
+  // Tests' per-module pills).
+  const { data: attemptRows } = await supabase
+    .from("user_attempts")
+    .select("test_id, question_id, score, max_score, attempted_at")
+    .eq("user_id", user.id)
+    .in("test_id", defs.map((d) => d.id));
+  const testProgress = summarizeTestProgress(attemptRows ?? []);
+
   // Real Mock Tests — full PTE-simulation experience. Free tier gets the
   // first PLANS.free.limits.mockTests tests, premium unlocks all of them.
-  const mockTests = defs.map((def) => ({
-    id: def.id,
-    number: def.testNumber,
-    title: def.title,
-    duration: "2 hours",
-    questionsCount: def.totalQuestions,
-    isLocked: !hasAccessToTest(plan, "mockTests", def.testNumber),
-  }));
+  const mockTests = defs.map((def) => {
+    const progress = testProgress.get(def.id);
+    return {
+      id: def.id,
+      number: def.testNumber,
+      title: def.title,
+      duration: "2 hours",
+      questionsCount: def.totalQuestions,
+      isLocked: !hasAccessToTest(plan, "mockTests", def.testNumber),
+      isCompleted: isTestComplete(progress, def.totalQuestions),
+      scorePercent: progress?.scorePercent ?? 0,
+    };
+  });
 
   return (
     <div className="space-y-8 py-2 sm:py-4 select-none font-geist">
@@ -83,15 +101,17 @@ export default async function MockTestsPage() {
         {mockTests.map((test) => (
           <div
             key={test.id}
-            className={`card-hover ${test.isLocked ? "card-locked" : ""} group bg-canvas border border-hairline rounded-xl flex flex-col justify-between overflow-hidden h-[210px]`}
+            className={`card-hover ${test.isLocked ? "card-locked" : ""} group relative bg-canvas border border-hairline rounded-xl flex flex-col overflow-hidden shadow-vercel-card`}
           >
-            <div className="p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-bold border transition duration-200 ${
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-develop-start via-gradient-preview-start to-gradient-ship-start" />
+
+            <div className="p-5 pt-6 space-y-4 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 transition duration-200 ${
                     test.isLocked
-                      ? "bg-canvas-soft-2 text-mute border-hairline"
-                      : "bg-canvas text-ink border-hairline-strong group-hover:bg-primary group-hover:text-on-primary group-hover:border-primary shadow-sm"
+                      ? "bg-canvas-soft-2 text-mute"
+                      : "bg-canvas-soft border border-hairline text-ink group-hover:bg-primary group-hover:text-on-primary group-hover:border-primary"
                   }`}>
                     {test.number < 10 ? `0${test.number}` : test.number}
                   </div>
@@ -99,33 +119,34 @@ export default async function MockTestsPage() {
                     <h3 className="text-sm font-semibold text-ink group-hover:text-link transition truncate">
                       {test.title}
                     </h3>
-                    <span className="text-[10px] text-mute font-mono uppercase tracking-wider block">
+                    <span className="text-[10px] text-mute font-mono uppercase tracking-wider truncate block">
                       Complete PTE Simulation
                     </span>
                   </div>
                 </div>
 
                 {test.isLocked && (
-                  <div className="flex items-center gap-1 text-[9px] font-semibold text-warning-deep bg-warning-soft border border-warning-deep/15 px-2 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                  <div className="flex items-center gap-1 text-[9px] font-semibold text-warning-deep bg-warning-soft border border-warning-deep/15 px-2 py-0.5 rounded-full uppercase tracking-wider font-mono shrink-0">
                     <Lock className="w-2.5 h-2.5" />
                     <span>Premium</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3 pt-1 text-2xs text-body font-medium font-mono">
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-canvas-soft border border-hairline">
-                  <Clock className="w-3.5 h-3.5 text-mute" />
-                  <span>{test.duration}</span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-canvas-soft border border-hairline">
-                  <FileText className="w-3.5 h-3.5 text-mute" />
-                  <span>{test.questionsCount} Questions</span>
-                </div>
+              <div className="flex items-center gap-3 text-xs text-mute font-mono">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  {test.duration}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-hairline-strong shrink-0" />
+                <span className="flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  {test.questionsCount} Questions
+                </span>
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t border-hairline bg-canvas-soft/50 flex items-center justify-between">
+            <div className="px-5 py-3.5 border-t border-hairline bg-canvas-soft/50 flex items-center justify-between gap-2">
               {test.isLocked ? (
                 <Link
                   href="/billing"
@@ -134,19 +155,21 @@ export default async function MockTestsPage() {
                   <span>Upgrade to unlock</span>
                   <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
+              ) : test.isCompleted ? (
+                <>
+                  <span className="text-2xs font-mono text-success font-semibold uppercase flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Completed · {test.scorePercent}%</span>
+                  </span>
+                  <StartExamButton href={`/mock-tests/${test.id}`} label="Retake Exam" />
+                </>
               ) : (
                 <>
-                  <span className="text-[10px] font-mono text-success font-semibold uppercase flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-success animate-pulse" />
-                    <span>Ready to Start</span>
+                  <span className="text-2xs font-mono text-success font-semibold uppercase flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                    <span>Ready</span>
                   </span>
-                  <Link
-                    href={`/mock-tests/${test.id}`}
-                    className="h-8 px-4 bg-primary text-on-primary hover:bg-opacity-90 font-semibold text-2xs rounded-md transition duration-150 flex items-center gap-1.5 active:scale-[0.98]"
-                  >
-                    <Play className="w-2.5 h-2.5 fill-current" />
-                    <span>Start Exam</span>
-                  </Link>
+                  <StartExamButton href={`/mock-tests/${test.id}`} />
                 </>
               )}
             </div>

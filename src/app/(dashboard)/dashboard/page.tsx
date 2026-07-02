@@ -1,14 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { mapDbToUrlTaskType, getTaskTypeFriendlyName } from "@/lib/taskTypeMapper";
+import { mapDbToUrlTaskType, getTaskTypeFriendlyName, questionHref } from "@/lib/taskTypeMapper";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
 import {
   Mic,
   PenTool,
   BookOpenCheck,
   Headphones,
-  CheckCircle,
   HelpCircle,
   TrendingUp,
   Award,
@@ -17,8 +16,10 @@ import {
   Lock,
 } from "lucide-react";
 import StatCard from "@/components/dashboard/StatCard";
-import RecentActivity from "@/components/dashboard/RecentActivity";
+import RecentActivity, { type ActivityEntry } from "@/components/dashboard/RecentActivity";
 import { PLANS, planName, isPremiumPlan, type PlanId } from "@/lib/plans";
+import { allMockTests, allPracticeTests, getMockTest, getPracticeTest } from "@/lib/testDefinitions";
+import { summarizeTestProgress, isTestComplete } from "@/lib/testProgress";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -39,40 +40,43 @@ export default async function DashboardPage() {
   const isPremium = isPremiumPlan(plan);
   const userName = profile?.full_name || user.user_metadata?.full_name || "Student";
 
-  const [{ data: realAttempts }, { data: moduleCounts }] = await Promise.all([
-    supabase
-      .from("user_attempts")
-      .select(`
-        id,
-        score,
-        max_score,
-        is_correct,
-        attempted_at,
-        question_id,
-        questions (
-          id,
-          module,
-          task_type,
-          title
-        )
-      `)
-      .eq("user_id", userId)
-      .order("attempted_at", { ascending: false }),
+  // Fetched as two plain queries + an in-memory join rather than a single
+  // PostgREST embedded `questions (...)` select: the embed resolves via
+  // PostgREST's cached FK graph, which silently 400s (PGRST200) whenever
+  // that cache lags a migration — and since the result here was
+  // destructured without checking `error`, a stale cache didn't surface
+  // as an error, it surfaced as every dashboard stat and Recent Activity
+  // entry looking permanently empty.
+  const [attempts, { data: moduleCounts }] = await Promise.all([
+    (async () => {
+      const { data: rawAttempts } = await supabase
+        .from("user_attempts")
+        .select("id, score, max_score, is_correct, attempted_at, question_id, test_id")
+        .eq("user_id", userId)
+        .order("attempted_at", { ascending: false });
+
+      const questionIds = Array.from(
+        new Set((rawAttempts || []).map((a) => a.question_id).filter(Boolean))
+      );
+      const { data: relatedQuestions } = questionIds.length
+        ? await supabase
+            .from("questions")
+            .select("id, module, task_type, title")
+            .in("id", questionIds)
+        : { data: [] as { id: string; module: string; task_type: string; title: string }[] };
+      const questionsById = new Map((relatedQuestions || []).map((q) => [q.id, q]));
+
+      return (rawAttempts || []).map((a) => ({
+        ...a,
+        questions: questionsById.get(a.question_id) ?? null,
+      }));
+    })(),
     supabase.rpc("count_questions_by_module"),
   ]);
 
-  const attempts = realAttempts || [];
   const totalAttempts = attempts.length || 0;
   const correctAttempts = attempts.filter((a) => a.is_correct).length || 0;
   const accuracy = totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0;
-
-  // Modules practiced — distinct count.
-  const practicedModulesSet = new Set<string>();
-  attempts.forEach((a: any) => {
-    const q = a.questions;
-    if (q?.module) practicedModulesSet.add(q.module);
-  });
-  const modulesPracticed = practicedModulesSet.size;
 
   // Question counts per module.
   let questionCounts = { speaking: 0, writing: 0, reading: 0, listening: 0 };
@@ -99,7 +103,78 @@ export default async function DashboardPage() {
     for (const [m, c] of results) questionCounts[m] = c;
   }
 
-  const recentAttempts = attempts.slice(0, 10);
+  // Test-level progress — group question attempts by test_id (stamped by
+  // the mock/practice test runners) since there's no dedicated "test
+  // session" table. See src/lib/testProgress.ts for the aggregation.
+  const testProgressMap = summarizeTestProgress(
+    attempts.map((a: any) => ({
+      test_id: a.test_id,
+      question_id: a.question_id,
+      score: a.score,
+      max_score: a.max_score,
+      attempted_at: a.attempted_at,
+    }))
+  );
+
+  const totalMockTests = allMockTests().length;
+  const totalPracticeTests = allPracticeTests().length;
+  const completedTestEntries: ActivityEntry[] = [];
+  let mockTestsCompleted = 0;
+  let practiceTestsCompleted = 0;
+
+  Array.from(testProgressMap.values()).forEach((progress) => {
+    const mockDef = getMockTest(progress.testId);
+    const practiceDef = getPracticeTest(progress.testId);
+    const def = mockDef ?? practiceDef;
+    if (!def) return;
+
+    if (!isTestComplete(progress, def.totalQuestions)) return;
+
+    if (mockDef) mockTestsCompleted += 1;
+    else practiceTestsCompleted += 1;
+
+    completedTestEntries.push({
+      kind: "test",
+      id: progress.testId,
+      title: def.title,
+      testKind: mockDef ? "mock" : "practice",
+      scorePercent: progress.scorePercent,
+      date: progress.lastAttemptedAt,
+      href: mockDef ? `/mock-tests/${def.id}` : `/practice-tests/${def.id}`,
+    });
+  });
+  const testsCompleted = mockTestsCompleted + practiceTestsCompleted;
+  const totalTests = totalMockTests + totalPracticeTests;
+  const averageTestScore =
+    completedTestEntries.length > 0
+      ? Math.round(
+          completedTestEntries.reduce((sum, t) => sum + (t.kind === "test" ? t.scorePercent : 0), 0) /
+            completedTestEntries.length
+        )
+      : null;
+
+  // Standalone question attempts — practice taken outside of a test
+  // (test_id null). Attempts that belong to a test are already represented
+  // by their single "test completed" entry above, so they're excluded here
+  // to avoid listing the same submissions twice.
+  const standaloneEntries: ActivityEntry[] = attempts
+    .filter((a: any) => !a.test_id && a.questions)
+    .map((a: any) => ({
+      kind: "question" as const,
+      id: a.id,
+      score: a.score,
+      maxScore: a.max_score,
+      isCorrect: a.is_correct,
+      date: a.attempted_at,
+      module: a.questions.module,
+      taskType: a.questions.task_type,
+      title: a.questions.title || "Untitled Question",
+      href: questionHref(a.questions.module, a.questions.task_type, a.questions.id),
+    }));
+
+  const recentActivityEntries = [...completedTestEntries, ...standaloneEntries]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, 10);
 
   const modules = [
     {
@@ -190,29 +265,29 @@ export default async function DashboardPage() {
       {isPremium ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
+            title="Tests Completed"
+            value={`${testsCompleted}/${totalTests}`}
+            desc="Mock + practice tests finished"
+            icon={<Award className="w-4 h-4 text-mute" />}
+          />
+          <StatCard
+            title="Average Test Score"
+            value={averageTestScore !== null ? `${averageTestScore}%` : "—"}
+            desc={testsCompleted > 0 ? `Across ${testsCompleted} completed test${testsCompleted === 1 ? "" : "s"}` : "Complete a test to see this"}
+            icon={<TrendingUp className="w-4 h-4 text-mute" />}
+            trend={averageTestScore !== null && averageTestScore >= 70 ? { value: "On track", positive: true } : undefined}
+          />
+          <StatCard
             title="Questions Attempted"
             value={totalAttempts}
             desc="Total practice submissions"
             icon={<HelpCircle className="w-4 h-4 text-mute" />}
           />
           <StatCard
-            title="Correct Answers"
-            value={correctAttempts}
-            desc={`Out of ${totalAttempts} attempts`}
-            icon={<CheckCircle className="w-4 h-4 text-mute" />}
-          />
-          <StatCard
             title="Accuracy Rate"
             value={`${accuracy}%`}
             desc="Correct vs total attempts"
-            icon={<TrendingUp className="w-4 h-4 text-mute" />}
-            trend={accuracy >= 70 ? { value: "On track", positive: true } : undefined}
-          />
-          <StatCard
-            title="Modules Practiced"
-            value={`${modulesPracticed}/4`}
-            desc="Coverage of PTE modules"
-            icon={<Award className="w-4 h-4 text-mute" />}
+            icon={<BookOpenCheck className="w-4 h-4 text-mute" />}
           />
         </div>
       ) : (
@@ -227,7 +302,7 @@ export default async function DashboardPage() {
             <div>
               <p className="text-sm font-semibold text-ink">Progress statistics are a Pro feature</p>
               <p className="text-xs text-mute mt-0.5">
-                Upgrade to Aura Pro to track attempts, accuracy, and module coverage.
+                Upgrade to Aura Pro to track tests completed, scores, and accuracy.
               </p>
             </div>
           </div>
@@ -290,13 +365,15 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity — also an Aura Pro perk, matching the stats gate above. */}
+      {/* Recent Activity — a single feed mixing completed tests and
+          standalone question practice, newest first. Also an Aura Pro
+          perk, matching the stats gate above. */}
       <div className="space-y-4">
         <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
           Recent Activity
         </h3>
         {isPremium ? (
-          <RecentActivity attempts={recentAttempts as any} />
+          <RecentActivity entries={recentActivityEntries} />
         ) : (
           <Link
             href="/billing"
@@ -309,7 +386,7 @@ export default async function DashboardPage() {
               <div>
                 <p className="text-sm font-semibold text-ink">Recent activity is a Pro feature</p>
                 <p className="text-xs text-mute mt-0.5">
-                  Upgrade to Aura Pro to see your last submissions across every module.
+                  Upgrade to Aura Pro to see your completed tests and last submissions.
                 </p>
               </div>
             </div>

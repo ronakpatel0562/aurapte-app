@@ -18,6 +18,7 @@ export default function ExamChrome({
   onSaveExit,
   onNext,
   nextLabel = "Next",
+  nextDisabled = false,
   children,
 }: {
   testTitle: string;
@@ -29,6 +30,10 @@ export default function ExamChrome({
   onSaveExit: () => void;
   onNext: () => void;
   nextLabel?: string;
+  /** Disables the Next button without the "Cannot Skip" modal — used for
+   *  timed reveals (e.g. the 3-second pre-Next delay on the overview
+   *  screen) rather than answer-validation locks. */
+  nextDisabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -81,7 +86,8 @@ export default function ExamChrome({
         </button>
         <button
           onClick={onNext}
-          className="px-5 py-2 rounded bg-[#1e7a9c] text-white text-xs font-semibold hover:bg-[#1c6f8f] transition"
+          disabled={nextDisabled}
+          className="px-5 py-2 rounded bg-[#1e7a9c] text-white text-xs font-semibold hover:bg-[#1c6f8f] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1e7a9c]"
         >
           {nextLabel}
         </button>

@@ -14,9 +14,7 @@ function LoginFormInner() {
   // Parse error from URL query string
   const urlError = searchParams.get("error");
   let friendlyErrorMessage: string | null = null;
-  if (urlError === "SESSION_ACTIVE") {
-    friendlyErrorMessage = "A login session is already active on another device. Please log out from that device first.";
-  } else if (urlError === "SESSION_OVERWRITTEN") {
+  if (urlError === "SESSION_OVERWRITTEN") {
     friendlyErrorMessage = "You have been logged out because a new login session was established on another device.";
   } else if (urlError === "auth-code-error") {
     friendlyErrorMessage = "Failed to verify secure login credentials. Please try signing in again.";

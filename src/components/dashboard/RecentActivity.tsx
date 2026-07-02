@@ -2,47 +2,55 @@
 
 import React from "react";
 import Link from "next/link";
-import { CheckCircle2, Circle, Calendar } from "lucide-react";
-import { mapDbToUrlTaskType, getTaskTypeFriendlyName } from "@/lib/taskTypeMapper";
+import { CheckCircle2, Circle, Calendar, Award, BookOpenCheck } from "lucide-react";
+import { getTaskTypeFriendlyName } from "@/lib/taskTypeMapper";
 
-interface Attempt {
-  id: string;
-  score: number;
-  max_score: number;
-  is_correct: boolean;
-  attempted_at: string;
-  question_id: string;
-  questions?: {
-    id: string;
-    module: string;
-    task_type: string;
-    title?: string;
-  } | null;
-}
+export type ActivityEntry =
+  | {
+      kind: "test";
+      id: string;
+      title: string;
+      testKind: "mock" | "practice";
+      scorePercent: number;
+      date: string;
+      href: string;
+    }
+  | {
+      kind: "question";
+      id: string;
+      score: number;
+      maxScore: number;
+      isCorrect: boolean;
+      date: string;
+      module: string;
+      taskType: string;
+      title: string;
+      href: string;
+    };
 
 interface RecentActivityProps {
-  attempts: Attempt[];
+  entries: ActivityEntry[];
 }
 
 /**
- * Recent activity — small horizontal list of the most recent attempts.
- * Each row shows: question title (link), module + task type label,
- * pass/attempt status with score, and relative date. The list scrolls
- * horizontally on phones (cards) and falls back to a vertical list
- * with the same data on wider viewports.
- *
- * Pure display component: data is fetched server-side and passed in.
+ * Recent Activity — a single unified feed mixing completed test sessions
+ * (mock/practice, grouped by test_id) with standalone question attempts
+ * (practice taken outside of a test). Kept as one list rather than two
+ * separate "Recent Tests" / "Recent Activity" sections since both answer
+ * the same question ("what did I just do?") and a completed test already
+ * accounts for its own questions — listing them again separately would be
+ * duplicate information.
  */
-export default function RecentActivity({ attempts }: RecentActivityProps) {
-  if (!attempts || attempts.length === 0) {
+export default function RecentActivity({ entries }: RecentActivityProps) {
+  if (!entries || entries.length === 0) {
     return (
       <div className="bg-canvas border border-hairline rounded-xl shadow-vercel-card py-12 px-6 text-center">
         <div className="w-12 h-12 mx-auto rounded-xl bg-canvas-soft-2 border border-hairline flex items-center justify-center mb-3">
           <Circle className="w-5 h-5 text-mute" />
         </div>
-        <p className="text-body-sm font-medium text-ink">No attempts yet</p>
+        <p className="text-body-sm font-medium text-ink">No activity yet</p>
         <p className="text-2xs text-mute mt-1">
-          Pick a module above to start practising — your activity will show up here.
+          Pick a module or test above to get started — your activity will show up here.
         </p>
       </div>
     );
@@ -52,8 +60,8 @@ export default function RecentActivity({ attempts }: RecentActivityProps) {
     <>
       {/* Mobile: horizontal scroll cards */}
       <div className="md:hidden -mx-4 px-4 overflow-x-auto snap-x snap-mandatory flex gap-3 pb-2">
-        {attempts.slice(0, 10).map((a) => (
-          <AttemptCard key={a.id} attempt={a} />
+        {entries.map((e) => (
+          <ActivityCard key={`${e.kind}-${e.id}`} entry={e} />
         ))}
       </div>
 
@@ -63,15 +71,15 @@ export default function RecentActivity({ attempts }: RecentActivityProps) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-canvas-soft border-b border-hairline text-2xs font-semibold text-mute uppercase font-mono tracking-wider">
-                <th className="py-3 px-6">Question</th>
-                <th className="py-3 px-6">Module / Task</th>
+                <th className="py-3 px-6">Activity</th>
+                <th className="py-3 px-6">Type</th>
                 <th className="py-3 px-6">Result</th>
                 <th className="py-3 px-6">When</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-hairline">
-              {attempts.slice(0, 10).map((a) => (
-                <AttemptRow key={a.id} attempt={a} />
+              {entries.map((e) => (
+                <ActivityRow key={`${e.kind}-${e.id}`} entry={e} />
               ))}
             </tbody>
           </table>
@@ -81,7 +89,7 @@ export default function RecentActivity({ attempts }: RecentActivityProps) {
   );
 }
 
-function formatRelativeDate(iso: string): string {
+export function formatRelativeDate(iso: string): string {
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60_000);
@@ -94,27 +102,38 @@ function formatRelativeDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function AttemptCard({ attempt: a }: { attempt: Attempt }) {
-  const q = a.questions;
-  if (!q) return null;
-  const passed = a.is_correct;
+function typeLabel(e: ActivityEntry): string {
+  if (e.kind === "test") return e.testKind === "mock" ? "Mock Test" : "Practice Test";
+  return `${e.module} · ${getTaskTypeFriendlyName(e.taskType)}`;
+}
+
+function resultBadge(e: ActivityEntry): { passed: boolean; text: string } {
+  if (e.kind === "test") return { passed: e.scorePercent >= 60, text: `${e.scorePercent}%` };
+  return { passed: e.isCorrect, text: `${e.score} / ${e.maxScore}` };
+}
+
+function ActivityCard({ entry: e }: { entry: ActivityEntry }) {
+  const { passed, text } = resultBadge(e);
   return (
     <Link
-      href={`/questions/${q.module}/${mapDbToUrlTaskType(q.task_type)}/${q.id}`}
+      href={e.href}
       className="card-hover min-w-[260px] max-w-[260px] snap-start bg-canvas border border-hairline rounded-xl p-4 flex flex-col gap-3"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="text-xs font-semibold text-ink line-clamp-2">{q.title || "Untitled"}</div>
-        {passed ? (
+        <div className="text-xs font-semibold text-ink line-clamp-2">{e.title}</div>
+        {e.kind === "test" ? (
+          e.testKind === "mock" ? (
+            <Award className="w-4 h-4 text-mute shrink-0" />
+          ) : (
+            <BookOpenCheck className="w-4 h-4 text-mute shrink-0" />
+          )
+        ) : passed ? (
           <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
         ) : (
           <Circle className="w-4 h-4 text-mute shrink-0" />
         )}
       </div>
-      <div className="text-2xs text-mute">
-        <span className="capitalize font-medium">{q.module}</span>
-        <span> • {getTaskTypeFriendlyName(q.task_type)}</span>
-      </div>
+      <div className="text-2xs text-mute capitalize">{typeLabel(e)}</div>
       <div className="flex items-center justify-between mt-auto pt-3 border-t border-hairline">
         <span
           className={`text-2xs font-mono font-semibold uppercase px-2 py-0.5 rounded ${
@@ -123,34 +142,27 @@ function AttemptCard({ attempt: a }: { attempt: Attempt }) {
               : "bg-error-soft text-error-deep border border-error/20"
           }`}
         >
-          {passed ? "Passed" : "Attempted"}
+          {e.kind === "test" ? "Completed" : passed ? "Passed" : "Attempted"}
         </span>
-        <span className="text-2xs font-mono text-mute">
-          {a.score} / {a.max_score}
-        </span>
+        <span className="text-2xs font-mono text-mute">{text}</span>
       </div>
     </Link>
   );
 }
 
-function AttemptRow({ attempt: a }: { attempt: Attempt }) {
-  const q = a.questions;
-  if (!q) return null;
-  const passed = a.is_correct;
+function ActivityRow({ entry: e }: { entry: ActivityEntry }) {
+  const { passed, text } = resultBadge(e);
   return (
     <tr className="hover:bg-canvas-soft transition">
       <td className="py-4 px-6">
         <Link
-          href={`/questions/${q.module}/${mapDbToUrlTaskType(q.task_type)}/${q.id}`}
+          href={e.href}
           className="text-body-sm-strong font-medium text-ink hover:text-link hover:underline transition truncate max-w-[280px] block"
         >
-          {q.title || "Untitled Question"}
+          {e.title}
         </Link>
       </td>
-      <td className="py-4 px-6 text-xs text-body">
-        <span className="capitalize font-medium">{q.module}</span>
-        <span className="text-mute font-normal"> • {getTaskTypeFriendlyName(q.task_type)}</span>
-      </td>
+      <td className="py-4 px-6 text-xs text-body capitalize">{typeLabel(e)}</td>
       <td className="py-4 px-6">
         <div className="flex items-center gap-2">
           <span
@@ -160,16 +172,14 @@ function AttemptRow({ attempt: a }: { attempt: Attempt }) {
                 : "bg-error-soft text-error-deep border border-error/20"
             }`}
           >
-            {passed ? "Passed" : "Attempted"}
+            {e.kind === "test" ? "Completed" : passed ? "Passed" : "Attempted"}
           </span>
-          <span className="text-xs font-mono text-mute">
-            {a.score} / {a.max_score}
-          </span>
+          <span className="text-xs font-mono text-mute">{text}</span>
         </div>
       </td>
       <td className="py-4 px-6 text-xs text-mute font-mono whitespace-nowrap">
         <Calendar className="w-3 h-3 inline mr-1.5 -mt-0.5" />
-        {formatRelativeDate(a.attempted_at)}
+        {formatRelativeDate(e.date)}
       </td>
     </tr>
   );

@@ -590,3 +590,8 @@ function stripHtml(input: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+/** Builds the `/questions/{module}/{task}/{id}` link for a question-kind entry. */
+export function questionHref(module: string, taskType: string, id: string): string {
+  return `/questions/${module}/${mapDbToUrlTaskType(taskType)}/${id}`;
+}

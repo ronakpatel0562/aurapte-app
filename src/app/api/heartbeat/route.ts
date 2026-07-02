@@ -54,8 +54,12 @@ export async function POST(request: Request) {
     }
 
     if (!sessionData || sessionData.session_id !== cleanSessionId) {
+      // `error: "SESSION_OVERWRITTEN"` (exact key/casing) is what
+      // SessionGuard's fetch interceptor matches on to force-logout and
+      // redirect this device to /login — a newer login has replaced this
+      // session's row in `user_sessions`.
       return NextResponse.json(
-        { ok: false, reason: "session_overwritten" },
+        { ok: false, error: "SESSION_OVERWRITTEN" },
         { status: 401 }
       );
     }
