@@ -19,12 +19,26 @@
  * runner may fall back to "all questions for this module" if fewer exist.
  */
 
+export interface TestSectionCategory {
+  /** DB task_type this group of legacy IDs belongs to, or null if the
+   *  category couldn't be recovered from the legacy source dump (falls
+   *  back to a generic same-module top-up at fetch time). */
+  taskType: string | null;
+  legacyIds: string[];
+}
+
 export interface TestSection {
   module: "speaking" | "writing" | "reading" | "listening";
   /** Original Mongo ObjectIDs (kept for future exact-ID lookup). */
   legacyIds: string[];
   /** Number of questions this section expects (derived from legacyIds length). */
   targetCount: number;
+  /** legacyIds grouped by their intended task_type, recovered positionally
+   *  from the legacy source dump (aus_data) — see extract script notes.
+   *  Optional: only practice tests currently have this; mock test rosters
+   *  don't overlap with the imported question bank at all, so there's
+   *  nothing to recover the category from. */
+  categories?: TestSectionCategory[];
 }
 
 export interface TestDefinition {
@@ -41,72 +55,29 @@ export interface TestDefinition {
 }
 
 interface RawTestJson {
-  statusCode?: number;
   data: {
-    practiceTests?: RawTestEntry[];
-    mockTests?: RawTestEntry[];
+    practiceTests?: TestDefinition[];
+    mockTests?: TestDefinition[];
   };
-}
-
-interface RawTestEntry {
-  _id: string;
-  testName: string;
-  sections: {
-    Reading?: string[];
-    Writing?: string[];
-    Listening?: string[];
-    Speaking?: string[];
-  };
-  status?: string;
-  totalDuration?: number;
-  createdBy?: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 /**
- * Normalise the JSON dump (a single object with practiceTests/mockTests
- * arrays) into TestDefinition objects with section order matching the PTE
- * exam: Speaking → Writing → Reading → Listening.
+ * The JSON files (`testDefinitions.practice.json` / `.mock.json`) are
+ * already shaped as `TestDefinition[]` — they were pre-built from the
+ * original Mongo dump by `scripts/extract_test_definitions.py`, not left
+ * as raw Mongo documents. So there is nothing to "parse" here; this just
+ * validates the shape and keeps a stable import point for the rest of the
+ * app (and a single place to add real parsing back if the JSON source
+ * ever reverts to a raw dump).
  */
 export function parseTestDefinitions(raw: RawTestJson): {
   practice: TestDefinition[];
   mock: TestDefinition[];
 } {
-  const practice: TestDefinition[] = (raw.data?.practiceTests ?? []).map((t, i) =>
-    buildDefinition(t, "practice", i + 1)
-  );
-  const mock: TestDefinition[] = (raw.data?.mockTests ?? []).map((t, i) =>
-    buildDefinition(t, "mock", i + 1)
-  );
-  return { practice, mock };
-}
-
-function buildDefinition(t: RawTestEntry, kind: "practice" | "mock", testNumber: number): TestDefinition {
-  // Display order matches the PTE exam flow. The JSON file happens to
-  // alphabetise the keys, but the section *order* on the page should
-  // match the real exam.
-  const sectionOrder: Array<{ key: keyof RawTestEntry["sections"]; module: TestSection["module"] }> = [
-    { key: "Speaking", module: "speaking" },
-    { key: "Writing", module: "writing" },
-    { key: "Reading", module: "reading" },
-    { key: "Listening", module: "listening" },
-  ];
-
-  const sections: TestSection[] = sectionOrder
-    .map(({ key, module }) => ({
-      module,
-      legacyIds: Array.isArray(t.sections[key]) ? (t.sections[key] as string[]) : [],
-      targetCount: Array.isArray(t.sections[key]) ? (t.sections[key] as string[]).length : 0,
-    }))
-    .filter((s) => s.targetCount > 0);
-
-  const totalQuestions = sections.reduce((sum, s) => sum + s.targetCount, 0);
-  const isMock = kind === "mock";
-  const label = isMock ? `Full Mock Test #${testNumber}` : `Practice Test #${testNumber}`;
-  const id = isMock ? `mock-test-${testNumber}` : `practice-test-${testNumber}`;
-
-  return { id, kind, testNumber, title: label, totalQuestions, isMock, sections };
+  return {
+    practice: raw.data?.practiceTests ?? [],
+    mock: raw.data?.mockTests ?? [],
+  };
 }
 
 /**

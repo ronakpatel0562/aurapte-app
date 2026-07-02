@@ -193,7 +193,8 @@ export default async function ModuleCategoriesPage({ params }: PageProps) {
       .from("questions")
       .select("id, task_type")
       .eq("module", moduleParam)
-      .eq("is_active", true),
+      .eq("is_active", true)
+      .eq("pool", "shared"),
     supabase
       .from("user_attempts")
       .select("question_id, score, max_score, is_correct")

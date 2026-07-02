@@ -46,13 +46,15 @@ export default async function QuestionAttemptPage({ params }: PageProps) {
         .eq("id", idParam)
         .eq("module", moduleParam)
         .eq("task_type", dbTaskType)
+        .eq("pool", "shared")
         .maybeSingle(),
       supabase
         .from("questions")
         .select("id, title")
         .eq("module", moduleParam)
         .eq("task_type", dbTaskType)
-        .eq("is_active", true),
+        .eq("is_active", true)
+        .eq("pool", "shared"),
     ]);
   const plan = profile?.plan || "free";
 

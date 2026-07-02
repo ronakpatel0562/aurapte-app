@@ -55,8 +55,42 @@ export default function QuestionListClient({
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Questions arrive from the server sorted by created_at, which (because
+  // they were seeded/imported difficulty-by-difficulty) reads as a visible
+  // easy → medium → hard grouping. Interleave difficulties round-robin
+  // (easy, medium, hard, easy, medium, hard, ...) so the unfiltered list
+  // reads as mixed instead of grouped. This is a deterministic function of
+  // initialQuestions — same order every time the user lands, no reshuffling
+  // on each visit, and no server/client hydration mismatch since it doesn't
+  // depend on Math.random().
+  const mixedQuestions = useMemo(() => {
+    const buckets: Record<string, Question[]> = {};
+    initialQuestions.forEach((q) => {
+      const key = q.difficulty || "medium";
+      (buckets[key] = buckets[key] || []).push(q);
+    });
+    const queues = ["easy", "medium", "hard"]
+      .concat(Object.keys(buckets).filter((k) => !["easy", "medium", "hard"].includes(k)))
+      .map((k) => buckets[k] || [])
+      .filter((q) => q.length > 0);
+
+    const mixed: Question[] = [];
+    let anyLeft = true;
+    while (anyLeft) {
+      anyLeft = false;
+      for (const queue of queues) {
+        const next = queue.shift();
+        if (next) {
+          mixed.push(next);
+          anyLeft = true;
+        }
+      }
+    }
+    return mixed;
+  }, [initialQuestions]);
+
   const filteredQuestions = useMemo(() => {
-    const filtered = initialQuestions.filter((q) => {
+    const filtered = mixedQuestions.filter((q) => {
       // 1. Search Query Match
       const previewText =
         q.content?.passage ||
@@ -84,20 +118,8 @@ export default function QuestionListClient({
       return searchMatch && difficultyMatch && statusMatch;
     });
 
-    const getQuestionNumber = (title: string): number => {
-      const match = title.match(/#(\d+)/);
-      return match ? parseInt(match[1], 10) : Infinity;
-    };
-
-    return [...filtered].sort((a, b) => {
-      const aNum = getQuestionNumber(a.title);
-      const bNum = getQuestionNumber(b.title);
-      if (aNum !== bNum) {
-        return aNum - bNum;
-      }
-      return a.title.localeCompare(b.title);
-    });
-  }, [initialQuestions, search, difficultyFilter, statusFilter, attemptMap]);
+    return filtered;
+  }, [mixedQuestions, search, difficultyFilter, statusFilter, attemptMap]);
 
   // Helper formatting for PTE type display
   const getDifficultyColor = (diff: string) => {
@@ -263,8 +285,7 @@ export default function QuestionListClient({
         {filteredQuestions.length > 0 ? (
           filteredQuestions.map((q, idx) => {
             const attempt = attemptMap[q.id];
-            const numMatch = q.title.match(/#(\d+)/);
-            const srNo = numMatch ? numMatch[1] : (idx + 1).toString();
+            const srNo = (idx + 1).toString();
             const isWFD = taskTypeName === "write-from-dictation";
             const isASQ = taskTypeName === "answer-short-question";
             const isRS = taskTypeName === "repeat-sentence";

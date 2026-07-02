@@ -91,7 +91,8 @@ export default async function DashboardPage() {
           .from("questions")
           .select("id", { count: "exact", head: true })
           .eq("module", m)
-          .eq("is_active", true);
+          .eq("is_active", true)
+          .eq("pool", "shared");
         return [m, count || 0] as const;
       })
     );

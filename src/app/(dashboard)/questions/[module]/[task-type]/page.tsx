@@ -162,6 +162,7 @@ export default async function QuestionListPage({ params }: PageProps) {
       .eq("module", moduleParam)
       .eq("task_type", dbTaskType)
       .eq("is_active", true)
+      .eq("pool", "shared")
       .order("created_at", { ascending: true }),
     supabase
       .from("profiles")

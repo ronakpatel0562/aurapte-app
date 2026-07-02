@@ -285,6 +285,43 @@ export function transformQuestionContent(question: any): any {
     }
   }
 
+  // 2b. Reading Multiple Choice – Single Answer (stored as reading_mcq_single).
+  // DB stores `correct_answer` as the full option text, not a letter, and
+  // under the singular key — but scoreAnswer/scoreMCQSingle compares the
+  // selected letter (ReadingMCQExam stores letters, not text) against
+  // `content.correct_answers[0]`. Without this, every reading_mcq_single
+  // question crashes on Next (correct_answers is always undefined/empty).
+  if (type === "reading_mcq_single" || type === "reading-multiple-choice-single") {
+    const opts = Array.isArray(content.options) ? content.options : [];
+    const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    if (content.correct_answer && !content.correct_answers) {
+      const idx = opts.findIndex(
+        (o: unknown) => typeof o === "string" && o.trim() === String(content.correct_answer).trim()
+      );
+      content.correct_answers = [idx >= 0 ? letters[idx] : String(content.correct_answer)];
+    } else if (!content.correct_answers) {
+      content.correct_answers = [];
+    }
+  }
+
+  // 2c. Reading Multiple Choice – Multiple Answers (stored as
+  // reading_mcq_multiple). Same text-vs-letter mismatch as above, just
+  // with an array of correct answers instead of one.
+  if (type === "reading_mcq_multiple" || type === "reading-multiple-choice-multiple") {
+    const opts = Array.isArray(content.options) ? content.options : [];
+    const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    if (Array.isArray(content.correct_answers)) {
+      content.correct_answers = content.correct_answers.map((ans: unknown) => {
+        if (typeof ans !== "string") return ans;
+        if (/^[A-H]$/.test(ans.trim())) return ans.trim();
+        const idx = opts.findIndex((o: unknown) => typeof o === "string" && o.trim() === ans.trim());
+        return idx >= 0 ? letters[idx] : ans;
+      });
+    } else {
+      content.correct_answers = [];
+    }
+  }
+
   // 3. Listening Fill in the Blanks (stored as listening_fill_in_the_blanks)
   if (type === "listening_fill_in_the_blanks" || type === "listening-fill-in-the-blanks") {
     if (content.correct_answers && Array.isArray(content.correct_answers)) {

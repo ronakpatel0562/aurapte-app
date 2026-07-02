@@ -110,6 +110,31 @@
     border: 2px solid var(--color-canvas-soft);
   }
   ::-webkit-scrollbar-thumb:hover { background: var(--color-mute); }
+
+  /* Hand cursor on every clickable control by default, everywhere in the
+     portal — individual components no longer need to remember to add
+     cursor-pointer themselves. Utility classes (e.g. an explicit
+     cursor-not-allowed) still win since utilities sit in a higher-priority
+     layer than base. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a,
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  select:not(:disabled),
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input[type="submit"]:disabled,
+  input[type="button"]:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /* ---------------------------------------------------------------------------

@@ -68,7 +68,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     razorpayPlanId: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID ?? "",
     isPaid: true,
     features: [
-      "All 20+ Practice Tests, unlimited retries",
+      "All 30 Practice Tests, unlimited retries",
       "All 10 Full Mock Tests with timer + scoring",
       "Specialised Tips PDF (Describe Image templates, WFD strategy, …)",
       "Unlimited questions across every module",

@@ -6,6 +6,7 @@ import path from "path";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import SupabaseSetupRequired from "@/components/layout/SupabaseSetupRequired";
 import NavigationLoader from "@/components/layout/NavigationLoader";
+import DisableContextMenu from "@/components/layout/DisableContextMenu";
 import { ThemeProvider, themeInitScript } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({
@@ -64,6 +65,7 @@ export default function RootLayout({
       </head>
       <body className="bg-canvas-soft text-ink min-h-screen flex flex-col font-geist antialiased">
         <ThemeProvider>
+          <DisableContextMenu />
           <NavigationLoader />
           {children}
         </ThemeProvider>

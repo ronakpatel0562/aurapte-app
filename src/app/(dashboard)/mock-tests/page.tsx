@@ -4,6 +4,7 @@ import { Lock, Play, ChevronRight, Award, Clock, FileText, Sparkles, ShieldCheck
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PLANS, planName, hasAccessToTest, isPremiumPlan, type PlanId } from "@/lib/plans";
+import { allMockTests } from "@/lib/testDefinitions";
 
 export default async function MockTestsPage() {
   const supabase = createClient();
@@ -23,21 +24,19 @@ export default async function MockTestsPage() {
     .maybeSingle();
   const plan = ((profile?.plan as PlanId) || "free") as PlanId;
   const isPremium = isPremiumPlan(plan);
-  const total = 10;
+  const defs = allMockTests();
+  const total = defs.length;
 
-  // Real Mock Tests — full PTE-simulation experience. 10 tests; free tier
-  // gets the first 5, premium unlocks all 10.
-  const mockTests = Array.from({ length: total }, (_, i) => {
-    const testNum = i + 1;
-    return {
-      id: `mock-test-${testNum}`,
-      number: testNum,
-      title: `Full Mock Test #${testNum}`,
-      duration: "2 hours",
-      questionsCount: 75,
-      isLocked: !hasAccessToTest(plan, "mockTests", testNum),
-    };
-  });
+  // Real Mock Tests — full PTE-simulation experience. Free tier gets the
+  // first PLANS.free.limits.mockTests tests, premium unlocks all of them.
+  const mockTests = defs.map((def) => ({
+    id: def.id,
+    number: def.testNumber,
+    title: def.title,
+    duration: "2 hours",
+    questionsCount: def.totalQuestions,
+    isLocked: !hasAccessToTest(plan, "mockTests", def.testNumber),
+  }));
 
   return (
     <div className="space-y-8 py-2 sm:py-4 select-none font-geist">

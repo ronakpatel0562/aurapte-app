@@ -54,15 +54,48 @@ CREATE TABLE IF NOT EXISTS public.questions (
   content JSONB NOT NULL,
   difficulty TEXT CHECK (difficulty IN ('easy','medium','hard')),
   is_active BOOLEAN DEFAULT true,
+  -- 'mock_only' rows are excluded from practice-test backfill and the
+  -- question browse pages; they only ever surface via an explicit
+  -- test_questions mapping or mock-test backfill.
+  pool TEXT NOT NULL DEFAULT 'shared' CHECK (pool IN ('shared', 'mock_only')),
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Enable RLS on Questions
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can view active questions" 
-  ON public.questions FOR SELECT 
+CREATE POLICY "Anyone can view active questions"
+  ON public.questions FOR SELECT
   USING (is_active = true);
+
+CREATE INDEX IF NOT EXISTS idx_questions_pool_lookup
+  ON public.questions (module, task_type, pool)
+  WHERE is_active = true;
+
+-- test_questions: precomputed (test, module, position) -> question
+-- mapping, populated by scripts/build_test_question_mapping.py so the
+-- runner can fetch a test's questions in one indexed query instead of
+-- resolving them live on every page load.
+CREATE TABLE IF NOT EXISTS public.test_questions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  test_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('practice', 'mock')),
+  module TEXT NOT NULL CHECK (module IN ('speaking', 'writing', 'reading', 'listening')),
+  position INT NOT NULL,
+  question_id UUID NOT NULL REFERENCES public.questions(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (test_id, module, position),
+  UNIQUE (test_id, question_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_test_questions_test_id
+  ON public.test_questions (test_id);
+
+ALTER TABLE public.test_questions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view test question mappings"
+  ON public.test_questions FOR SELECT
+  USING (true);
 
 
 -- 3. User Attempts Table
@@ -75,6 +108,10 @@ CREATE TABLE IF NOT EXISTS public.user_attempts (
   max_score NUMERIC,
   is_correct BOOLEAN,
   time_taken_seconds INTEGER,
+  -- Which numbered test (e.g. "practice-test-3") and module this attempt
+  -- belongs to. NULL for the standalone free-practice question flow.
+  test_id TEXT DEFAULT NULL,
+  module TEXT DEFAULT NULL,
   attempted_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -134,7 +171,7 @@ SET search_path = public
 AS $$
   SELECT module::text, COUNT(*)::bigint AS count
   FROM public.questions
-  WHERE is_active = true
+  WHERE is_active = true AND pool = 'shared'
   GROUP BY module;
 $$;
 

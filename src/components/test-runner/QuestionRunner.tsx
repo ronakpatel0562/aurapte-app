@@ -145,10 +145,14 @@ export default function QuestionRunner({
   questions,
   config,
   userId,
+  testId,
 }: {
   questions: RunnerQuestion[];
   config: RunnerConfig;
   userId: string;
+  /** e.g. "practice-test-3" — stamped onto each attempt row so listing
+   *  pages can compute real "Attempted" status per test. */
+  testId?: string;
 }) {
   const initialState: RunnerState = useMemo(
     () => ({
@@ -245,6 +249,8 @@ export default function QuestionRunner({
           score: finalCorrect ? 1 : 0,
           max_score: 1,
           is_correct: finalCorrect,
+          test_id: testId ?? null,
+          module: q.module,
         };
       });
       // Insert in chunks to avoid request body limits on big mock tests.
@@ -258,7 +264,7 @@ export default function QuestionRunner({
     }
 
     dispatch({ type: "SUBMIT", correct: score.correct, total: score.total, perModule: score.perModule });
-  }, [computeScore, questions, state.answers, state.submitted, userId]);
+  }, [computeScore, questions, state.answers, state.submitted, userId, testId]);
 
   // ---------------------------------------------------------------------
   // Pre-start screen
