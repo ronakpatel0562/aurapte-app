@@ -28,9 +28,23 @@ export function useFullscreen(targetRef: React.RefObject<HTMLElement>) {
       // Blocked (no transient activation, or user denied) — the shell
       // shows a manual "Enter Full Screen" button as a fallback.
     }
+    // Best-effort landscape lock for phones/tablets so the exam gets the
+    // wider layout it's designed for. Unsupported on iOS Safari — the
+    // portrait rotate-hint in ExamChrome covers that case instead.
+    try {
+      const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
+      await orientation.lock?.("landscape");
+    } catch {
+      // ignore — orientation lock is opportunistic only
+    }
   }, [targetRef]);
 
   const exit = useCallback(async () => {
+    try {
+      screen.orientation?.unlock?.();
+    } catch {
+      // ignore
+    }
     if (document.fullscreenElement) {
       try {
         await document.exitFullscreen();

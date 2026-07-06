@@ -76,7 +76,7 @@ export default function AudioPromptBox({
   };
 
   return (
-    <div className="flex justify-center py-8 select-none">
+    <div className="flex justify-center py-4 sm:py-8 select-none w-full">
       {audioUrl && (
         <audio
           ref={audioRef}
@@ -101,7 +101,7 @@ export default function AudioPromptBox({
       )}
       <div
         onClick={handleBoxClick}
-        className={`w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 ${
+        className={`w-full max-w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 ${
           status === "Click to Play" ? "cursor-pointer hover:bg-[#5284A3]" : ""
         }`}
       >
@@ -129,7 +129,7 @@ export default function AudioPromptBox({
             step="0.05"
             value={volume}
             onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-            className="w-48 h-[3px] bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
+            className="w-full max-w-48 h-[3px] bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
             style={{
               background: `linear-gradient(to right, white ${volume * 100}%, rgba(255,255,255,0.3) ${volume * 100}%)`,
             }}

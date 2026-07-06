@@ -258,3 +258,20 @@
   background-color: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
 }
+
+/* ---------------------------------------------------------------------------
+   Exam runner rotate-device hint
+   ---------------------------------------------------------------------------
+   The exam driver chrome (ExamChrome.tsx) is laid out for landscape/desktop
+   widths. Orientation-lock is opportunistic (unsupported on iOS Safari), so
+   this hint nudges phone users still in portrait toward landscape instead
+   of silently leaving them with a cramped layout.
+   --------------------------------------------------------------------------- */
+.exam-rotate-hint {
+  display: none;
+}
+@media (max-width: 768px) and (orientation: portrait) {
+  .exam-rotate-hint {
+    display: flex;
+  }
+}

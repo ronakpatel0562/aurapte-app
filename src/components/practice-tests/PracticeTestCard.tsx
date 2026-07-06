@@ -26,9 +26,11 @@ interface PracticeTestCardProps {
   isLocked: boolean;
   /** Module keys the user has at least one recorded attempt for on this test. */
   attemptedModules?: string[];
+  /** Last score (0-100) per attempted module key, e.g. { speaking: 72 }. */
+  moduleScores?: Record<string, number>;
 }
 
-export default function PracticeTestCard({ id, testNumber, isLocked, attemptedModules = [] }: PracticeTestCardProps) {
+export default function PracticeTestCard({ id, testNumber, isLocked, attemptedModules = [], moduleScores = {} }: PracticeTestCardProps) {
   const attemptedSet = new Set(attemptedModules);
   const attemptedCount = MODULES.filter((m) => attemptedSet.has(m.key)).length;
 
@@ -88,7 +90,11 @@ export default function PracticeTestCard({ id, testNumber, isLocked, attemptedMo
                     }`}
                   >
                     {attempted && <CheckCircle2 className="w-2.5 h-2.5 shrink-0" />}
-                    {isLocked ? "Locked" : attempted ? "Attempted" : "Not Attempted"}
+                    {isLocked
+                      ? "Locked"
+                      : attempted
+                      ? `${moduleScores[m.key] ?? 0}%`
+                      : "Not Attempted"}
                   </span>
                 </span>
               </Link>

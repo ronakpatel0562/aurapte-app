@@ -14,6 +14,10 @@ export interface TestAttemptRow {
   attempted_at: string;
 }
 
+export interface ModuleAttemptRow extends TestAttemptRow {
+  module: string | null;
+}
+
 export interface TestProgress {
   testId: string;
   /** Distinct questions attempted for this test_id (deduped by question_id). */
@@ -65,4 +69,52 @@ export function summarizeTestProgress(rows: TestAttemptRow[]): Map<string, TestP
 
 export function isTestComplete(progress: TestProgress | undefined, totalQuestions: number): boolean {
   return !!progress && totalQuestions > 0 && progress.distinctQuestions >= totalQuestions;
+}
+
+export interface ModuleProgress {
+  scorePercent: number;
+  lastAttemptedAt: string;
+}
+
+/**
+ * Same dedupe-by-question-then-sum approach as summarizeTestProgress, but
+ * keyed by test_id + module — used by Practice Tests, where each module
+ * (speaking/writing/reading/listening) is scored independently rather than
+ * as one combined test score.
+ */
+export function summarizeModuleProgress(rows: ModuleAttemptRow[]): Map<string, Map<string, ModuleProgress>> {
+  const latestByTestModuleQuestion = new Map<string, Map<string, TestAttemptRow>>();
+
+  for (const row of rows) {
+    if (!row.test_id || !row.module) continue;
+    const key = `${row.test_id}::${row.module}`;
+    let byQuestion = latestByTestModuleQuestion.get(key);
+    if (!byQuestion) {
+      byQuestion = new Map();
+      latestByTestModuleQuestion.set(key, byQuestion);
+    }
+    const existing = byQuestion.get(row.question_id);
+    if (!existing || row.attempted_at > existing.attempted_at) {
+      byQuestion.set(row.question_id, row);
+    }
+  }
+
+  const result = new Map<string, Map<string, ModuleProgress>>();
+  Array.from(latestByTestModuleQuestion.entries()).forEach(([key, byQuestion]) => {
+    const [testId, module] = key.split("::");
+    let totalScore = 0;
+    let totalMaxScore = 0;
+    let lastAttemptedAt = "";
+    Array.from(byQuestion.values()).forEach((row) => {
+      totalScore += row.score ?? 0;
+      totalMaxScore += row.max_score ?? 0;
+      if (row.attempted_at > lastAttemptedAt) lastAttemptedAt = row.attempted_at;
+    });
+    if (!result.has(testId)) result.set(testId, new Map());
+    result.get(testId)!.set(module, {
+      scorePercent: totalMaxScore > 0 ? Math.round((totalScore / totalMaxScore) * 100) : 0,
+      lastAttemptedAt,
+    });
+  });
+  return result;
 }

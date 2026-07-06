@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { PLANS, planName, hasAccessToTest, isPremiumPlan, type PlanId } from "@/lib/plans";
 import PracticeTestCard from "@/components/practice-tests/PracticeTestCard";
 import { allPracticeTests } from "@/lib/testDefinitions";
+import { summarizeModuleProgress } from "@/lib/testProgress";
 
 export default async function PracticeTestsPage() {
   const supabase = createClient();
@@ -39,12 +40,12 @@ export default async function PracticeTestsPage() {
     };
   });
 
-  // Real "Attempted" status per test/module — attempt rows are stamped with
-  // test_id + module by the runner at submit time (see QuestionRunner /
-  // ExamRunner). One query for every card instead of N.
+  // Real "Attempted" status + last score per test/module — attempt rows are
+  // stamped with test_id + module by the runner at submit time (see
+  // QuestionRunner / ExamRunner). One query for every card instead of N.
   const { data: attemptRows } = await supabase
     .from("user_attempts")
-    .select("test_id, module")
+    .select("test_id, module, question_id, score, max_score, attempted_at")
     .eq("user_id", user.id)
     .not("test_id", "is", null);
 
@@ -54,6 +55,7 @@ export default async function PracticeTestsPage() {
     if (!attemptedByTest.has(row.test_id)) attemptedByTest.set(row.test_id, new Set());
     attemptedByTest.get(row.test_id)!.add(row.module);
   }
+  const moduleProgressByTest = summarizeModuleProgress(attemptRows ?? []);
 
   return (
     <div className="space-y-8 py-2 sm:py-4 select-none font-geist">
@@ -124,15 +126,25 @@ export default async function PracticeTestsPage() {
       </Link>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {practiceTests.map((test) => (
-          <PracticeTestCard
-            key={test.id}
-            id={test.id}
-            testNumber={test.number}
-            isLocked={test.isLocked}
-            attemptedModules={Array.from(attemptedByTest.get(test.id) ?? [])}
-          />
-        ))}
+        {practiceTests.map((test) => {
+          const moduleScores = moduleProgressByTest.get(test.id);
+          return (
+            <PracticeTestCard
+              key={test.id}
+              id={test.id}
+              testNumber={test.number}
+              isLocked={test.isLocked}
+              attemptedModules={Array.from(attemptedByTest.get(test.id) ?? [])}
+              moduleScores={
+                moduleScores
+                  ? Object.fromEntries(
+                      Array.from(moduleScores.entries()).map(([module, p]) => [module, p.scorePercent])
+                    )
+                  : undefined
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );
