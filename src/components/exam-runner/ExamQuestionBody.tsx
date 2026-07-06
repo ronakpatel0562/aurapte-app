@@ -12,6 +12,7 @@ import ListeningFillBlanksExam from "./listening/ListeningFillBlanksExam";
 import ListeningMCQExam from "./listening/ListeningMCQExam";
 import HighlightWordsExam from "./listening/HighlightWordsExam";
 import WriteDictationExam from "./listening/WriteDictationExam";
+import { parsePrompt } from "@/lib/linguistics/parsePrompt";
 import type { RunnerQuestion } from "@/components/test-runner/QuestionRunner";
 
 /**
@@ -183,21 +184,30 @@ export default function ExamQuestionBody({
         />
       );
 
-    case "write_an_email":
+    case "write_an_email": {
+      // The situation paragraph and bullet points can arrive as an explicit
+      // `scenario`/`bullet_points` pair, or as a single raw `prompt` string
+      // that mixes both — see WriteEmail.tsx (the Question Bank's own
+      // renderer) for the same fallback, needed so the situation text isn't
+      // silently dropped when only `prompt` was populated by the importer.
+      const parsedFromPrompt = !content.scenario && content.prompt ? parsePrompt(content.prompt) : null;
+      const description = content.scenario || parsedFromPrompt?.instruction || "";
+      const points: string[] =
+        Array.isArray(content.bullet_points) && content.bullet_points.length > 0
+          ? content.bullet_points
+          : parsedFromPrompt?.themes || [];
       return (
         <WritingTaskFlow
           title="Read the situation below and write an email to resolve the issue. You have 9 minutes to finish this task."
           prompt={
             <>
-              {content.scenario && <p className="mb-3 whitespace-pre-wrap">{content.scenario}</p>}
-              {Array.isArray(content.bullet_points) && content.bullet_points.length > 0 ? (
+              {description && <p className="mb-3 whitespace-pre-wrap">{description}</p>}
+              {points.length > 0 && (
                 <ul className="space-y-1">
-                  {content.bullet_points.map((bp: string, i: number) => (
+                  {points.map((bp, i) => (
                     <li key={i}>{bp}</li>
                   ))}
                 </ul>
-              ) : (
-                !content.scenario && <p className="whitespace-pre-wrap">{content.prompt}</p>
               )}
             </>
           }
@@ -206,6 +216,7 @@ export default function ExamQuestionBody({
           placeholder="Type your email here…"
         />
       );
+    }
 
     case "rw_fill_in_the_blanks":
       return (

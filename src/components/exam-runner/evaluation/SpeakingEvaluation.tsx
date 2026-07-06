@@ -31,6 +31,13 @@ export default function SpeakingEvaluation({
   const transcript = (answer || "").trim();
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+
+  const readAloudDiff =
+    taskType === "read_aloud" && content.passage && transcript
+      ? diffWords(content.passage, transcript)
+      : null;
+  const passageDiff = readAloudDiff?.passageParts;
+  const transcriptDiff = readAloudDiff?.transcriptParts;
   const shortAnswerCorrect =
     taskType === "answer_short_question" && content.correct_answer
       ? norm(content.correct_answer)
@@ -48,7 +55,17 @@ export default function SpeakingEvaluation({
         <div>
           <EvalLabel>Text to read</EvalLabel>
           <div className="border border-gray-300 rounded bg-white p-4 text-[15px] leading-relaxed text-gray-800">
-            {content.passage}
+            {passageDiff
+              ? passageDiff.map((part, i) =>
+                  part.type === "missing" ? (
+                    <span key={i} className="text-error-deep line-through decoration-2">
+                      {part.text}{" "}
+                    </span>
+                  ) : (
+                    <span key={i}>{part.text} </span>
+                  )
+                )
+              : content.passage}
           </div>
         </div>
       )}
@@ -72,7 +89,19 @@ export default function SpeakingEvaluation({
       <div>
         <EvalLabel>What we heard (auto transcript)</EvalLabel>
         <div className="border border-gray-300 rounded bg-white p-4 text-[15px] leading-relaxed text-gray-800 min-h-[64px]">
-          {transcript ? transcript : <span className="text-gray-400 italic">No speech was captured.</span>}
+          {transcriptDiff
+            ? transcriptDiff.map((part, i) =>
+                part.type === "extra" ? (
+                  <span key={i} className="text-[#2980b9] font-semibold">
+                    {part.text}{" "}
+                  </span>
+                ) : (
+                  <span key={i}>{part.text} </span>
+                )
+              )
+            : transcript
+            ? transcript
+            : <span className="text-gray-400 italic">No speech was captured.</span>}
         </div>
       </div>
 
@@ -94,6 +123,61 @@ export default function SpeakingEvaluation({
       </p>
     </div>
   );
+}
+
+type DiffPart = { text: string; type: "match" | "missing" | "extra" };
+
+/**
+ * Word-level diff via LCS, used to mark which words of the Read Aloud
+ * passage were skipped/misread and which words in the captured transcript
+ * were inserted — same idea as a text diff, applied to two word arrays.
+ */
+function diffWords(
+  original: string,
+  spoken: string
+): { passageParts: DiffPart[]; transcriptParts: DiffPart[] } {
+  const clean = (w: string) => w.toLowerCase().replace(/[^a-z0-9']/g, "");
+  const a = original.split(/\s+/).filter(Boolean);
+  const b = spoken.split(/\s+/).filter(Boolean);
+  const an = a.map(clean);
+  const bn = b.map(clean);
+
+  const dp: number[][] = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      dp[i][j] =
+        an[i] === bn[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+
+  const passageParts: DiffPart[] = [];
+  const transcriptParts: DiffPart[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    if (an[i] === bn[j]) {
+      passageParts.push({ text: a[i], type: "match" });
+      transcriptParts.push({ text: b[j], type: "match" });
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      passageParts.push({ text: a[i], type: "missing" });
+      i++;
+    } else {
+      transcriptParts.push({ text: b[j], type: "extra" });
+      j++;
+    }
+  }
+  while (i < a.length) {
+    passageParts.push({ text: a[i], type: "missing" });
+    i++;
+  }
+  while (j < b.length) {
+    transcriptParts.push({ text: b[j], type: "extra" });
+    j++;
+  }
+
+  return { passageParts, transcriptParts };
 }
 
 const INSTRUCTIONS: Record<string, string> = {

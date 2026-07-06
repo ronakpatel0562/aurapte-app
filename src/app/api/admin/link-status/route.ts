@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
   allPracticeTests,
   allMockTests,
 } from "@/lib/testDefinitions";
+import { isAdminEmail } from "@/lib/admin";
 
 /**
  * GET /api/admin/link-status
@@ -14,18 +15,37 @@ import {
  *   - Per-test breakdown: for each of the 12 practice + 15 mock tests,
  *     how many of its section questions are linked.
  *
- * This is read-only and safe to expose to any logged-in user (no PII).
+ * Read-only (no PII) but still restricted to ADMIN_EMAILS — it exposes
+ * internal question-bank structure and this tool shouldn't be discoverable
+ * by regular accounts at all.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) {
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
 
+  const authHeader = req.headers.get("authorization") ?? "";
+  const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!bearer) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false },
   });
+
+  const {
+    data: { user },
+    error: authErr,
+  } = await admin.auth.getUser(bearer);
+  if (authErr || !user) {
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+  if (!isAdminEmail(user.email)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   // Collect every distinct Mongo ID across all tests.
   const allIds = new Set<string>();

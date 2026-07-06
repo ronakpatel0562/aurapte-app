@@ -3,7 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { verifySessionId } from "@/lib/session";
 
 /**
- * Middleware runs on every navigation to /dashboard/* and /questions/*.
+ * Middleware runs on every navigation to the protected routes below.
  *
  * What it does (and doesn't do):
  *   1. Refreshes the Supabase auth session so server components see a
@@ -11,7 +11,10 @@ import { verifySessionId } from "@/lib/session";
  *   2. Verifies the `session_id` cookie's HMAC signature locally (CPU only,
  *      no DB) so we know the cookie was issued by us and hasn't been
  *      tampered with.
- *   3. Adds a short-lived cache hint so the browser can short-circuit
+ *   3. Enforces the hard paywall: there is no free tier, so any
+ *      authenticated user without an active (non-expired) plan is bounced
+ *      to /billing before they can reach app content.
+ *   4. Adds a short-lived cache hint so the browser can short-circuit
  *      repeat navigations within a few seconds (a real win on flaky links).
  *
  * What it explicitly does NOT do:
@@ -21,12 +24,18 @@ import { verifySessionId } from "@/lib/session";
  *     which fires once a minute rather than on every click.
  */
 export async function middleware(request: NextRequest) {
-  const { user, response } = await updateSession(request);
+  const { supabase, user, response } = await updateSession(request);
   const url = new URL(request.url);
 
+  const isBillingRoute = url.pathname === "/billing";
   const isProtectedRoute =
     url.pathname.startsWith("/dashboard") ||
-    url.pathname.startsWith("/questions");
+    url.pathname.startsWith("/questions") ||
+    url.pathname.startsWith("/practice-tests") ||
+    url.pathname.startsWith("/mock-tests") ||
+    url.pathname.startsWith("/specialised-tips") ||
+    url.pathname.startsWith("/prediction-files") ||
+    isBillingRoute;
 
   if (!isProtectedRoute) {
     return response;
@@ -35,6 +44,24 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     const redirectUrl = new URL("/login", request.url);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // Hard paywall: no free tier, so an active, non-expired plan is required
+  // for every protected route except /billing itself.
+  if (!isBillingRoute) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan_expiry")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const hasActivePlan =
+      !!profile?.plan_expiry && new Date(profile.plan_expiry).getTime() > Date.now();
+
+    if (!hasActivePlan) {
+      const redirectUrl = new URL("/billing", request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   // Cookie-signature check (HMAC, local CPU only). This proves the cookie
@@ -90,6 +117,11 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/questions/:path*",
+    "/practice-tests/:path*",
+    "/mock-tests/:path*",
+    "/specialised-tips/:path*",
+    "/prediction-files/:path*",
+    "/billing",
     "/api/heartbeat",
   ],
 };

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAdminEmail } from "@/lib/admin";
 
 /**
  * POST /api/admin/link-questions
@@ -8,7 +9,8 @@ import { createClient } from "@supabase/supabase-js";
  *
  * Server-side bulk-update of the legacy_mongo_id column on questions.
  * Uses the service role key so RLS doesn't block us — this route is the
- * only place we trust arbitrary ID pairings. We do still validate inputs:
+ * only place we trust arbitrary ID pairings. Restricted to ADMIN_EMAILS;
+ * any other authenticated user gets a 403. We do still validate inputs:
  *
  *   - legacyMongoId must look like a 24-hex string (the original format).
  *   - questionId must be a valid UUID.
@@ -31,8 +33,10 @@ export async function POST(req: NextRequest) {
   }
 
   // The service role bypasses RLS so we don't need to be logged in as a
-  // user. We do still gate on the request being authenticated to defend
-  // against drive-by abuse — the page that calls this is also gated.
+  // user. We gate on the caller being an admin (ADMIN_EMAILS) rather than
+  // just "authenticated" — this route can rewrite question ID mappings for
+  // every test, so any signed-up account being able to call it is a real
+  // data-integrity risk, not just drive-by abuse.
   const authHeader = req.headers.get("authorization") ?? "";
   const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   if (!bearer) {
@@ -48,6 +52,9 @@ export async function POST(req: NextRequest) {
   } = await admin.auth.getUser(bearer);
   if (authErr || !user) {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+  if (!isAdminEmail(user.email)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   let body: { pairs?: Array<{ legacyMongoId?: string; questionId?: string }> };

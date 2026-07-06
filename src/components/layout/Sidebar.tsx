@@ -15,6 +15,7 @@ import {
   ChevronRight,
   LogOut,
   Award,
+  FileText,
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -220,7 +221,7 @@ export default function Sidebar() {
             </span>
             {!isPremium && (
               <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute font-medium uppercase">
-                10 Free
+                10 tests
               </span>
             )}
           </Link>
@@ -239,7 +240,7 @@ export default function Sidebar() {
             </span>
             {!isPremium && (
               <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute font-medium uppercase">
-                5 Free
+                5 tests
               </span>
             )}
           </Link>
@@ -256,13 +257,26 @@ export default function Sidebar() {
               <PenTool className="w-4 h-4" />
               Specialised Tips
             </span>
-            {!isPremium ? (
-              <Lock className="w-3.5 h-3.5 text-mute" />
-            ) : (
-              <span className="text-[10px] bg-success/10 text-success border border-success/20 px-1.5 py-0.5 rounded font-mono font-medium uppercase">
-                PDF
-              </span>
-            )}
+            <span className="text-[10px] bg-success/10 text-success border border-success/20 px-1.5 py-0.5 rounded font-mono font-medium uppercase">
+              PDF
+            </span>
+          </Link>
+
+          <Link
+            href="/prediction-files"
+            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
+              pathname === "/prediction-files"
+                ? "bg-canvas-soft-2 text-ink font-semibold"
+                : "text-body hover:bg-canvas-soft hover:text-ink"
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <FileText className="w-4 h-4" />
+              Prediction Files
+            </span>
+            <span className="text-[10px] bg-success/10 text-success border border-success/20 px-1.5 py-0.5 rounded font-mono font-medium uppercase">
+              PDF
+            </span>
           </Link>
 
           <Link

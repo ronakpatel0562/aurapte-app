@@ -40,8 +40,8 @@ export function decodeJson<T>(raw: string, fallback: T): T {
  * the palette colours and the per-question badges never disagree.
  *
  * Speaking task types have no deterministic key, so they fall back to the
- * heuristic fluency/pronunciation/accuracy scorers — the evaluation screen
- * surfaces these as "recorded, indicative score" rather than a hard result.
+ * heuristic fluency/pronunciation/accuracy scorers computed from the
+ * on-device transcript.
  */
 export function scoreAnswer(
   question: RunnerQuestion,

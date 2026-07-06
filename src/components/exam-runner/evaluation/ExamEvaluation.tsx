@@ -8,7 +8,7 @@ import ScoreBadge from "@/components/questions/shared/ScoreBadge";
 import { scoreAnswer, SPEAKING_TASK_TYPES } from "../scoreAnswer";
 import QuestionEvaluation from "./QuestionEvaluation";
 
-type ResultState = "correct" | "partial" | "wrong" | "skipped" | "indicative";
+type ResultState = "correct" | "partial" | "wrong" | "skipped";
 
 interface QResult {
   score: number;
@@ -47,8 +47,6 @@ export default function ExamEvaluation({
         let state: ResultState;
         if (!answered) {
           state = "skipped";
-        } else if (SPEAKING_TASK_TYPES.has(q.task_type)) {
-          state = "indicative";
         } else if (maxScore > 0 && score >= maxScore) {
           state = "correct";
         } else if (score > 0) {
@@ -61,8 +59,6 @@ export default function ExamEvaluation({
     [questions, answers]
   );
 
-  // Aggregate over auto-scorable (non-speaking) questions only — mixing the
-  // 100-point speaking heuristic into the point total would distort it.
   const summary = useMemo(() => {
     let earned = 0;
     let possible = 0;
@@ -70,10 +66,7 @@ export default function ExamEvaluation({
     let autoCount = 0;
     let recorded = 0;
     results.forEach((r, i) => {
-      if (SPEAKING_TASK_TYPES.has(questions[i].task_type)) {
-        if (r.state === "indicative") recorded += 1;
-        return;
-      }
+      if (SPEAKING_TASK_TYPES.has(questions[i].task_type) && r.answered) recorded += 1;
       autoCount += 1;
       earned += r.score;
       possible += r.maxScore;
@@ -111,8 +104,8 @@ export default function ExamEvaluation({
               <Stat label="Fully correct" value={`${summary.fullyCorrect}/${summary.autoCount}`} />
             </>
           )}
-          {summary.recorded > 0 && summary.autoCount === 0 && (
-            <Stat label="Recorded" value={summary.recorded.toString()} />
+          {summary.recorded > 0 && (
+            <Stat label="Speaking recorded" value={summary.recorded.toString()} />
           )}
         </div>
       </div>
@@ -149,7 +142,6 @@ export default function ExamEvaluation({
           <LegendDot cls="bg-amber-500" label="Partial" />
           <LegendDot cls="bg-red-500" label="Incorrect" />
           <LegendDot cls="bg-slate-400" label="Skipped" />
-          <LegendDot cls="bg-sky-500" label="Recorded" />
         </div>
       </div>
 
@@ -165,13 +157,7 @@ export default function ExamEvaluation({
                 {getTaskTypeFriendlyName(selectedQuestion.task_type)}
               </h3>
             </div>
-            {selectedResult.state !== "indicative" ? (
-              <ScoreBadge score={selectedResult.score} maxScore={selectedResult.maxScore} />
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
-                Recorded
-              </span>
-            )}
+            <ScoreBadge score={selectedResult.score} maxScore={selectedResult.maxScore} />
           </div>
           <div className="p-6">
             <QuestionEvaluation question={selectedQuestion} answer={answers[selectedQuestion.id] ?? ""} />
@@ -204,7 +190,6 @@ function paletteStyles(state: ResultState, active: boolean): string {
     partial: "border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100",
     wrong: "border-red-500 text-red-700 bg-red-50 hover:bg-red-100",
     skipped: "border-slate-300 text-slate-500 bg-slate-50 hover:bg-slate-100",
-    indicative: "border-sky-500 text-sky-700 bg-sky-50 hover:bg-sky-100",
   };
   const ring = active ? " ring-2 ring-offset-1 ring-gray-800/70 scale-105" : "";
   return base[state] + ring;

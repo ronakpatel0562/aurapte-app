@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import {
   Clock,
   ChevronLeft,
@@ -16,6 +16,10 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapDbToUrlTaskType } from "@/lib/taskTypeMapper";
+import ExamQuestionBody from "@/components/exam-runner/ExamQuestionBody";
+import { scoreAnswer } from "@/components/exam-runner/scoreAnswer";
+import MockExamEvaluation from "@/components/exam-runner/evaluation/MockExamEvaluation";
+import type { MockModuleQuestions } from "@/components/exam-runner/MockExamRunner";
 
 /**
  * QuestionRunner — the engine that powers both Practice Tests and full
@@ -47,9 +51,10 @@ import { mapDbToUrlTaskType } from "@/lib/taskTypeMapper";
  *     modules this test was supposed to cover".
  *
  * Scoring:
- *   - For non-speaking modules we compute the score client-side using
- *     the existing taskTypeMapper + scorer patterns. Speaking is recorded
- *     as "submitted, awaiting manual scoring" — the AI scorer is Phase 2.
+ *   - Every module (including speaking) is scored with the shared
+ *     `scoreAnswer` heuristic from the exam-runner, so results and the
+ *     post-submit review are consistent with Mock Test / single-module
+ *     Practice Test.
  *   - On submit we INSERT one row per question into user_attempts, exactly
  *     like the question-by-question flow does. This keeps the dashboard
  *     data model unchanged.
@@ -85,7 +90,10 @@ interface RunnerConfig {
 
 interface RunnerState {
   currentIdx: number;
-  answers: Record<string, any>;
+  /** Every answer is a string — plain text for text inputs, JSON-encoded
+   *  for structured shapes (arrays/records), matching ExamQuestionBody's
+   *  contract so `scoreAnswer` can score every module uniformly. */
+  answers: Record<string, string>;
   flags: Record<string, boolean>;
   submitted: boolean;
   started: boolean;
@@ -93,7 +101,6 @@ interface RunnerState {
   perQuestionRemaining: number;
   paused: boolean;
   showReview: boolean;
-  score: { correct: number; total: number; perModule: Record<string, { correct: number; total: number }> };
 }
 
 type RunnerAction =
@@ -102,10 +109,10 @@ type RunnerAction =
   | { type: "TICK_PER_Q" }
   | { type: "PAUSE"; paused: boolean }
   | { type: "GOTO"; idx: number }
-  | { type: "ANSWER"; questionId: string; answer: any }
+  | { type: "ANSWER"; questionId: string; answer: string }
   | { type: "FLAG"; questionId: string; flag: boolean }
   | { type: "SHOW_REVIEW"; show: boolean }
-  | { type: "SUBMIT"; correct: number; total: number; perModule: RunnerState["score"]["perModule"] }
+  | { type: "SUBMIT" }
   | { type: "RESET_PER_Q"; seconds: number };
 
 function reducer(state: RunnerState, action: RunnerAction): RunnerState {
@@ -129,11 +136,7 @@ function reducer(state: RunnerState, action: RunnerAction): RunnerState {
     case "SHOW_REVIEW":
       return { ...state, showReview: action.show };
     case "SUBMIT":
-      return {
-        ...state,
-        submitted: true,
-        score: { correct: action.correct, total: action.total, perModule: action.perModule },
-      };
+      return { ...state, submitted: true };
     case "RESET_PER_Q":
       return { ...state, perQuestionRemaining: action.seconds };
     default:
@@ -165,12 +168,14 @@ export default function QuestionRunner({
       perQuestionRemaining: config.perQuestionSeconds,
       paused: false,
       showReview: false,
-      score: { correct: 0, total: 0, perModule: {} },
     }),
     [config.totalTimeSeconds, config.perQuestionSeconds]
   );
 
   const [state, dispatch] = useReducer(reducer, initialState);
+  // Blocks "Next"/"Review & Submit" while a speaking prompt is still
+  // prepping/recording — see SpeakingRecorderFlow's onLockChange.
+  const [nextLocked, setNextLocked] = useState(false);
 
   const currentQ = questions[state.currentIdx];
   const total = questions.length;
@@ -208,47 +213,26 @@ export default function QuestionRunner({
   }, [state.currentIdx, config.perQuestionSeconds]);
 
   // ---------------------------------------------------------------------
-  // Scoring — runs on submit. Simple per-question matcher; full AI
-  // scoring for Speaking/Writing will be Phase 2.
+  // Submit — scores every question (including speaking) with the shared
+  // scoreAnswer heuristic and persists one row per question, same as the
+  // Mock Test / single-module Practice Test runners.
   // ---------------------------------------------------------------------
-  const computeScore = useCallback(() => {
-    let correct = 0;
-    const perModule: Record<string, { correct: number; total: number }> = {};
-
-    for (const q of questions) {
-      const mod = q.module;
-      if (!perModule[mod]) perModule[mod] = { correct: 0, total: 0 };
-      perModule[mod].total += 1;
-
-      const userAnswer = state.answers[q.id];
-      const isCorrect = scoreQuestion(q, userAnswer);
-      if (isCorrect) {
-        correct += 1;
-        perModule[mod].correct += 1;
-      }
-    }
-    return { correct, total: questions.length, perModule };
-  }, [questions, state.answers]);
-
   const handleSubmit = useCallback(async () => {
     if (state.submitted) return;
-    const score = computeScore();
 
-    // Persist attempts — same table the question-by-question flow uses.
     try {
       const supabase = createClient();
       const rows = questions.map((q) => {
-        const userAnswer = state.answers[q.id];
-        const isCorrect = scoreQuestion(q, userAnswer);
-        // Speaking modules can't be auto-scored — record as attempted.
-        const finalCorrect = q.module === "speaking" ? false : isCorrect;
+        const userAnswer = state.answers[q.id] ?? "";
+        const { score, maxScore } = scoreAnswer(q, userAnswer);
+        const isCorrect = maxScore > 0 && score / maxScore >= 0.6;
         return {
           user_id: userId,
           question_id: q.id,
-          user_answer: userAnswer ?? null,
-          score: finalCorrect ? 1 : 0,
-          max_score: 1,
-          is_correct: finalCorrect,
+          user_answer: { transcript: userAnswer },
+          score,
+          max_score: maxScore,
+          is_correct: isCorrect,
           test_id: testId ?? null,
           module: q.module,
         };
@@ -263,8 +247,8 @@ export default function QuestionRunner({
       // Don't block the UI; the user still sees their score.
     }
 
-    dispatch({ type: "SUBMIT", correct: score.correct, total: score.total, perModule: score.perModule });
-  }, [computeScore, questions, state.answers, state.submitted, userId, testId]);
+    dispatch({ type: "SUBMIT" });
+  }, [questions, state.answers, state.submitted, userId, testId]);
 
   // ---------------------------------------------------------------------
   // Pre-start screen
@@ -283,16 +267,24 @@ export default function QuestionRunner({
   }
 
   // ---------------------------------------------------------------------
-  // Result screen
+  // Result screen — grouped by module and reusing the same per-question
+  // evaluation UI as Mock Test / single-module Practice Test, so a click
+  // on any question number shows the submitted response + reference
+  // answer/score instead of just closing back to a summary.
   // ---------------------------------------------------------------------
   if (state.submitted) {
+    const modules: MockModuleQuestions[] = [];
+    for (const q of questions) {
+      const mod = modules.find((m) => m.module === q.module);
+      if (mod) mod.questions.push(q);
+      else modules.push({ module: q.module as MockModuleQuestions["module"], questions: [q] });
+    }
     return (
-      <ResultScreen
-        score={state.score}
-        questions={questions}
-        flags={state.flags}
-        isMock={config.isMock}
-        onReview={() => dispatch({ type: "SHOW_REVIEW", show: true })}
+      <MockExamEvaluation
+        testTitle={config.title}
+        modules={modules}
+        answers={state.answers}
+        backHref="/practice-tests"
       />
     );
   }
@@ -357,16 +349,16 @@ export default function QuestionRunner({
             </div>
           </div>
 
-          {/* Question body — simplest reasonable representation. The full
-              task-specific UI (audio player, MCQ options, fill-in-blanks
-              inputs) is rendered through the same components used by the
-              single-question page; for the runner we render a compact
-              textarea + MCQ list based on what we know about the question. */}
-          <RunnerQuestionBody
+          {/* Question body — same exam-clone renderer used by Mock Test /
+              single-module Practice Test, so speaking questions get a real
+              recorder and every task type's answer encoding matches what
+              scoreAnswer expects. */}
+          <ExamQuestionBody
+            key={currentQ.id}
             question={currentQ}
-            answer={state.answers[currentQ.id]}
-            onChange={(a) => dispatch({ type: "ANSWER", questionId: currentQ.id, answer: a })}
-            disabled={state.paused}
+            answer={state.answers[currentQ.id] ?? ""}
+            onAnswerChange={(a) => dispatch({ type: "ANSWER", questionId: currentQ.id, answer: a })}
+            onLockChange={setNextLocked}
           />
         </div>
 
@@ -394,7 +386,9 @@ export default function QuestionRunner({
             {state.currentIdx === total - 1 ? (
               <button
                 onClick={() => dispatch({ type: "SHOW_REVIEW", show: true })}
-                className="h-10 px-5 rounded-md bg-primary text-on-primary text-sm font-semibold hover:bg-opacity-90 active:scale-[0.99] transition flex items-center gap-1.5"
+                disabled={nextLocked}
+                title={nextLocked ? "Finish recording your response first" : undefined}
+                className="h-10 px-5 rounded-md bg-primary text-on-primary text-sm font-semibold hover:bg-opacity-90 active:scale-[0.99] transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ListChecks className="w-4 h-4" />
                 Review &amp; Submit
@@ -402,7 +396,9 @@ export default function QuestionRunner({
             ) : (
               <button
                 onClick={() => dispatch({ type: "GOTO", idx: Math.min(total - 1, state.currentIdx + 1) })}
-                className="h-10 px-5 rounded-md bg-primary text-on-primary text-sm font-semibold hover:bg-opacity-90 active:scale-[0.99] transition flex items-center gap-1.5"
+                disabled={nextLocked}
+                title={nextLocked ? "Finish recording your response first" : undefined}
+                className="h-10 px-5 rounded-md bg-primary text-on-primary text-sm font-semibold hover:bg-opacity-90 active:scale-[0.99] transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -593,87 +589,6 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RunnerQuestionBody({
-  question,
-  answer,
-  onChange,
-  disabled,
-}: {
-  question: RunnerQuestion;
-  answer: any;
-  onChange: (a: any) => void;
-  disabled: boolean;
-}) {
-  const { content } = question;
-
-  // MCQ-single / MCQ-multiple — render option buttons.
-  if (
-    question.task_type === "listening_mcq_single" ||
-    question.task_type === "listening_mcq_multiple" ||
-    question.task_type === "reading_mcq_single" ||
-    question.task_type === "reading_mcq_multiple" ||
-    question.task_type === "select_missing_word"
-  ) {
-    const options: string[] = Array.isArray(content.options) ? content.options : [];
-    const isMulti = question.task_type.includes("multiple");
-    const selected: string[] = Array.isArray(answer) ? answer : answer ? [answer] : [];
-
-    return (
-      <div className="space-y-2.5">
-        {options.map((opt, i) => {
-          const letter = String.fromCharCode(65 + i);
-          const isSelected = selected.includes(letter);
-          return (
-            <button
-              key={i}
-              type="button"
-              disabled={disabled}
-              onClick={() => {
-                if (isMulti) {
-                  onChange(isSelected ? selected.filter((s) => s !== letter) : [...selected, letter]);
-                } else {
-                  onChange(letter);
-                }
-              }}
-              className={`w-full text-left p-3.5 rounded-lg border transition flex items-start gap-3 ${
-                isSelected
-                  ? "bg-primary/5 border-primary text-ink"
-                  : "bg-canvas border-hairline text-body hover:border-hairline-strong hover:bg-canvas-soft-2"
-              }`}
-            >
-              <span
-                className={`w-7 h-7 rounded-md flex items-center justify-center text-2xs font-mono font-bold border shrink-0 ${
-                  isSelected ? "bg-primary text-on-primary border-primary" : "bg-canvas-soft-2 text-mute border-hairline"
-                }`}
-              >
-                {letter}
-              </span>
-              <span className="text-sm leading-relaxed pt-0.5">{opt.replace(/^[A-Z]\.\s*/, "")}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // Default — free text input. Covers Writing, Summarize Spoken Text,
-  // Write from Dictation, fill-in-blanks.
-  return (
-    <textarea
-      value={typeof answer === "string" ? answer : ""}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      rows={6}
-      placeholder="Type your response here…"
-      spellCheck={false}
-      autoCorrect="off"
-      autoCapitalize="off"
-      autoComplete="off"
-      className="w-full bg-canvas-soft-2 border border-hairline rounded-lg p-3.5 text-sm leading-relaxed font-geist focus:outline-none focus:border-primary focus:bg-canvas transition resize-y"
-    />
-  );
-}
-
 function ReviewModal({
   questions,
   answers,
@@ -685,7 +600,7 @@ function ReviewModal({
   submitLabel,
 }: {
   questions: RunnerQuestion[];
-  answers: Record<string, any>;
+  answers: Record<string, string>;
   flags: Record<string, boolean>;
   currentIdx: number;
   onClose: () => void;
@@ -797,84 +712,6 @@ function ReviewModal({
   );
 }
 
-function ResultScreen({
-  score,
-  questions,
-  flags,
-  isMock,
-  onReview,
-}: {
-  score: RunnerState["score"];
-  questions: RunnerQuestion[];
-  flags: Record<string, boolean>;
-  isMock: boolean;
-  onReview: () => void;
-}) {
-  const pct = score.total > 0 ? Math.round((score.correct / score.total) * 100) : 0;
-  const verdict = pct >= 80 ? "Excellent" : pct >= 60 ? "On Track" : pct >= 40 ? "Keep Practising" : "Just Starting";
-
-  return (
-    <div className="max-w-2xl mx-auto space-y-5">
-      <div className="bg-canvas border border-hairline rounded-xl p-6 sm:p-8 shadow-vercel-card text-center space-y-3">
-        <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-gradient-develop-start to-gradient-develop-end flex items-center justify-center">
-          <CheckCircle2 className="w-10 h-10 text-white" />
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-ink">{verdict}</h1>
-        <p className="text-sm text-mute">
-          {isMock ? "Exam submitted" : "Test submitted"} — your attempts have been saved to your dashboard.
-        </p>
-
-        <div className="grid grid-cols-3 gap-3 pt-2">
-          <Metric label="Score" value={`${pct}%`} />
-          <Metric label="Correct" value={`${score.correct}/${score.total}`} />
-          <Metric label="Flagged" value={Object.values(flags).filter(Boolean).length.toString()} />
-        </div>
-      </div>
-
-      {/* Per-module breakdown */}
-      <div className="bg-canvas border border-hairline rounded-xl p-6 shadow-vercel-card space-y-4">
-        <h2 className="text-sm font-semibold text-ink uppercase tracking-wider">Breakdown by Module</h2>
-        <div className="space-y-3">
-          {Object.entries(score.perModule).map(([module, m]) => {
-            const mPct = m.total > 0 ? Math.round((m.correct / m.total) * 100) : 0;
-            return (
-              <div key={module} className="space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="font-semibold text-ink capitalize">{module}</span>
-                  <span className="font-mono text-mute">
-                    {m.correct} / {m.total} ({mPct}%)
-                  </span>
-                </div>
-                <div className="h-2 bg-canvas-soft-2 rounded-full overflow-hidden border border-hairline">
-                  <div
-                    className="h-full bg-primary transition-all"
-                    style={{ width: `${mPct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <a
-          href="/dashboard"
-          className="h-10 px-5 rounded-md border border-hairline bg-canvas text-sm font-medium hover:bg-canvas-soft-2 transition flex items-center justify-center"
-        >
-          Back to Dashboard
-        </a>
-        <button
-          onClick={onReview}
-          className="h-10 px-5 rounded-md bg-primary text-on-primary text-sm font-semibold hover:bg-opacity-90 active:scale-[0.99] transition"
-        >
-          Review Answers
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -894,59 +731,3 @@ function formatMS(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/**
- * Lightweight client-side scorer — compares the user's answer to the
- * stored correct answers. This intentionally duplicates only the simplest
- * cases; the existing taskTypeMapper + scorer module handle the complex
- * ones server-side. Speaking/writing return false here so we record the
- * attempt as "submitted, manual review pending".
- */
-function scoreQuestion(q: RunnerQuestion, userAnswer: any): boolean {
-  if (userAnswer === undefined || userAnswer === null || userAnswer === "") return false;
-
-  const c = q.content;
-  switch (q.task_type) {
-    case "listening_mcq_single":
-    case "reading_mcq_single":
-    case "select_missing_word":
-      // correct_answers is an array with one letter
-      if (Array.isArray(c.correct_answers) && c.correct_answers.length > 0) {
-        return c.correct_answers[0] === userAnswer;
-      }
-      if (typeof c.correct_answer === "string") {
-        return c.correct_answer === userAnswer;
-      }
-      return false;
-
-    case "listening_mcq_multiple":
-    case "reading_mcq_multiple": {
-      if (!Array.isArray(c.correct_answers)) return false;
-      const expected = new Set<string>(c.correct_answers);
-      const actual = new Set<string>(Array.isArray(userAnswer) ? userAnswer : [userAnswer]);
-      if (expected.size !== actual.size) return false;
-      expected.forEach((a) => { if (!actual.has(a)) return false; });
-      return true;
-    }
-
-    case "summarize_spoken_text":
-    case "summarize_written_text":
-    case "write_an_email":
-    case "write_from_dictation":
-    case "responding_to_situation":
-    case "answer_short_question":
-    case "describe_image":
-    case "read_aloud":
-    case "repeat_sentence":
-      // No auto-scoring yet — manual / AI grading.
-      return false;
-
-    case "listening_fill_in_the_blanks":
-    case "reading_fill_in_the_blanks":
-    case "rw_fill_in_the_blanks":
-    case "highlight_incorrect_words":
-      return false; // complex scoring handled by lib/scoring/listening.ts server-side
-
-    default:
-      return false;
-  }
-}

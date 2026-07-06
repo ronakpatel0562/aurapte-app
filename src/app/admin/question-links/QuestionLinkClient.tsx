@@ -44,7 +44,14 @@ export default function QuestionLinkClient({ tests }: { tests: TestDefinition[] 
 
   async function refresh() {
     try {
-      const res = await fetch("/api/admin/link-status", { cache: "no-store" });
+      const { data: sessionData } = await (await import("@/lib/supabase/client")).createClient().auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Not signed in");
+
+      const res = await fetch("/api/admin/link-status", {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setStatus(await res.json());
       setError(null);

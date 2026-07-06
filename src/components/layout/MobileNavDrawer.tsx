@@ -16,6 +16,7 @@ import {
   LogOut,
   Award,
   X,
+  FileText,
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -237,7 +238,7 @@ export default function MobileNavDrawer({
               </span>
               {!isPremium && (
                 <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute uppercase">
-                  10 Free
+                  10 tests
                 </span>
               )}
             </Link>
@@ -252,7 +253,7 @@ export default function MobileNavDrawer({
               </span>
               {!isPremium && (
                 <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute uppercase">
-                  5 Free
+                  5 tests
                 </span>
               )}
             </Link>
@@ -265,7 +266,16 @@ export default function MobileNavDrawer({
                 <PenTool className="w-4 h-4" />
                 Specialised Tips
               </span>
-              {!isPremium && <Lock className="w-3.5 h-3.5 text-mute" />}
+            </Link>
+            <Link
+              href="/prediction-files"
+              onClick={onClose}
+              className="flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-body hover:bg-canvas-soft hover:text-ink transition"
+            >
+              <span className="flex items-center gap-3">
+                <FileText className="w-4 h-4" />
+                Prediction Files
+              </span>
             </Link>
             <Link
               href="/billing"

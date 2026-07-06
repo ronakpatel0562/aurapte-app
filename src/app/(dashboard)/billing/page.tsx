@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Check, ChevronRight, Sparkles, Award, Lock, ArrowRight } from "lucide-react";
+import { Check, ChevronRight, Sparkles, Award, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
 import { PLANS, planName, isPremiumPlan, formatPrice, type PlanId } from "@/lib/plans";
@@ -65,22 +65,22 @@ export default async function BillingPage({
         </p>
       </div>
 
-      {/* Plan cards — Aura Starter on the left, Aura Pro on the right.
-          On phones they stack; on tablets+ they sit side by side. */}
+      {/* Plan cards — both paid, Aura Starter on the left, Aura Pro (featured)
+          on the right. On phones they stack; on tablets+ side by side. */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {orderedPlans.map((plan) => {
           const isCurrent = plan.id === currentPlan;
-          const isPaid = plan.id === "premium";
+          const isFeatured = plan.id === "premium";
           return (
             <div
               key={plan.id}
               className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col ${
-                isPaid
+                isFeatured
                   ? "border-gradient-preview-start/40 ring-1 ring-gradient-preview-start/20"
                   : "border-hairline"
               }`}
             >
-              {isPaid && (
+              {isFeatured && (
                 <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-preview-start to-gradient-preview-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
                   Most Popular
                 </div>
@@ -88,7 +88,7 @@ export default async function BillingPage({
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Sparkles className={`w-4 h-4 ${isPaid ? "text-gradient-preview-start" : "text-mute"}`} />
+                  <Sparkles className={`w-4 h-4 ${isFeatured ? "text-gradient-preview-start" : "text-mute"}`} />
                   <h2 className="text-xl font-semibold text-ink">{plan.name}</h2>
                   {isCurrent && (
                     <span className="text-2xs font-mono font-semibold uppercase px-2 py-0.5 rounded bg-success/10 text-success border border-success/20">
@@ -101,11 +101,9 @@ export default async function BillingPage({
 
               <div className="mt-5 flex items-baseline gap-1">
                 <span className="text-4xl font-bold text-ink tracking-tight">
-                  {plan.priceInr === 0 ? "Free" : `₹${plan.priceInr.toLocaleString("en-IN")}`}
+                  ₹{plan.priceInr.toLocaleString("en-IN")}
                 </span>
-                {plan.priceInr > 0 && (
-                  <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
-                )}
+                <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
               </div>
 
               <ul className="mt-5 space-y-2.5 flex-1">
@@ -113,7 +111,7 @@ export default async function BillingPage({
                   <li key={f} className="flex items-start gap-2.5 text-sm text-body">
                     <span
                       className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                        isPaid ? "bg-gradient-preview-start/10 text-gradient-preview-start" : "bg-success/10 text-success"
+                        isFeatured ? "bg-gradient-preview-start/10 text-gradient-preview-start" : "bg-success/10 text-success"
                       }`}
                     >
                       <Check className="w-3 h-3" />
@@ -131,16 +129,16 @@ export default async function BillingPage({
                   >
                     Your current plan
                   </button>
-                ) : isPaid ? (
-                  <RazorpayCheckout planId={plan.id} configured={configured} />
                 ) : (
-                  <Link
-                    href="/dashboard"
-                    className="w-full h-11 rounded-lg border border-hairline bg-canvas hover:bg-canvas-soft-2 text-ink text-sm font-semibold transition flex items-center justify-center gap-2"
-                  >
-                    Continue with Starter
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                  <RazorpayCheckout
+                    planId={plan.id}
+                    configured={configured}
+                    label={
+                      plan.priceInr < PLANS[currentPlan].priceInr
+                        ? `Downgrade to ${plan.name}`
+                        : `Upgrade to ${plan.name}`
+                    }
+                  />
                 )}
               </div>
             </div>

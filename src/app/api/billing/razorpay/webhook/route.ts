@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyRazorpaySignature } from "@/lib/razorpay";
 /**
  * POST /api/billing/razorpay/webhook
  *
@@ -74,23 +73,22 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Razorpay signs the entire request body, not just (order_id|payment_id).
- * The signature is `HMAC_SHA256(body, key_secret)` hex-encoded.
+ * Razorpay signs the entire webhook request body with the *Webhook Secret*
+ * configured in the Razorpay Dashboard's Webhooks section — a different
+ * value from RAZORPAY_KEY_SECRET (which authenticates server-to-server API
+ * calls like order creation). Verifying against the wrong secret means
+ * every real webhook delivery fails signature verification.
+ * The signature is `HMAC_SHA256(body, webhook_secret)` hex-encoded.
  */
 function verifyRazorpaySignatureFromBody(body: string, signature: string): boolean {
   if (!signature) return false;
-  const { keySecret } = getRazorpayCredentials();
-  if (!keySecret) return false;
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET ?? "";
+  if (!webhookSecret) return false;
   // Lazy import so this module stays edge-runtime safe.
   const crypto = require("crypto") as typeof import("crypto");
-  const expected = crypto.createHmac("sha256", keySecret).update(body).digest("hex");
+  const expected = crypto.createHmac("sha256", webhookSecret).update(body).digest("hex");
   const a = Buffer.from(expected, "hex");
   const b = Buffer.from(signature, "hex");
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(a, b);
-}
-
-function getRazorpayCredentials() {
-  const keySecret = process.env.RAZORPAY_KEY_SECRET ?? "";
-  return { keySecret };
 }

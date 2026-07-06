@@ -9,7 +9,7 @@ import { scoreAnswer, SPEAKING_TASK_TYPES } from "../scoreAnswer";
 import QuestionEvaluation from "./QuestionEvaluation";
 import type { MockModuleQuestions } from "../MockExamRunner";
 
-type ResultState = "correct" | "partial" | "wrong" | "skipped" | "indicative";
+type ResultState = "correct" | "partial" | "wrong" | "skipped";
 
 interface QResult {
   score: number;
@@ -44,8 +44,6 @@ export default function MockExamEvaluation({
           let state: ResultState;
           if (!answered) {
             state = "skipped";
-          } else if (SPEAKING_TASK_TYPES.has(q.task_type)) {
-            state = "indicative";
           } else if (maxScore > 0 && score >= maxScore) {
             state = "correct";
           } else if (score > 0) {
@@ -70,10 +68,7 @@ export default function MockExamEvaluation({
       totalQuestions += m.questions.length;
       m.questions.forEach((q, qi) => {
         const r = resultsByModule[mi][qi];
-        if (SPEAKING_TASK_TYPES.has(q.task_type)) {
-          if (r.state === "indicative") recorded += 1;
-          return;
-        }
+        if (SPEAKING_TASK_TYPES.has(q.task_type) && r.answered) recorded += 1;
         autoCount += 1;
         earned += r.score;
         possible += r.maxScore;
@@ -85,9 +80,6 @@ export default function MockExamEvaluation({
   }, [modules, resultsByModule]);
 
   const [selected, setSelected] = useState<{ moduleIndex: number; questionIndex: number } | null>(null);
-  const selectedQuestion =
-    selected !== null ? modules[selected.moduleIndex].questions[selected.questionIndex] : null;
-  const selectedResult = selected !== null ? resultsByModule[selected.moduleIndex][selected.questionIndex] : null;
 
   return (
     <div className="max-w-5xl mx-auto py-6 sm:py-10 px-4 space-y-6">
@@ -118,47 +110,46 @@ export default function MockExamEvaluation({
         </div>
       </div>
 
-      {modules.map((m, mi) => (
-        <ModuleSection
-          key={m.module}
-          module={m.module}
-          questions={m.questions}
-          results={resultsByModule[mi]}
-          selectedQuestionIndex={selected?.moduleIndex === mi ? selected.questionIndex : null}
-          onSelect={(qi) =>
-            setSelected((prev) =>
-              prev && prev.moduleIndex === mi && prev.questionIndex === qi ? null : { moduleIndex: mi, questionIndex: qi }
-            )
-          }
-        />
-      ))}
-
-      {/* Selected question evaluation */}
-      {selectedQuestion && selectedResult && (
-        <div className="bg-[#FAF9F6] border border-gray-300 rounded-xl shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 bg-white">
-            <div className="min-w-0">
-              <div className="text-2xs font-mono uppercase tracking-wider text-gray-400">
-                {capitalize(modules[selected!.moduleIndex].module)} — Question {selected!.questionIndex + 1} of{" "}
-                {modules[selected!.moduleIndex].questions.length}
+      {modules.map((m, mi) => {
+        const selectedQuestionIndex = selected?.moduleIndex === mi ? selected.questionIndex : null;
+        const selectedQuestion = selectedQuestionIndex !== null ? m.questions[selectedQuestionIndex] : null;
+        const selectedResult = selectedQuestionIndex !== null ? resultsByModule[mi][selectedQuestionIndex] : null;
+        return (
+          <React.Fragment key={m.module}>
+            <ModuleSection
+              module={m.module}
+              questions={m.questions}
+              results={resultsByModule[mi]}
+              selectedQuestionIndex={selectedQuestionIndex}
+              onSelect={(qi) =>
+                setSelected((prev) =>
+                  prev && prev.moduleIndex === mi && prev.questionIndex === qi ? null : { moduleIndex: mi, questionIndex: qi }
+                )
+              }
+            />
+            {/* Selected question evaluation — rendered directly below the
+                module it belongs to, not after every module section. */}
+            {selectedQuestion && selectedResult && (
+              <div className="bg-[#FAF9F6] border border-gray-300 rounded-xl shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 bg-white">
+                  <div className="min-w-0">
+                    <div className="text-2xs font-mono uppercase tracking-wider text-gray-400">
+                      {capitalize(m.module)} — Question {selectedQuestionIndex! + 1} of {m.questions.length}
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-800 truncate">
+                      {getTaskTypeFriendlyName(selectedQuestion.task_type)}
+                    </h3>
+                  </div>
+                  <ScoreBadge score={selectedResult.score} maxScore={selectedResult.maxScore} />
+                </div>
+                <div className="p-6">
+                  <QuestionEvaluation question={selectedQuestion} answer={answers[selectedQuestion.id] ?? ""} />
+                </div>
               </div>
-              <h3 className="text-base font-semibold text-gray-800 truncate">
-                {getTaskTypeFriendlyName(selectedQuestion.task_type)}
-              </h3>
-            </div>
-            {selectedResult.state !== "indicative" ? (
-              <ScoreBadge score={selectedResult.score} maxScore={selectedResult.maxScore} />
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
-                Recorded
-              </span>
             )}
-          </div>
-          <div className="p-6">
-            <QuestionEvaluation question={selectedQuestion} answer={answers[selectedQuestion.id] ?? ""} />
-          </div>
-        </div>
-      )}
+          </React.Fragment>
+        );
+      })}
 
       {/* Footer actions */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
@@ -223,7 +214,6 @@ function ModuleSection({
         <LegendDot cls="bg-amber-500" label="Partial" />
         <LegendDot cls="bg-red-500" label="Incorrect" />
         <LegendDot cls="bg-slate-400" label="Skipped" />
-        <LegendDot cls="bg-sky-500" label="Recorded" />
       </div>
     </div>
   );
@@ -235,7 +225,6 @@ function paletteStyles(state: ResultState, active: boolean): string {
     partial: "border-amber-500 text-amber-700 bg-amber-50 hover:bg-amber-100",
     wrong: "border-red-500 text-red-700 bg-red-50 hover:bg-red-100",
     skipped: "border-slate-300 text-slate-500 bg-slate-50 hover:bg-slate-100",
-    indicative: "border-sky-500 text-sky-700 bg-sky-50 hover:bg-sky-100",
   };
   const ring = active ? " ring-2 ring-offset-1 ring-gray-800/70 scale-105" : "";
   return base[state] + ring;

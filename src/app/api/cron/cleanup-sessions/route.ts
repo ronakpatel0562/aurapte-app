@@ -3,10 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseCredentials } from "@/lib/supabase/config";
 
 export async function GET(request: NextRequest) {
-  // Verify Cron authorization secret
+  // Verify Cron authorization secret. Fail closed: if CRON_SECRET isn't
+  // configured, refuse rather than leaving this endpoint open to anyone.
   const authHeader = request.headers.get("authorization");
   if (
-    process.env.CRON_SECRET &&
+    !process.env.CRON_SECRET ||
     authHeader !== `Bearer ${process.env.CRON_SECRET}`
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

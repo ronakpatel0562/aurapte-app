@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Play, Pause, Volume2 } from "lucide-react";
 
 const CHIME_DURATION = 4; // seconds — matches the real driver's "0:04" sample
@@ -12,7 +12,13 @@ const CHIME_DURATION = 4; // seconds — matches the real driver's "0:04" sample
  * so a short tone is synthesised with the Web Audio API instead of
  * shipping a static file.
  */
-export default function HeadsetCheckScreen() {
+export default function HeadsetCheckScreen({
+  onLockChange,
+}: {
+  /** Reports whether the exam shell should disable "Next" — locked while
+   *  the chime is playing, same as a speaking prep/think countdown. */
+  onLockChange?: (locked: boolean) => void;
+}) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -20,6 +26,11 @@ export default function HeadsetCheckScreen() {
   const ctxRef = useRef<AudioContext | null>(null);
   const gainRef = useRef<GainNode | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => onLockChange?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stop = () => {
     if (tickRef.current) {
@@ -29,6 +40,7 @@ export default function HeadsetCheckScreen() {
     ctxRef.current?.close().catch(() => {});
     ctxRef.current = null;
     setPlaying(false);
+    onLockChange?.(false);
   };
 
   const play = () => {
@@ -47,6 +59,7 @@ export default function HeadsetCheckScreen() {
     gainRef.current = gain;
 
     setPlaying(true);
+    onLockChange?.(true);
     setCurrentTime(0);
     const start = Date.now();
     tickRef.current = setInterval(() => {

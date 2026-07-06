@@ -151,10 +151,9 @@ export default function ExamRunner({
 
   const persistAttempt = async (question: RunnerQuestion, answer: string) => {
     const { score, maxScore } = scoreAnswer(question, answer);
-    // Speaking has no deterministic scorer (see scoreAnswer.ts) — record it
-    // as "attempted" only, same as QuestionRunner does. Everything else is
-    // "correct" once it clears a 60% pass threshold.
-    const isCorrect = module !== "speaking" && maxScore > 0 && score / maxScore >= 0.6;
+    // Speaking is scored by the transcript-based heuristic in scoreAnswer.ts,
+    // same 60% pass threshold as every other module.
+    const isCorrect = maxScore > 0 && score / maxScore >= 0.6;
     try {
       const supabase = createClient();
       await supabase.from("user_attempts").insert({
@@ -205,11 +204,11 @@ export default function ExamRunner({
   };
 
   const handleNextClick = () => {
+    if (nextLocked) {
+      setShowCannotSkip(true);
+      return;
+    }
     if (phase.kind === "question" || phase.kind === "personal-intro") {
-      if (nextLocked) {
-        setShowCannotSkip(true);
-        return;
-      }
       setConfirmNext(true);
     } else {
       goToNextPhase();
@@ -243,8 +242,8 @@ export default function ExamRunner({
         onNext={handleNextClick}
         nextLabel={isLastQuestion ? "Submit Test" : "Next"}
       >
-        {phase.kind === "headset-check" && <HeadsetCheckScreen />}
-        {phase.kind === "mic-check" && <MicCheckScreen />}
+        {phase.kind === "headset-check" && <HeadsetCheckScreen onLockChange={setNextLocked} />}
+        {phase.kind === "mic-check" && <MicCheckScreen onLockChange={setNextLocked} />}
         {phase.kind === "personal-intro" && (
           <PersonalIntroScreen
             onAnswerChange={(v) => setAnswers((a) => ({ ...a, __personal_intro__: v }))}

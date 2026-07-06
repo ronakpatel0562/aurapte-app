@@ -1,9 +1,9 @@
 import React from "react";
 import Link from "next/link";
-import { Lock, FileDown, ChevronRight, Award, Check, Sparkles, BookOpen } from "lucide-react";
+import { FileDown, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { PLANS, planName, isPremiumPlan, type PlanId } from "@/lib/plans";
+import { planName, type PlanId } from "@/lib/plans";
 
 export default async function SpecialisedTipsPage() {
   const supabase = createClient();
@@ -22,63 +22,6 @@ export default async function SpecialisedTipsPage() {
     .eq("id", user.id)
     .maybeSingle();
   const plan = ((profile?.plan as PlanId) || "free") as PlanId;
-  const isPremium = isPremiumPlan(plan);
-
-  if (!isPremium) {
-    return (
-      <div className="py-6 sm:py-8 max-w-2xl mx-auto text-center space-y-8 select-none px-4">
-        <div className="relative w-20 h-20 bg-warning-soft rounded-2xl flex items-center justify-center border border-warning/20 mx-auto shadow-vercel-card">
-          <Lock className="w-10 h-10 text-warning-deep animate-pulse" />
-          <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-warning-deep" />
-        </div>
-
-        <div className="space-y-3">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">
-            Unlock Specialised Tips PDF
-          </h1>
-          <p className="text-sm text-mute leading-relaxed max-w-lg mx-auto">
-            Get instant access to our expert, curated PDF guide loaded with strategic templates, vocabulary sheets, and score-maximizer tips for all PTE modules.
-          </p>
-        </div>
-
-        <div className="bg-canvas border border-hairline rounded-xl p-6 text-left space-y-4 shadow-vercel-card">
-          <h3 className="text-xs font-bold text-ink uppercase tracking-wider border-b border-hairline pb-2.5">
-            What&apos;s Included in the PDF Guide:
-          </h3>
-          <ul className="space-y-3">
-            {[
-              "Speaking templates for Describe Image and Retell Lecture",
-              "Writing structures for Write Essay and Write an Email to score 90/90",
-              "Listening strategies for Write From Dictation and Summarize Spoken Text",
-              "High-frequency vocabulary and collocations lists for Reading Fill in the Blanks",
-              "Common mistakes to avoid that drag down spelling and grammar scores",
-            ].map((benefit, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-xs text-body">
-                <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="pt-4 flex flex-col sm:flex-row justify-center gap-4">
-          <Link
-            href="/dashboard"
-            className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center active:scale-[0.99] text-ink font-semibold"
-          >
-            Return to Dashboard
-          </Link>
-          <Link
-            href="/billing"
-            className="h-10 px-6 bg-gradient-to-r from-gradient-develop-start to-gradient-preview-start text-white hover:opacity-95 font-medium text-sm rounded-md shadow-md transition duration-150 flex items-center justify-center gap-2 active:scale-[0.99]"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Upgrade to {PLANS.premium.name}</span>
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8 py-2 sm:py-4 select-none">

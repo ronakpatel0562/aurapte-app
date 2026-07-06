@@ -94,10 +94,10 @@ export default async function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
                 <Link
-                  href="/signup"
+                  href="#pricing"
                   className="pulse-ring inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg bg-primary text-on-primary font-semibold shadow-vercel-popover hover:bg-opacity-90 active:scale-[0.99] transition"
                 >
-                  Start free practice
+                  Choose your plan
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
@@ -112,11 +112,11 @@ export default async function LandingPage() {
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-2xs text-mute pt-2">
                 <span className="flex items-center gap-1.5">
                   <Check className="w-3 h-3 text-success" />
-                  No credit card to start
+                  Real exam-format simulation
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Check className="w-3 h-3 text-success" />
-                  10 free practice tests
+                  Secure checkout via Razorpay
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Check className="w-3 h-3 text-success" />
@@ -187,8 +187,8 @@ export default async function LandingPage() {
               "220+ LISTENING AUDIO FILES",
               "12 PRACTICE TESTS",
               "15 FULL MOCK TESTS",
-              "AURA STARTER · FREE FOREVER",
-              "AURA PRO · ₹999/MO",
+              "AURA STARTER · ₹33,499/MO",
+              "AURA PRO · ₹46,999/MO",
               "4 MODULES · 20+ TASK TYPES",
               "CLOUD-RENDERED AUDIO",
               "REAL EXAM TIMER",
@@ -341,28 +341,28 @@ export default async function LandingPage() {
       </section>
 
       {/* ------------------ PRICING ------------------ */}
-      <section className="relative py-20 sm:py-28">
+      <section id="pricing" className="relative py-20 sm:py-28 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
               Simple pricing
             </h2>
             <p className="text-base text-mute leading-relaxed">
-              Start free. Upgrade when you&apos;re ready.
+              Pick a plan and get full access from day one.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             {[PLANS.free, PLANS.premium].map((plan) => {
-              const isPaid = plan.id === "premium";
+              const isFeatured = plan.id === "premium";
               return (
                 <div
                   key={plan.id}
                   className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col ${
-                    isPaid ? "border-gradient-preview-start/40 ring-1 ring-gradient-preview-start/20" : "border-hairline"
+                    isFeatured ? "border-gradient-preview-start/40 ring-1 ring-gradient-preview-start/20" : "border-hairline"
                   }`}
                 >
-                  {isPaid && (
+                  {isFeatured && (
                     <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-preview-start to-gradient-preview-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
                       Most Popular
                     </div>
@@ -371,11 +371,9 @@ export default async function LandingPage() {
                   <p className="text-sm text-mute leading-relaxed mt-1">{plan.tagline}</p>
                   <div className="mt-5 flex items-baseline gap-1">
                     <span className="text-4xl font-bold text-ink">
-                      {plan.priceInr === 0 ? "Free" : `₹${plan.priceInr.toLocaleString("en-IN")}`}
+                      ₹{plan.priceInr.toLocaleString("en-IN")}
                     </span>
-                    {plan.priceInr > 0 && (
-                      <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
-                    )}
+                    <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
                   </div>
                   <ul className="mt-5 space-y-2.5 flex-1">
                     {plan.features.map((f) => (
@@ -391,7 +389,7 @@ export default async function LandingPage() {
                     <Link
                       href="/signup"
                       className={`w-full h-11 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 ${
-                        isPaid
+                        isFeatured
                           ? "bg-gradient-to-r from-gradient-preview-start to-gradient-preview-end text-white hover:opacity-95 active:scale-[0.99]"
                           : "border border-hairline bg-canvas hover:bg-canvas-soft-2 text-ink"
                       }`}

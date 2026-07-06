@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Mic, Square, Play } from "lucide-react";
 
 type Phase = "idle" | "recording" | "recorded" | "playing";
@@ -10,9 +10,25 @@ type Phase = "idle" | "recording" | "recorded" | "playing";
  * the real PTE test driver. Uses the actual mic (MediaRecorder) so the
  * check is genuine, not simulated.
  */
-export default function MicCheckScreen() {
+export default function MicCheckScreen({
+  onLockChange,
+}: {
+  /** Reports whether the exam shell should disable "Next" — locked while
+   *  actively recording or playing back, same as a speaking recorder step. */
+  onLockChange?: (locked: boolean) => void;
+}) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLockChange?.(phase === "recording" || phase === "playing");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  useEffect(() => {
+    return () => onLockChange?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);

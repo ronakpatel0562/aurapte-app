@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Link2, FileText, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/admin";
 import {
   allPracticeTests,
   allMockTests,
@@ -29,8 +30,9 @@ import QuestionLinkClient from "./QuestionLinkClient";
  *          and the client validates + POSTs to /api/admin/link-questions.
  *
  * Gating:
- *   - Authenticated user required (any logged-in account can use this
- *     page; tighten later when you add an admin role).
+ *   - Restricted to ADMIN_EMAILS (see src/lib/admin.ts). The underlying
+ *     APIs enforce this too, but we also bounce non-admins off the page
+ *     itself so the tool isn't even discoverable.
  *   - Service role key must be in env (the API needs it; the UI tells
  *     you if it's missing).
  */
@@ -40,6 +42,7 @@ export default async function QuestionLinksPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/admin/question-links");
+  if (!isAdminEmail(user.email)) redirect("/dashboard");
 
   // Pre-compute the union of all Mongo IDs across all tests so we can
   // hand them to the bulk paste box as a checklist.
