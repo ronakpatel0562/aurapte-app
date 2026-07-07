@@ -77,16 +77,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyClass(initial);
 
     // Step 2: sync with Supabase in background
-    const syncWithDB = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+    const supabase = createClient();
 
+    const syncWithDB = async (userId: string) => {
+      try {
         const { data } = await supabase
           .from("profiles")
           .select("theme, plan")
-          .eq("id", user.id)
+          .eq("id", userId)
           .maybeSingle();
 
         const premium = isPremiumPlan(data?.plan);
@@ -110,17 +108,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           await supabase
             .from("profiles")
             .update({ theme: initial })
-            .eq("id", user.id);
+            .eq("id", userId);
         }
       } catch (_) {}
     };
 
-    syncWithDB();
+    // onAuthStateChange fires immediately with whatever session is already
+    // known (INITIAL_SESSION) and again on every change, so unlike a one-shot
+    // getUser() call it can't lose the race against session hydration on a
+    // fresh page load — a race that used to leave isPremium stuck at false
+    // (dark mode permanently locked) even for paid accounts.
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        syncWithDB(session.user.id);
+      } else {
+        setIsPremium(false);
+      }
+    });
 
-    // Re-check plan when it changes elsewhere (e.g. the dev plan switcher in Header)
-    // so the lock reflects the new tier without a full page reload.
-    window.addEventListener("planChanged", syncWithDB);
-    return () => window.removeEventListener("planChanged", syncWithDB);
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   const setMode = useCallback(async (next: Mode) => {
