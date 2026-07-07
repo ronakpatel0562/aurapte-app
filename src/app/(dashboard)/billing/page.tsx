@@ -1,11 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Check, ChevronRight, Sparkles, Award, Lock } from "lucide-react";
+import { Check, ChevronRight, Sparkles, Award } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
-import { PLANS, planName, isPremiumPlan, formatPrice, type PlanId } from "@/lib/plans";
-import RazorpayCheckout from "@/components/billing/RazorpayCheckout";
+import { PLANS, planName, isPremiumPlan, type PlanId } from "@/lib/plans";
+import BankPaymentPanel from "@/components/billing/BankPaymentPanel";
 
 export default async function BillingPage({
   searchParams,
@@ -23,8 +23,14 @@ export default async function BillingPage({
     .maybeSingle();
   const currentPlan = ((profile?.plan as PlanId) || "free") as PlanId;
   const isPremium = isPremiumPlan(currentPlan);
-
-  const configured = !!process.env.RAZORPAY_KEY_ID && !!process.env.RAZORPAY_KEY_SECRET;
+  // profiles.plan defaults to "free" for every signup regardless of payment
+  // — it only reflects the *label* of the plan an admin last activated, not
+  // whether that plan is currently paid for. Whether a plan is "current" (and
+  // therefore not purchasable again) must also require a non-expired
+  // plan_expiry, otherwise a brand-new unpaid user sees Starter marked
+  // "Current" with the purchase button hidden and has no way to ever pay.
+  const hasActivePlan =
+    !!profile?.plan_expiry && new Date(profile.plan_expiry).getTime() > Date.now();
 
   // Sort: free first, then premium.
   const orderedPlans = [PLANS.free, PLANS.premium];
@@ -47,20 +53,26 @@ export default async function BillingPage({
           </h1>
         </div>
         <p className="text-sm text-mute leading-relaxed">
-          You&apos;re currently on{" "}
-          <span className="font-semibold text-ink">{planName(currentPlan)}</span>.
-          {isPremium && profile?.plan_expiry && (
+          {hasActivePlan ? (
             <>
-              {" "}Renews on{" "}
-              <span className="font-mono text-body">
-                {new Date(profile.plan_expiry).toLocaleDateString(undefined, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-              .
+              You&apos;re currently on{" "}
+              <span className="font-semibold text-ink">{planName(currentPlan)}</span>.
+              {isPremium && profile?.plan_expiry && (
+                <>
+                  {" "}Renews on{" "}
+                  <span className="font-mono text-body">
+                    {new Date(profile.plan_expiry).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  .
+                </>
+              )}
             </>
+          ) : (
+            <>You don&apos;t have an active plan yet — choose one below to get started.</>
           )}
         </p>
       </div>
@@ -69,26 +81,26 @@ export default async function BillingPage({
           on the right. On phones they stack; on tablets+ side by side. */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {orderedPlans.map((plan) => {
-          const isCurrent = plan.id === currentPlan;
+          const isCurrent = plan.id === currentPlan && hasActivePlan;
           const isFeatured = plan.id === "premium";
           return (
             <div
               key={plan.id}
               className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col ${
                 isFeatured
-                  ? "border-gradient-preview-start/40 ring-1 ring-gradient-preview-start/20"
+                  ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20"
                   : "border-hairline"
               }`}
             >
               {isFeatured && (
-                <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-preview-start to-gradient-preview-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
+                <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
                   Most Popular
                 </div>
               )}
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Sparkles className={`w-4 h-4 ${isFeatured ? "text-gradient-preview-start" : "text-mute"}`} />
+                  <Sparkles className={`w-4 h-4 ${isFeatured ? "text-gradient-brand-start" : "text-mute"}`} />
                   <h2 className="text-xl font-semibold text-ink">{plan.name}</h2>
                   {isCurrent && (
                     <span className="text-2xs font-mono font-semibold uppercase px-2 py-0.5 rounded bg-success/10 text-success border border-success/20">
@@ -111,7 +123,7 @@ export default async function BillingPage({
                   <li key={f} className="flex items-start gap-2.5 text-sm text-body">
                     <span
                       className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                        isFeatured ? "bg-gradient-preview-start/10 text-gradient-preview-start" : "bg-success/10 text-success"
+                        isFeatured ? "bg-gradient-brand-start/10 text-gradient-brand-start" : "bg-success/10 text-success"
                       }`}
                     >
                       <Check className="w-3 h-3" />
@@ -130,13 +142,13 @@ export default async function BillingPage({
                     Your current plan
                   </button>
                 ) : (
-                  <RazorpayCheckout
+                  <BankPaymentPanel
                     planId={plan.id}
-                    configured={configured}
+                    planName={plan.name}
                     label={
                       plan.priceInr < PLANS[currentPlan].priceInr
-                        ? `Downgrade to ${plan.name}`
-                        : `Upgrade to ${plan.name}`
+                        ? `Get payment details to switch to ${plan.name}`
+                        : `Get payment details for ${plan.name}`
                     }
                   />
                 )}
@@ -146,39 +158,12 @@ export default async function BillingPage({
         })}
       </div>
 
-      {/* Test-mode notice — only when keys are missing. */}
-      {!configured && (
-        <div className="bg-canvas border border-hairline rounded-xl p-5 shadow-vercel-card space-y-2 max-w-2xl">
-          <div className="flex items-center gap-2 text-warning-deep">
-            <Lock className="w-4 h-4" />
-            <h3 className="text-sm font-semibold">Running in &ldquo;keys-missing&rdquo; mode</h3>
-          </div>
-          <p className="text-xs text-mute leading-relaxed">
-            The billing UI is fully built but the &ldquo;Upgrade&rdquo; button is disabled until you
-            set <code className="font-mono text-2xs">RAZORPAY_KEY_ID</code> and{" "}
-            <code className="font-mono text-2xs">RAZORPAY_KEY_SECRET</code> in your environment.
-            You can grab test keys from{" "}
-            <a
-              href="https://dashboard.razorpay.com/app/keys"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-link hover:underline"
-            >
-              dashboard.razorpay.com/app/keys
-            </a>{" "}
-            (use the Test mode toggle) — the test card{" "}
-            <code className="font-mono text-2xs">4111 1111 1111 1111</code> will simulate a successful
-            payment without real money.
-          </p>
-        </div>
-      )}
-
       {/* FAQ / reassurance */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
         {[
-          { title: "Cancel anytime", body: "No lock-in. Stop your subscription in one click from your dashboard." },
-          { title: "UPI supported", body: "Pay with any UPI app, plus cards, netbanking, and wallets." },
-          { title: "Receipts by email", body: "Every payment generates a GST-compliant invoice for your records." },
+          { title: "Manual activation", body: "Pay by bank transfer or UPI, then email us your payment proof." },
+          { title: "Activated within 24 hours", body: "We confirm your payment and switch your plan by hand." },
+          { title: "Cancel anytime", body: "No lock-in. Just don't renew next month — no auto-billing." },
         ].map((item) => (
           <div key={item.title} className="bg-canvas border border-hairline rounded-xl p-4 shadow-vercel-card">
             <h3 className="text-sm font-semibold text-ink mb-1">{item.title}</h3>

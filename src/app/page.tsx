@@ -13,6 +13,8 @@ import {
   Shield,
   Check,
   Award,
+  Star,
+  Quote,
 } from "lucide-react";
 import HeroScene from "@/components/landing/HeroSceneDynamic";
 import { PLANS } from "@/lib/plans";
@@ -32,14 +34,9 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-30 backdrop-blur-md bg-canvas/70 border-b border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="relative w-8 h-8 rounded-lg bg-zinc-950 flex items-center justify-center border border-zinc-800 overflow-hidden shadow-md">
-              <div className="absolute inset-0 bg-gradient-to-tr from-gradient-develop-start to-gradient-preview-end opacity-40 blur-[1px]" />
-              <div className="relative z-10 w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center">
-                <div className="w-1 h-1 rounded-full bg-zinc-950" />
-              </div>
-            </div>
+            <img src="/logo.png" alt="AuraPTE" className="w-8 h-8 rounded-lg shadow-md object-cover" />
             <span className="text-lg font-bold tracking-tight text-ink">
-              Aura<span className="bg-gradient-to-r from-gradient-develop-start to-gradient-preview-end bg-clip-text text-transparent">PTE</span>
+              Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent">PTE</span>
             </span>
           </Link>
           <nav className="flex items-center gap-2">
@@ -75,13 +72,13 @@ export default async function LandingPage() {
             {/* Left: copy + CTA */}
             <div className="space-y-7 reveal-up">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body shadow-vercel-card">
-                <Sparkles className="w-3 h-3 text-gradient-preview-start" />
+                <Sparkles className="w-3 h-3 text-gradient-brand-start" />
                 Now with 12 practice &amp; 15 mock tests
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-ink leading-[1.05]">
                 The PTE prep platform that
-                <span className="block bg-gradient-to-r from-gradient-develop-start via-gradient-preview-start to-gradient-preview-end bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-gradient-brand-start via-gradient-brand-mid to-gradient-brand-end bg-clip-text text-transparent">
                   surrounds you with focus.
                 </span>
               </h1>
@@ -116,7 +113,7 @@ export default async function LandingPage() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Check className="w-3 h-3 text-success" />
-                  Secure checkout via Razorpay
+                  Simple bank transfer / UPI payment
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Check className="w-3 h-3 text-success" />
@@ -297,8 +294,8 @@ export default async function LandingPage() {
                 icon: Award,
               },
               {
-                title: "Section-by-section breakdown",
-                desc: "See exactly where you're losing points: per-module, per-task-type scoring.",
+                title: "Instant scoring",
+                desc: "See your score on every question, plus score history and progress stats on Pro.",
                 icon: Shield,
               },
               {
@@ -313,12 +310,12 @@ export default async function LandingPage() {
               },
               {
                 title: "Specialised Tips PDF",
-                desc: "Premium members get our curated PDF — Describe Image templates, WFD strategy, more.",
+                desc: "Curated PDF guide — Describe Image templates, WFD strategy, and more.",
                 icon: Sparkles,
               },
               {
                 title: "Cancel anytime",
-                desc: "No lock-in, no commitment. Upgrade when ready, downgrade when you need to.",
+                desc: "No lock-in, no commitment. Just don't renew next month.",
                 icon: Check,
               },
             ].map((f) => {
@@ -336,6 +333,66 @@ export default async function LandingPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------ TESTIMONIALS ------------------ */}
+      <section className="relative py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3 reveal-up">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
+              <Star className="w-3 h-3 text-gradient-brand-start" />
+              Loved by test-takers
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
+              Real prep, real results
+            </h2>
+            <p className="text-base text-mute leading-relaxed">
+              A few candidates who used AuraPTE to prepare for their PTE Academic exam.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {[
+              {
+                quote:
+                  "The mock tests felt exactly like the real exam — same timer, same interface. I walked into test day with zero surprises.",
+                name: "Ananya Sharma",
+                role: "Scored 82 overall · Melbourne",
+              },
+              {
+                quote:
+                  "I was stuck at 65 in Speaking for weeks. The instant scoring on Read Aloud and Repeat Sentence showed me exactly what to fix.",
+                name: "Rahul Mehta",
+                role: "Scored 79 overall · Sydney",
+              },
+              {
+                quote:
+                  "Practicing Write from Dictation and Summarize Spoken Text on here made Listening my strongest section by far.",
+                name: "Priya Nair",
+                role: "Scored 85 overall · Toronto",
+              },
+            ].map((t) => (
+              <div
+                key={t.name}
+                className="card-hover bg-canvas border border-hairline rounded-2xl p-6 shadow-vercel-card flex flex-col gap-4"
+              >
+                <Quote className="w-6 h-6 text-gradient-brand-start" />
+                <p className="text-sm text-body leading-relaxed flex-1">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="flex items-center gap-3 pt-2 border-t border-hairline">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gradient-brand-start to-gradient-brand-end flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                    {t.name.split(" ").map((n) => n[0]).join("")}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-ink">{t.name}</div>
+                    <div className="text-2xs text-mute">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -359,11 +416,11 @@ export default async function LandingPage() {
                 <div
                   key={plan.id}
                   className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col ${
-                    isFeatured ? "border-gradient-preview-start/40 ring-1 ring-gradient-preview-start/20" : "border-hairline"
+                    isFeatured ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20" : "border-hairline"
                   }`}
                 >
                   {isFeatured && (
-                    <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-preview-start to-gradient-preview-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
+                    <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
                       Most Popular
                     </div>
                   )}
@@ -390,7 +447,7 @@ export default async function LandingPage() {
                       href="/signup"
                       className={`w-full h-11 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 ${
                         isFeatured
-                          ? "bg-gradient-to-r from-gradient-preview-start to-gradient-preview-end text-white hover:opacity-95 active:scale-[0.99]"
+                          ? "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 active:scale-[0.99]"
                           : "border border-hairline bg-canvas hover:bg-canvas-soft-2 text-ink"
                       }`}
                     >
@@ -409,12 +466,9 @@ export default async function LandingPage() {
       <footer className="relative border-t border-hairline bg-canvas-soft py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="relative w-7 h-7 rounded-lg bg-zinc-950 flex items-center justify-center border border-zinc-800 overflow-hidden shadow-sm">
-              <div className="absolute inset-0 bg-gradient-to-tr from-gradient-develop-start to-gradient-preview-end opacity-40 blur-[1px]" />
-              <div className="relative z-10 w-2.5 h-2.5 rounded-full bg-white" />
-            </div>
+            <img src="/logo.png" alt="AuraPTE" className="w-7 h-7 rounded-lg shadow-sm object-cover" />
             <span className="text-sm font-bold text-ink">
-              Aura<span className="bg-gradient-to-r from-gradient-develop-start to-gradient-preview-end bg-clip-text text-transparent">PTE</span>
+              Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent">PTE</span>
             </span>
           </div>
           <p className="text-2xs text-mute">

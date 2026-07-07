@@ -65,8 +65,8 @@ export default async function MockTestsPage() {
       </div>
 
       <div className="relative bg-canvas border border-hairline rounded-xl p-6 sm:p-8 shadow-vercel-card overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-gradient-to-tr from-gradient-develop-start to-gradient-preview-end opacity-10 blur-2xl" />
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-develop-start via-gradient-preview-start to-gradient-ship-start" />
+        <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-end opacity-10 blur-2xl" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-brand-start via-gradient-brand-mid to-gradient-brand-end" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -103,7 +103,7 @@ export default async function MockTestsPage() {
             key={test.id}
             className={`card-hover ${test.isLocked ? "card-locked" : ""} group relative bg-canvas border border-hairline rounded-xl flex flex-col overflow-hidden shadow-vercel-card`}
           >
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-develop-start via-gradient-preview-start to-gradient-ship-start" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-brand-start via-gradient-brand-mid to-gradient-brand-end" />
 
             <div className="p-5 pt-6 space-y-4 flex-1">
               <div className="flex items-start justify-between gap-2">

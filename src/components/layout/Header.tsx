@@ -108,7 +108,7 @@ export default function Header() {
             <div
               className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-mono font-semibold uppercase tracking-wider border ${
                 isPremium
-                  ? "text-on-primary bg-gradient-to-r from-gradient-preview-start to-gradient-preview-end border-transparent shadow-sm"
+                  ? "text-on-primary bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end border-transparent shadow-sm"
                   : "text-body bg-canvas-soft-2 border-hairline"
               }`}
               title={planDef.tagline}
@@ -127,7 +127,7 @@ export default function Header() {
                 <div
                   className={`w-8 h-8 rounded-full font-semibold text-xs flex items-center justify-center shadow-vercel-card transition ${
                     isPremium
-                      ? "bg-gradient-to-tr from-gradient-preview-start to-gradient-preview-end text-white"
+                      ? "bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-end text-white"
                       : "bg-primary text-on-primary"
                   }`}
                 >

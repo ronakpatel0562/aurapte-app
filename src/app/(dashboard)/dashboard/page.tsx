@@ -230,10 +230,10 @@ export default async function DashboardPage() {
           href="/billing"
           className="card-hover relative block bg-canvas border border-hairline rounded-xl p-5 sm:p-6 shadow-vercel-card overflow-hidden"
         >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-preview-start via-gradient-ship-start to-gradient-develop-start" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-brand-start via-gradient-brand-mid to-gradient-brand-end" />
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gradient-preview-start to-gradient-preview-end flex items-center justify-center shadow-md shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gradient-brand-start to-gradient-brand-end flex items-center justify-center shadow-md shrink-0">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div className="space-y-1">

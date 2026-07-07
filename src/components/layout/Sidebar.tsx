@@ -125,14 +125,13 @@ export default function Sidebar() {
       {/* Brand Header */}
       <div className="h-16 border-b border-hairline flex items-center px-6">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="relative w-8 h-8 rounded-lg bg-zinc-950 flex items-center justify-center border border-zinc-800 overflow-hidden shadow-md transition group-hover:scale-105">
-            <div className="absolute inset-0 bg-gradient-to-tr from-gradient-develop-start to-gradient-preview-end opacity-40 blur-[1px]" />
-            <div className="relative z-10 w-3.5 h-3.5 rounded-full bg-white shadow-inner flex items-center justify-center">
-              <div className="w-1 h-1 rounded-full bg-zinc-950" />
-            </div>
-          </div>
+          <img
+            src="/logo.png"
+            alt="AuraPTE"
+            className="w-8 h-8 rounded-lg shadow-md object-cover transition group-hover:scale-105"
+          />
           <span className="text-lg font-bold tracking-tight text-ink">
-            Aura<span className="bg-gradient-to-r from-gradient-develop-start to-gradient-preview-end bg-clip-text text-transparent font-extrabold">PTE</span>
+            Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent font-extrabold">PTE</span>
           </span>
         </Link>
       </div>

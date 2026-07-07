@@ -5,6 +5,14 @@ import { verifySessionId } from "@/lib/session";
 /**
  * Middleware runs on every navigation to the protected routes below.
  *
+ * IMPORTANT: this file must live at src/middleware.ts, not at the project
+ * root — this app uses a src/ directory (src/app), and Next.js only
+ * discovers middleware.ts alongside app/pages inside src/ in that layout.
+ * A root-level middleware.ts is silently ignored (empty
+ * .next/server/middleware-manifest.json, no compile step, no errors) —
+ * that's exactly what happened here: the hard paywall below never ran for
+ * anyone, so every signup kept full Starter-tier access with no payment.
+ *
  * What it does (and doesn't do):
  *   1. Refreshes the Supabase auth session so server components see a
  *      logged-in user. (1 round-trip to Supabase auth — unavoidable.)

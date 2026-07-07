@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Maximize2, Layers, Clock, HelpCircle, AlertTriangle, Sparkles, Info, X, RotateCw } from "lucide-react";
+import { Maximize2, Layers, Clock, HelpCircle, AlertTriangle, Info, X, RotateCw } from "lucide-react";
 
 /**
  * Fullscreen exam-driver chrome — header, blue section bar, and bottom
@@ -41,9 +41,11 @@ export default function ExamChrome({
       {/* Header */}
       <div className="bg-[#c9c4c4] px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between shrink-0 gap-2">
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-[#1e7a9c] flex items-center justify-center overflow-hidden shrink-0">
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="AuraPTE"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded object-cover shrink-0"
+          />
           <span className="text-[13px] sm:text-[15px] font-semibold text-gray-800 truncate">AuraPTE</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">

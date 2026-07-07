@@ -52,6 +52,13 @@
   --color-gradient-ship-start: #ff4d4d;
   --color-gradient-ship-end: #f9cb28;
 
+  /* Brand gradient — sampled from the logo mark (public/logo.png). This is
+     the identity gradient: wordmark, plan badges, primary CTAs, hero
+     headline accent. Theme-stable like the other gradient tokens above. */
+  --color-gradient-brand-start: #ff7a1a;
+  --color-gradient-brand-mid: #f5348c;
+  --color-gradient-brand-end: #e91e8c;
+
   --font-geist: var(--font-geist-sans), Geist, Inter, system-ui, -apple-system, sans-serif;
   --font-geist-mono: var(--font-geist-mono), Geist Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 }

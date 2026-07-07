@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, BarChart3, Laptop, ShieldCheck } from "lucide-react";
+import { Sparkles, BarChart3, Laptop, Globe } from "lucide-react";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -15,8 +15,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <div className="hidden lg:flex lg:col-span-5 relative bg-zinc-950 text-white flex-col justify-between p-12 overflow-hidden border-r border-zinc-900">
         {/* Animated Mesh Glowing Backdrops */}
         <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full bg-gradient-to-tr from-gradient-develop-start to-gradient-develop-end opacity-25 blur-[120px] animate-pulse" style={{ animationDuration: "12s" }} />
-          <div className="absolute bottom-[-15%] right-[-10%] w-[90%] h-[90%] rounded-full bg-gradient-to-br from-gradient-preview-start to-gradient-preview-end opacity-20 blur-[130px] animate-pulse" style={{ animationDuration: "16s" }} />
+          <div className="absolute top-[-10%] left-[-15%] w-[80%] h-[80%] rounded-full bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-mid opacity-25 blur-[120px] animate-pulse" style={{ animationDuration: "12s" }} />
+          <div className="absolute bottom-[-15%] right-[-10%] w-[90%] h-[90%] rounded-full bg-gradient-to-br from-gradient-brand-mid to-gradient-brand-end opacity-20 blur-[130px] animate-pulse" style={{ animationDuration: "16s" }} />
         </div>
 
         {/* Subtle grid pattern overlay */}
@@ -25,15 +25,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         {/* Top Section: Logo */}
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="relative w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center border border-white/20 overflow-hidden shadow-[0_0_15px_rgba(255,255,255,0.15)] transition group-hover:scale-105">
-              {/* Inner glowing aura */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-gradient-develop-start to-gradient-preview-end opacity-50 blur-[2px]" />
-              <div className="relative z-10 w-4 h-4 rounded-full bg-white shadow-inner flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-zinc-950" />
-              </div>
-            </div>
+            <img
+              src="/logo.png"
+              alt="AuraPTE"
+              className="w-9 h-9 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.15)] object-cover transition group-hover:scale-105"
+            />
             <span className="text-xl font-bold tracking-tight text-white">
-              Aura<span className="bg-gradient-to-r from-gradient-develop-start to-gradient-preview-end bg-clip-text text-transparent font-extrabold">PTE</span>
+              Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent font-extrabold">PTE</span>
             </span>
           </Link>
         </div>
@@ -42,14 +40,15 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <div className="relative z-10 my-auto py-8">
           <div className="space-y-2 mb-10">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-zinc-300">
-              <Sparkles className="w-3.5 h-3.5 text-gradient-develop-end animate-spin" style={{ animationDuration: "6s" }} />
-              <span>Version 2.0 Released</span>
+              <Sparkles className="w-3.5 h-3.5 text-gradient-brand-start animate-spin" style={{ animationDuration: "6s" }} />
+              <span>Now with 12 practice &amp; 15 mock tests</span>
             </div>
             <h2 className="text-3xl font-semibold tracking-tight leading-tight text-white max-w-sm">
-              Experience the future of PTE preparation
+              The PTE prep platform that surrounds you with focus
             </h2>
             <p className="text-sm text-zinc-400 max-w-sm">
-              Our AI-powered engine analyzes your speaking, writing, reading, and listening responses against official test rubrics.
+              Real exam simulations, module-by-module practice, and scoring that
+              actually tells you where you stand — for speaking, writing, reading, and listening.
             </p>
           </div>
 
@@ -57,10 +56,10 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             {/* Feature 1 */}
             <div className="flex gap-4 group">
               <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:bg-white/10 group-hover:border-white/20">
-                <Sparkles className="w-5 h-5 text-gradient-develop-start" />
+                <Sparkles className="w-5 h-5 text-gradient-brand-start" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">Instant AI Grading</h3>
+                <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">Instant Grading</h3>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                   Speaking and Writing tasks scored in seconds with detailed metrics on pronunciation, fluency, and grammar.
                 </p>
@@ -70,7 +69,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             {/* Feature 2 */}
             <div className="flex gap-4 group">
               <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:bg-white/10 group-hover:border-white/20">
-                <Laptop className="w-5 h-5 text-[#a855f7]" />
+                <Laptop className="w-5 h-5 text-gradient-brand-mid" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">Exact Exam Simulation</h3>
@@ -83,7 +82,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             {/* Feature 3 */}
             <div className="flex gap-4 group">
               <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:bg-white/10 group-hover:border-white/20">
-                <BarChart3 className="w-5 h-5 text-[#f43f5e]" />
+                <BarChart3 className="w-5 h-5 text-gradient-brand-end" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">Smart Actionable Analytics</h3>
@@ -96,12 +95,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             {/* Feature 4 */}
             <div className="flex gap-4 group">
               <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:bg-white/10 group-hover:border-white/20">
-                <ShieldCheck className="w-5 h-5 text-gradient-develop-end" />
+                <Globe className="w-5 h-5 text-gradient-brand-start" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">Single Session Validation</h3>
+                <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">Audio That Loads Instantly</h3>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Enjoy secure progress tracking with single active session protection and robust local state storage.
+                  Cloud-streamed audio for Listening tasks with zero buffering, even on slow networks.
                 </p>
               </div>
             </div>
@@ -122,20 +121,15 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <div className="col-span-1 lg:col-span-7 flex flex-col justify-center items-center min-h-screen px-4 sm:px-8 py-12 relative overflow-hidden bg-zinc-50">
         {/* Soft background light blooms for light mode */}
         <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-gradient-develop-start to-gradient-develop-end opacity-10 blur-[100px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-gradient-preview-start to-gradient-preview-end opacity-10 blur-[100px]" />
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-mid opacity-10 blur-[100px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-gradient-brand-mid to-gradient-brand-end opacity-10 blur-[100px]" />
         </div>
 
         {/* Small top logo for mobile viewports */}
         <div className="lg:hidden mb-8 z-10 flex items-center gap-2">
-          <div className="relative w-8 h-8 rounded-lg bg-zinc-950 flex items-center justify-center border border-zinc-800 overflow-hidden shadow-md">
-            <div className="absolute inset-0 bg-gradient-to-tr from-gradient-develop-start to-gradient-preview-end opacity-40 blur-[1px]" />
-            <div className="relative z-10 w-3.5 h-3.5 rounded-full bg-white shadow-inner flex items-center justify-center">
-              <div className="w-1 h-1 rounded-full bg-zinc-950" />
-            </div>
-          </div>
+          <img src="/logo.png" alt="AuraPTE" className="w-8 h-8 rounded-lg shadow-md object-cover" />
           <span className="text-lg font-bold tracking-tight text-zinc-900">
-            Aura<span className="bg-gradient-to-r from-gradient-develop-start to-gradient-preview-end bg-clip-text text-transparent font-extrabold">PTE</span>
+            Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent font-extrabold">PTE</span>
           </span>
         </div>
 

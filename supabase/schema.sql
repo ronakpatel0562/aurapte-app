@@ -44,6 +44,29 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- Lock down plan/plan_expiry: there is no free tier (see src/lib/plans.ts),
+-- so these columns must only ever be changed by an admin (service role)
+-- after a payment is confirmed. Without this, the "own profile" UPDATE
+-- policy above lets any signed-in user self-grant premium access by
+-- writing to profiles.plan / plan_expiry directly from the client.
+REVOKE UPDATE ON public.profiles FROM authenticated;
+GRANT UPDATE (full_name, phone, avatar_url, theme) ON public.profiles TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.protect_plan_columns()
+RETURNS trigger AS $$
+BEGIN
+  IF (NEW.plan IS DISTINCT FROM OLD.plan OR NEW.plan_expiry IS DISTINCT FROM OLD.plan_expiry)
+     AND auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'plan and plan_expiry can only be changed by an administrator';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE TRIGGER protect_plan_columns_trigger
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_plan_columns();
+
 
 -- 2. Questions Table
 CREATE TABLE IF NOT EXISTS public.questions (

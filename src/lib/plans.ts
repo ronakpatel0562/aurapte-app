@@ -2,11 +2,16 @@
  * Plan model — single source of truth for tier names, pricing, and feature
  * gates. Both tiers are paid, no free access:
  *   - "free" (internal id, unchanged for DB compatibility) → "Aura Starter"
- *   - "premium" → "Aura Pro" — full access, paid via Razorpay
+ *   - "premium" → "Aura Pro" — full access
  *
- * Starter is priced off a 550 CAD/mo target, converted to INR (~61 INR/CAD)
- * since Razorpay settles in INR. Pro is priced ~40% above Starter so the
- * jump to "everything unlocked" reads as a small step up, not a new decision.
+ * Payment is collected manually (bank transfer / UPI), not through a payment
+ * gateway — see src/components/billing/BankPaymentPanel.tsx. An admin flips
+ * profiles.plan by hand once payment is confirmed.
+ *
+ * The feature list for each tier must match what src/lib/plans.ts actually
+ * gates elsewhere in the app (hasAccessToTest, isPremiumPlan, per-question
+ * score locks, dark mode, etc.) — don't add bullets that aren't backed by
+ * real enforcement, that's how billing copy drifts from reality.
  *
  * Anywhere in the codebase that needs the friendly name, price, or feature
  * list should import from here. Don't hardcode "Plan 1" / "Plan 2" anywhere
@@ -21,14 +26,10 @@ export interface PlanDefinition {
   name: string;
   /** One-line tagline. */
   tagline: string;
-  /** Price in INR (paise for Razorpay = price * 100). 0 = free tier. */
+  /** Price in INR. 0 = free tier. */
   priceInr: number;
   /** Billing period label, e.g. "month", "one-time". */
   billingPeriod: string;
-  /** Razorpay Plan ID (set in Razorpay dashboard after creating plans).
-   *  Empty until you wire up a real Razorpay account — that's fine, the
-   *  checkout button will display a "Payment not configured" notice. */
-  razorpayPlanId: string;
   /** Whether this tier shows the upgrade CTA. */
   isPaid: boolean;
   /** Ordered list of feature bullets shown on the billing page. */
@@ -45,18 +46,15 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   free: {
     id: "free",
     name: "Aura Starter",
-    tagline: "Everything you need to start scoring higher on PTE Academic.",
+    tagline: "A focused set of practice and mock tests to get you started.",
     priceInr: 33499,
     billingPeriod: "month",
-    razorpayPlanId: process.env.NEXT_PUBLIC_RAZORPAY_STARTER_PLAN_ID ?? "",
     isPaid: true,
     features: [
-      "10 Practice Tests (focused, short-form)",
-      "5 Full Mock Tests (PTE-simulated)",
-      "Unlimited single-module practice questions",
-      "Score history & recent activity dashboard",
-      "Reading & Writing Fill in the Blanks scoring",
+      "10 Practice Tests across all 4 modules",
+      "5 Full Mock Tests (PTE-simulated, timed)",
       "Specialised Tips & Templates (Describe Image, WFD strategy, …)",
+      "Real exam timer and interface",
     ],
     limits: {
       practiceTests: 10,
@@ -67,17 +65,16 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   premium: {
     id: "premium",
     name: "Aura Pro",
-    tagline: "Unlock everything — full mock library, all specialised tips, and AI scoring.",
+    tagline: "Unlimited tests with full scoring and progress tracking.",
     priceInr: 46999,
     billingPeriod: "month",
-    razorpayPlanId: process.env.NEXT_PUBLIC_RAZORPAY_PLAN_ID ?? "",
     isPaid: true,
     features: [
-      "Everything in Aura Starter, unlimited retries",
-      "All Practice Tests and Full Mock Tests, no caps",
-      "Unlimited questions across every module",
-      "Score breakdown per question and per module",
-      "Priority access to new question packs",
+      "Unlimited Practice Tests and Full Mock Tests",
+      "See your score on every question (Starter scores stay hidden)",
+      "Score history, best-score tracking, and dashboard stats",
+      "Random Practice Test — custom mixed-difficulty sets",
+      "Dark mode",
     ],
     limits: {
       practiceTests: null,

@@ -47,7 +47,7 @@ export default async function SpecialisedTipsPage() {
           <a
             href="data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iagogIDw8IC9UeXBlIC9DYXRhbG9nCiAgICAgL1BhZ2VzIDIgMCBSCiAgPj4KZW5kb2JqCjIgMCBvYmoKICA8PCAvVHlwZSAvUGFnZXMKICAgICAvS2lkcyBbIDMgMCBSIF0KICAgICAvQ291bnQgMQogID4+CmVuZG9iagozIDAgb2JqCiAgPDwgL1R5cGUgL1BhZ2UKICAgICAvUGFyZW50IDIgMCBSCiAgICAgL01lZGlhQm94IFsgMCAwIDU5NSA4NDIgXQogICAgIC9Db250ZW50cyA0IDAgUgogICAgIC9SZXNvdXJjZXMgPDwgL0ZvbnQgPDwgL0YxIDUgMCBSID4+ID4+CiAgPj4KZW5kb2JqCjQgMCBvYmoKICA8PCAvTGVuZ3RoIDY5ID4+CnN0cmVhbQpCVAovRjEgMjQgVGYKMTAwIDcwMCBUZAooQXVyYVBURSBQcmVtaXVtIFNwZWNpYWxpc2VkIFRpcHMgUERGKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKICA8PCAvVHlwZSAvRm9udAogICAgIC9TdWJ0eXBlIC9UeXBlMQogICAgIC9CYXNlRm9udCAvSGVsdmV0aWNhCiAgPj4KZW5kb2JqCnRyYWlsZXIKICA8PCAvUm9vdCAxIDAgUgogID4+CiUlRU9GCg=="
             download="AuraPTE_Specialised_Tips.pdf"
-            className="h-10 px-5 bg-gradient-to-r from-gradient-develop-start to-gradient-preview-start text-white hover:opacity-95 font-medium text-sm rounded-md shadow-md transition duration-150 flex items-center justify-center gap-2 active:scale-[0.99]"
+            className="h-10 px-5 bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 font-medium text-sm rounded-md shadow-md transition duration-150 flex items-center justify-center gap-2 active:scale-[0.99]"
           >
             <FileDown className="w-4 h-4" />
             <span>Download PDF Guide</span>

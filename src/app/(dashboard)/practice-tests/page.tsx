@@ -66,8 +66,8 @@ export default async function PracticeTestsPage() {
       </div>
 
       <div className="relative bg-canvas border border-hairline rounded-xl p-6 sm:p-8 shadow-vercel-card overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-gradient-to-tr from-gradient-preview-start to-gradient-preview-end opacity-10 blur-2xl" />
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-preview-start via-gradient-preview-end to-gradient-ship-start" />
+        <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-end opacity-10 blur-2xl" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gradient-brand-start via-gradient-brand-mid to-gradient-brand-end" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -102,7 +102,7 @@ export default async function PracticeTestsPage() {
         href={isPremium ? "/practice-tests/random" : "/billing?from=random-practice-test"}
         className="card-hover group relative flex items-center justify-between gap-4 bg-canvas border border-hairline rounded-xl p-5 sm:p-6 shadow-vercel-card overflow-hidden"
       >
-        <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-gradient-to-tr from-gradient-preview-start to-gradient-preview-end opacity-10 blur-2xl" />
+        <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-end opacity-10 blur-2xl" />
         <div className="relative z-10 flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <Sparkles className="w-4.5 h-4.5 text-primary" />

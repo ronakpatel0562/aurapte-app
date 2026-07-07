@@ -56,14 +56,22 @@ const nextConfig = {
    * never ends up with a partial vendor-chunks split either. webpack-
    * turbopack shares this config with the client compiler.
    */
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, nextRuntime }) => {
       // Externalize for both server AND client builds so the package is
       // loaded via Node/browser ESM-CJS interop rather than bundled into
       // a separately-named vendor-chunks file. This makes the dev chunk
       // graph deterministic.
+      //
+      // IMPORTANT: never do this for the edge runtime (nextRuntime ===
+      // "edge", i.e. src/middleware.ts). The Edge sandbox has no Node
+      // `require()`, so a `commonjs @supabase/ssr` external throws
+      // "Native module not found: @supabase/ssr" the instant middleware
+      // runs — which silently broke the entire auth/paywall middleware
+      // (it either failed to compile or 500'd on every request) until this
+      // was scoped to the Node.js server runtime only.
       const externalsRegex =
         /^@supabase\/(supabase-js|ssr|auth-js|functions-js|storage-js|realtime-js|postgrest-js)$/;
-      if (isServer) {
+      if (isServer && nextRuntime !== "edge") {
         config.externals = config.externals || [];
         if (Array.isArray(config.externals)) {
           config.externals.push(({ request }, callback) => {

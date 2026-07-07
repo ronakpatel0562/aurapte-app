@@ -75,7 +75,7 @@ export default function PredictionFilesClient({ files }: { files: PredictionFile
         <button
           onClick={handleDownloadAll}
           disabled={downloadingAll}
-          className="h-10 px-5 bg-gradient-to-r from-gradient-develop-start to-gradient-preview-start text-white hover:opacity-95 font-medium text-sm rounded-md shadow-md transition duration-150 flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+          className="h-10 px-5 bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 font-medium text-sm rounded-md shadow-md transition duration-150 flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <FileDown className="w-4 h-4" />
           <span>{downloadingAll ? "Downloading…" : "Download All PDFs"}</span>
