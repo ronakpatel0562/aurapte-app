@@ -224,12 +224,97 @@
   position: absolute;
   inset: -10%;
   background:
-    radial-gradient(60% 50% at 20% 30%, color-mix(in oklab, var(--color-link) 28%, transparent) 0%, transparent 60%),
-    radial-gradient(50% 60% at 80% 20%, color-mix(in oklab, var(--color-violet) 24%, transparent) 0%, transparent 65%),
-    radial-gradient(40% 40% at 50% 80%, color-mix(in oklab, var(--color-cyan) 18%, transparent) 0%, transparent 60%);
-  filter: blur(60px);
+    radial-gradient(55% 50% at 15% 25%, color-mix(in oklab, var(--color-gradient-brand-start) 30%, transparent) 0%, transparent 60%),
+    radial-gradient(50% 55% at 85% 15%, color-mix(in oklab, var(--color-gradient-brand-mid) 26%, transparent) 0%, transparent 65%),
+    radial-gradient(45% 45% at 50% 90%, color-mix(in oklab, var(--color-gradient-brand-end) 20%, transparent) 0%, transparent 60%);
+  filter: blur(70px);
   pointer-events: none;
   z-index: 0;
+  animation: aurora-drift 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.dark .landing-aurora {
+  background:
+    radial-gradient(55% 50% at 15% 25%, color-mix(in oklab, var(--color-gradient-brand-start) 45%, transparent) 0%, transparent 60%),
+    radial-gradient(50% 55% at 85% 15%, color-mix(in oklab, var(--color-gradient-brand-mid) 40%, transparent) 0%, transparent 65%),
+    radial-gradient(45% 45% at 50% 90%, color-mix(in oklab, var(--color-gradient-brand-end) 32%, transparent) 0%, transparent 60%);
+}
+
+@keyframes aurora-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-3%, 3%) scale(1.08); }
+  100% { transform: translate(3%, -2%) scale(1); }
+}
+
+/* Gentle vertical bob for floating hero accents */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.float-slow {
+  animation: float-slow 5s ease-in-out infinite;
+}
+
+/* Same bob, but as a CSS variable so it composes with a base transform
+   (translate/translateZ) set inline — used by the 3D hero mockup, where
+   each layer already carries its own depth offset. */
+@property --bob {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes float-bob {
+  0%, 100% { --bob: 0px; }
+  50% { --bob: -10px; }
+}
+.float-bob {
+  animation: float-bob 5s ease-in-out infinite;
+}
+
+/* Recording indicator pulse for the hero mockup's waveform card */
+@keyframes rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.rec-pulse {
+  animation: rec-pulse 1.6s ease-in-out infinite;
+}
+
+/* Waveform bars — each bar gets its own animation-delay inline */
+@keyframes waveform-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+.waveform-bar {
+  animation: waveform-bar 1.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Hero dashboard mockup — circular score ring fills in once on load,
+   module bars grow in from the left with a stagger. */
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--ring-circumference); }
+  to { stroke-dashoffset: var(--ring-offset); }
+}
+.score-ring-fill {
+  animation: ring-fill 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.bar-grow {
+  animation: bar-grow 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: left;
+}
+
+@keyframes count-pop {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.count-pop {
+  animation: count-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.2s both;
 }
 
 /* Marquee text for landing stats strip */
@@ -250,6 +335,19 @@
   animation: reveal-up 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Scroll-triggered reveal — driven by ScrollReveal's IntersectionObserver,
+   which toggles the -visible class once per element. */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(32px) scale(0.98);
+  transition: opacity 750ms cubic-bezier(0.16, 1, 0.3, 1), transform 750ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+.scroll-reveal-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
 /* Pulse ring for CTA */
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-link) 35%, transparent); }
@@ -258,6 +356,37 @@
 }
 .pulse-ring {
   animation: pulse-ring 2.4s cubic-bezier(0.66, 0, 0, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-aurora,
+  .float-slow,
+  .float-bob,
+  .animate-marquee,
+  .reveal-up,
+  .pulse-ring,
+  .rec-pulse,
+  .waveform-bar,
+  .score-ring-fill,
+  .bar-grow,
+  .count-pop {
+    animation: none !important;
+  }
+  .score-ring-fill {
+    stroke-dashoffset: var(--ring-offset) !important;
+  }
+  .bar-grow {
+    transform: scaleX(1) !important;
+  }
+  .count-pop {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* Lightbox for MediaDetail */

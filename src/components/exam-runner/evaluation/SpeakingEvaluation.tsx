@@ -118,7 +118,7 @@ export default function SpeakingEvaluation({
 
       <p className="flex items-start gap-2 text-xs text-gray-500 leading-relaxed">
         <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        Speaking responses are graded by AI on pronunciation, fluency and content in the real exam.
+        Speaking responses are scored on pronunciation, fluency and content in the real exam.
         The transcript above is captured on-device and is only indicative.
       </p>
     </div>

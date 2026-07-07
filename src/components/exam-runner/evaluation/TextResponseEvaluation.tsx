@@ -80,7 +80,7 @@ export default function TextResponseEvaluation({
 
       <p className="flex items-start gap-2 text-xs text-gray-500 leading-relaxed">
         <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        This is an indicative structural score. In the real exam this task is graded by AI on content,
+        This is an indicative structural score. In the real exam this task is scored on content,
         grammar, vocabulary and fluency.
       </p>
     </div>

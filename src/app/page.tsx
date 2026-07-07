@@ -16,9 +16,28 @@ import {
   Star,
   Quote,
 } from "lucide-react";
-import HeroScene from "@/components/landing/HeroSceneDynamic";
+import HeroDashboardMockup from "@/components/landing/HeroDashboardMockup";
+import HeroMockup from "@/components/landing/HeroMockup";
+import { WritingMockup, ReadingMockup, ListeningMockup } from "@/components/landing/ModuleMockups";
+import LandingThemeToggle from "@/components/landing/LandingThemeToggle";
+import ScrollReveal from "@/components/landing/ScrollReveal";
+import ScrollProgressBar from "@/components/landing/ScrollProgressBar";
+import ParallaxLayer from "@/components/landing/ParallaxLayer";
 import { PLANS } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
+
+const LANDING_THEME_INIT_SCRIPT = `
+(function() {
+  try {
+    var stored = localStorage.getItem('aurapte-landing-theme');
+    var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) {
+      var root = document.getElementById('landing-root');
+      if (root) root.classList.add('dark');
+    }
+  } catch (_) {}
+})();
+`;
 
 export default async function LandingPage() {
   // Authenticated users skip the marketing page.
@@ -29,7 +48,9 @@ export default async function LandingPage() {
   if (user) redirect("/dashboard");
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-canvas text-ink font-geist">
+    <main id="landing-root" className="relative min-h-screen overflow-x-hidden bg-canvas text-ink font-geist">
+      <script dangerouslySetInnerHTML={{ __html: LANDING_THEME_INIT_SCRIPT }} />
+
       {/* Header */}
       <header className="sticky top-0 z-30 backdrop-blur-md bg-canvas/70 border-b border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -40,6 +61,7 @@ export default async function LandingPage() {
             </span>
           </Link>
           <nav className="flex items-center gap-2">
+            <LandingThemeToggle />
             <Link
               href="/login"
               className="hidden sm:inline-flex h-9 px-4 items-center text-sm font-medium text-body hover:text-ink transition rounded-md"
@@ -56,6 +78,7 @@ export default async function LandingPage() {
           </nav>
         </div>
       </header>
+      <ScrollProgressBar />
 
       {/* ------------------ HERO ------------------ */}
       <section className="relative isolate">
@@ -70,10 +93,10 @@ export default async function LandingPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-20 sm:pb-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             {/* Left: copy + CTA */}
-            <div className="space-y-7 reveal-up">
+            <ParallaxLayer speed={0.06} fade className="space-y-7 reveal-up">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body shadow-vercel-card">
                 <Sparkles className="w-3 h-3 text-gradient-brand-start" />
-                Now with 12 practice &amp; 15 mock tests
+                Now with 30 practice &amp; 15 mock tests
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-ink leading-[1.05]">
@@ -85,7 +108,7 @@ export default async function LandingPage() {
 
               <p className="text-base sm:text-lg text-mute leading-relaxed max-w-xl">
                 AuraPTE is a complete PTE Academic preparation platform — real exam simulations,
-                module-by-module practice, AI-style scoring, and progress tracking that
+                module-by-module practice, automated scoring, and progress tracking that
                 actually tells you where you stand.
               </p>
 
@@ -120,58 +143,12 @@ export default async function LandingPage() {
                   Cancel anytime
                 </span>
               </div>
-            </div>
+            </ParallaxLayer>
 
-            {/* Right: 3D scene */}
-            <div className="relative h-[360px] sm:h-[460px] lg:h-[520px]">
-              <HeroScene />
-              {/* Floating stat cards layered over the 3D scene */}
-              <div className="absolute top-6 left-4 sm:left-8 hidden sm:block">
-                <div className="bg-canvas/90 backdrop-blur border border-hairline rounded-xl p-3 shadow-vercel-popover max-w-[180px]">
-                  <div className="text-2xs font-mono uppercase tracking-wider text-mute">
-                    Score accuracy
-                  </div>
-                  <div className="text-2xl font-bold text-ink mt-0.5">92%</div>
-                  <div className="text-2xs text-success font-semibold">+18% this month</div>
-                </div>
-              </div>
-              <div className="absolute bottom-8 right-4 sm:right-12 hidden sm:block">
-                <div className="bg-canvas/90 backdrop-blur border border-hairline rounded-xl p-3 shadow-vercel-popover max-w-[200px]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Award className="w-3.5 h-3.5 text-warning-deep" />
-                    <span className="text-2xs font-mono uppercase tracking-wider text-mute">
-                      PTE-aligned
-                    </span>
-                  </div>
-                  <div className="text-sm font-semibold text-ink">
-                    Real exam timer &amp; format
-                  </div>
-                </div>
-              </div>
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 hidden md:block">
-                <div className="bg-canvas/90 backdrop-blur border border-hairline rounded-xl p-3 shadow-vercel-popover">
-                  <div className="text-2xs font-mono uppercase tracking-wider text-mute mb-2">
-                    Modules
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {[
-                      { icon: Mic, label: "Speaking" },
-                      { icon: PenTool, label: "Writing" },
-                      { icon: BookOpenCheck, label: "Reading" },
-                      { icon: Headphones, label: "Listening" },
-                    ].map(({ icon: Icon, label }) => (
-                      <div
-                        key={label}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded bg-canvas-soft-2 border border-hairline"
-                      >
-                        <Icon className="w-3 h-3 text-mute" />
-                        <span className="text-2xs font-medium text-ink">{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Right: 3D hero mockup */}
+            <ParallaxLayer speed={0.03}>
+              <HeroDashboardMockup />
+            </ParallaxLayer>
           </div>
         </div>
       </section>
@@ -182,7 +159,7 @@ export default async function LandingPage() {
           {[...Array(2)].flatMap((_, dup) =>
             [
               "220+ LISTENING AUDIO FILES",
-              "12 PRACTICE TESTS",
+              "30 PRACTICE TESTS",
               "15 FULL MOCK TESTS",
               "AURA STARTER · ₹33,499/MO",
               "AURA PRO · ₹46,999/MO",
@@ -204,7 +181,7 @@ export default async function LandingPage() {
       {/* ------------------ MODULES ------------------ */}
       <section className="relative py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3 reveal-up">
+          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
               <Zap className="w-3 h-3" />
               Every module, every task type
@@ -216,7 +193,7 @@ export default async function LandingPage() {
               Each module mirrors the real PTE structure, with the same task types, scoring,
               and timing you&apos;ll face on test day.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {[
@@ -248,35 +225,112 @@ export default async function LandingPage() {
                 count: 7,
                 desc: "Summarize Spoken Text, MCQ, Fill Blanks, Highlight Incorrect Words, Write from Dictation",
               },
-            ].map((m) => {
+            ].map((m, i) => {
               const Icon = m.icon;
               return (
-                <div
-                  key={m.name}
-                  className="card-hover bg-canvas border border-hairline rounded-2xl p-6 shadow-vercel-card flex flex-col gap-4 overflow-hidden relative"
-                >
-                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${m.gradient}`} />
-                  <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${m.gradient} flex items-center justify-center shadow-sm`}>
-                    <Icon className="w-5 h-5 text-white" />
+                <ScrollReveal key={m.name} delay={i * 90}>
+                  <div className="card-hover bg-canvas border border-hairline rounded-2xl p-6 shadow-vercel-card flex flex-col gap-4 overflow-hidden relative h-full">
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${m.gradient}`} />
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${m.gradient} flex items-center justify-center shadow-sm`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-semibold text-ink">{m.name}</h3>
+                      <p className="text-2xs font-mono uppercase tracking-wider text-mute">
+                        {m.count} task types
+                      </p>
+                    </div>
+                    <p className="text-sm text-mute leading-relaxed">{m.desc}</p>
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-ink">{m.name}</h3>
-                    <p className="text-2xs font-mono uppercase tracking-wider text-mute">
-                      {m.count} task types
-                    </p>
-                  </div>
-                  <p className="text-sm text-mute leading-relaxed">{m.desc}</p>
-                </div>
+                </ScrollReveal>
               );
             })}
           </div>
         </div>
       </section>
 
+      {/* ------------------ MODULES UP CLOSE ------------------ */}
+      <section className="relative py-20 sm:py-28 bg-canvas-soft border-y border-hairline overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 sm:space-y-28">
+          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
+              <Sparkles className="w-3 h-3 text-gradient-brand-start" />
+              See it before you sit it
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
+              Every module, up close
+            </h2>
+            <p className="text-base text-mute leading-relaxed">
+              The exact interface you&apos;ll practice on — modeled after the real PTE Academic
+              screens for each skill.
+            </p>
+          </ScrollReveal>
+
+          {[
+            {
+              key: "speaking",
+              icon: Mic,
+              name: "Speaking",
+              gradient: "from-gradient-develop-start to-gradient-develop-end",
+              tasks: "Read Aloud, Repeat Sentence, Describe Image, Respond to Situation, Answer Short Question",
+              desc: "Record into your mic just like on exam day. Every attempt is scored in seconds on pronunciation, fluency, and content.",
+              mockup: <HeroMockup />,
+            },
+            {
+              key: "writing",
+              icon: PenTool,
+              name: "Writing",
+              gradient: "from-gradient-preview-start to-gradient-preview-end",
+              tasks: "Summarize Written Text, Write an Email",
+              desc: "A live word-count meter enforces the same limits as the real exam, so you build the habit of writing within range.",
+              mockup: <WritingMockup />,
+            },
+            {
+              key: "reading",
+              icon: BookOpenCheck,
+              name: "Reading",
+              gradient: "from-gradient-ship-start to-gradient-ship-end",
+              tasks: "Fill in the Blanks, Re-order Paragraphs, Multiple Choice single & multiple",
+              desc: "Drag-and-drop paragraph reordering and click-to-fill blanks — the same interactions as the Pearson interface.",
+              mockup: <ReadingMockup />,
+            },
+            {
+              key: "listening",
+              icon: Headphones,
+              name: "Listening",
+              gradient: "from-gradient-develop-start to-gradient-preview-start",
+              tasks: "Summarize Spoken Text, MCQ, Fill Blanks, Highlight Incorrect Words, Write from Dictation",
+              desc: "Cloud-streamed audio starts instantly, even on slow connections, so you never lose practice time to buffering.",
+              mockup: <ListeningMockup />,
+            },
+          ].map((m, i) => {
+            const Icon = m.icon;
+            const reversed = i % 2 === 1;
+            return (
+              <div key={m.key} className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+                <ScrollReveal className={reversed ? "lg:order-2" : ""}>
+                  <div className="space-y-4 max-w-lg">
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${m.gradient} flex items-center justify-center shadow-sm`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink">{m.name}</h3>
+                    <p className="text-base text-mute leading-relaxed">{m.desc}</p>
+                    <p className="text-xs font-mono uppercase tracking-wider text-mute pt-1">{m.tasks}</p>
+                  </div>
+                </ScrollReveal>
+                <ScrollReveal delay={120} className={reversed ? "lg:order-1" : ""}>
+                  {m.mockup}
+                </ScrollReveal>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ------------------ FEATURE GRID ------------------ */}
       <section className="relative py-20 sm:py-28 bg-canvas-soft border-y border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
+          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
               <Shield className="w-3 h-3" />
               Engineered for results
@@ -284,7 +338,7 @@ export default async function LandingPage() {
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
               Everything you need. Nothing you don&apos;t.
             </h2>
-          </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[
@@ -318,19 +372,18 @@ export default async function LandingPage() {
                 desc: "No lock-in, no commitment. Just don't renew next month.",
                 icon: Check,
               },
-            ].map((f) => {
+            ].map((f, i) => {
               const Icon = f.icon;
               return (
-                <div
-                  key={f.title}
-                  className="card-hover bg-canvas border border-hairline rounded-xl p-5 shadow-vercel-card space-y-3"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-canvas-soft-2 border border-hairline flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-ink" />
+                <ScrollReveal key={f.title} delay={i * 70}>
+                  <div className="card-hover bg-canvas border border-hairline rounded-xl p-5 shadow-vercel-card space-y-3 h-full">
+                    <div className="w-9 h-9 rounded-lg bg-canvas-soft-2 border border-hairline flex items-center justify-center">
+                      <Icon className="w-4 h-4 text-ink" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-ink">{f.title}</h3>
+                    <p className="text-xs text-mute leading-relaxed">{f.desc}</p>
                   </div>
-                  <h3 className="text-sm font-semibold text-ink">{f.title}</h3>
-                  <p className="text-xs text-mute leading-relaxed">{f.desc}</p>
-                </div>
+                </ScrollReveal>
               );
             })}
           </div>
@@ -340,7 +393,7 @@ export default async function LandingPage() {
       {/* ------------------ TESTIMONIALS ------------------ */}
       <section className="relative py-20 sm:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3 reveal-up">
+          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
               <Star className="w-3 h-3 text-gradient-brand-start" />
               Loved by test-takers
@@ -351,7 +404,7 @@ export default async function LandingPage() {
             <p className="text-base text-mute leading-relaxed">
               A few candidates who used AuraPTE to prepare for their PTE Academic exam.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[
@@ -373,25 +426,24 @@ export default async function LandingPage() {
                 name: "Priya Nair",
                 role: "Scored 85 overall · Toronto",
               },
-            ].map((t) => (
-              <div
-                key={t.name}
-                className="card-hover bg-canvas border border-hairline rounded-2xl p-6 shadow-vercel-card flex flex-col gap-4"
-              >
-                <Quote className="w-6 h-6 text-gradient-brand-start" />
-                <p className="text-sm text-body leading-relaxed flex-1">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-3 pt-2 border-t border-hairline">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gradient-brand-start to-gradient-brand-end flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                    {t.name.split(" ").map((n) => n[0]).join("")}
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-ink">{t.name}</div>
-                    <div className="text-2xs text-mute">{t.role}</div>
+            ].map((t, i) => (
+              <ScrollReveal key={t.name} delay={i * 90}>
+                <div className="card-hover bg-canvas border border-hairline rounded-2xl p-6 shadow-vercel-card flex flex-col gap-4 h-full">
+                  <Quote className="w-6 h-6 text-gradient-brand-start" />
+                  <p className="text-sm text-body leading-relaxed flex-1">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                  <div className="flex items-center gap-3 pt-2 border-t border-hairline">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gradient-brand-start to-gradient-brand-end flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                      {t.name.split(" ").map((n) => n[0]).join("")}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-ink">{t.name}</div>
+                      <div className="text-2xs text-mute">{t.role}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -400,62 +452,63 @@ export default async function LandingPage() {
       {/* ------------------ PRICING ------------------ */}
       <section id="pricing" className="relative py-20 sm:py-28 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
+          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
               Simple pricing
             </h2>
             <p className="text-base text-mute leading-relaxed">
               Pick a plan and get full access from day one.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
-            {[PLANS.free, PLANS.premium].map((plan) => {
+            {[PLANS.free, PLANS.premium].map((plan, i) => {
               const isFeatured = plan.id === "premium";
               return (
-                <div
-                  key={plan.id}
-                  className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col ${
-                    isFeatured ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20" : "border-hairline"
-                  }`}
-                >
-                  {isFeatured && (
-                    <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
-                      Most Popular
+                <ScrollReveal key={plan.id} delay={i * 100}>
+                  <div
+                    className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col h-full ${
+                      isFeatured ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20" : "border-hairline"
+                    }`}
+                  >
+                    {isFeatured && (
+                      <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
+                        Most Popular
+                      </div>
+                    )}
+                    <h3 className="text-xl font-semibold text-ink">{plan.name}</h3>
+                    <p className="text-sm text-mute leading-relaxed mt-1">{plan.tagline}</p>
+                    <div className="mt-5 flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-ink">
+                        ₹{plan.priceInr.toLocaleString("en-IN")}
+                      </span>
+                      <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
                     </div>
-                  )}
-                  <h3 className="text-xl font-semibold text-ink">{plan.name}</h3>
-                  <p className="text-sm text-mute leading-relaxed mt-1">{plan.tagline}</p>
-                  <div className="mt-5 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-ink">
-                      ₹{plan.priceInr.toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
+                    <ul className="mt-5 space-y-2.5 flex-1">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-sm text-body">
+                          <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-success/10 text-success">
+                            <Check className="w-3 h-3" />
+                          </span>
+                          <span className="leading-relaxed">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-6">
+                      <Link
+                        href="/signup"
+                        className={`w-full h-11 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 ${
+                          isFeatured
+                            ? "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 active:scale-[0.99]"
+                            : "border border-hairline bg-canvas hover:bg-canvas-soft-2 text-ink"
+                        }`}
+                      >
+                        Get started
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
                   </div>
-                  <ul className="mt-5 space-y-2.5 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-sm text-body">
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-success/10 text-success">
-                          <Check className="w-3 h-3" />
-                        </span>
-                        <span className="leading-relaxed">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-6">
-                    <Link
-                      href="/signup"
-                      className={`w-full h-11 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 ${
-                        isFeatured
-                          ? "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 active:scale-[0.99]"
-                          : "border border-hairline bg-canvas hover:bg-canvas-soft-2 text-ink"
-                      }`}
-                    >
-                      Get started
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
+                </ScrollReveal>
               );
             })}
           </div>

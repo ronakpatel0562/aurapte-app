@@ -101,6 +101,8 @@ export default async function AdminUsersPage() {
       <div className="flex items-center gap-2 text-xs font-mono text-mute uppercase">
         <Link href="/dashboard" className="hover:text-ink transition">Dashboard</Link>
         <ChevronRight className="w-3.5 h-3.5" />
+        <Link href="/admin" className="hover:text-ink transition">Admin</Link>
+        <ChevronRight className="w-3.5 h-3.5" />
         <span className="text-body font-semibold">Users</span>
       </div>
 

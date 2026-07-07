@@ -122,7 +122,7 @@ export default function QuestionLinkClient({ tests }: { tests: TestDefinition[] 
           <div className="space-y-0.5">
             <h2 className="text-sm font-semibold text-ink uppercase tracking-wider">Coverage</h2>
             <p className="text-2xs text-mute">
-              Across 12 practice tests + 15 mock tests
+              Across 30 practice tests + 15 mock tests
             </p>
           </div>
           <button

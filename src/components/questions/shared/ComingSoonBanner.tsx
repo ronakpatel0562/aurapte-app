@@ -6,7 +6,7 @@ interface ComingSoonBannerProps {
 }
 
 export default function ComingSoonBanner({
-  message = "Answer evaluation and AI scoring for this task type are coming soon.",
+  message = "Answer evaluation and scoring for this task type are coming soon.",
 }: ComingSoonBannerProps) {
   return (
     <div className="bg-canvas border border-warning/30 rounded-lg p-4 flex items-start gap-3 shadow-vercel-card">

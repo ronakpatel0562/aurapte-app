@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { LogOut, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/auth/actions";
-import { PLANS, planName, type PlanId } from "@/lib/plans";
+import { PLANS, type PlanId } from "@/lib/plans";
 import { useFullscreen } from "@/hooks/useFullscreen";
 
 interface UserProfile {
@@ -149,47 +149,6 @@ export default function Header() {
                       <div className="text-sm font-semibold text-ink truncate">
                         {profile.email}
                       </div>
-                    </div>
-
-                    {/* Plan switcher (dev convenience — same as before but
-                        using the friendly plan names) */}
-                    <div className="px-4 py-3 border-b border-hairline">
-                      <div className="text-xs text-mute font-mono uppercase tracking-wider mb-2">
-                        Switch plan
-                      </div>
-                      <select
-                        value={profile.plan}
-                        onChange={async (e) => {
-                          const newPlan = e.target.value as PlanId;
-                          try {
-                            const supabase = createClient();
-                            const {
-                              data: { user },
-                            } = await supabase.auth.getUser();
-                            if (user) {
-                              const { error } = await supabase
-                                .from("profiles")
-                                .update({ plan: newPlan })
-                                .eq("id", user.id);
-                              if (!error) {
-                                setProfile((p) => (p ? { ...p, plan: newPlan } : p));
-                                window.dispatchEvent(new Event("planChanged"));
-                              } else {
-                                console.error("Plan update error:", error.message);
-                              }
-                            }
-                          } catch (err) {
-                            console.error("Failed to switch plan:", err);
-                          }
-                        }}
-                        className="w-full text-xs font-medium bg-canvas-soft-2 border border-hairline rounded-md px-2 py-1.5 focus:outline-none cursor-pointer hover:border-hairline-strong transition"
-                      >
-                        {(Object.keys(PLANS) as PlanId[]).map((id) => (
-                          <option key={id} value={id}>
-                            {planName(id)}
-                          </option>
-                        ))}
-                      </select>
                     </div>
 
                     <button
