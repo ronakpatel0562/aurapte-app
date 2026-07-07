@@ -78,7 +78,7 @@ export default function PredictionFilesClient({ files }: { files: PredictionFile
           className="h-10 px-5 bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 font-medium text-sm rounded-md shadow-md transition duration-150 flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <FileDown className="w-4 h-4" />
-          <span>{downloadingAll ? "Downloading…" : "Download All PDFs"}</span>
+          <span>{downloadingAll ? "Downloading…" : "Download All Files"}</span>
         </button>
       </div>
 
@@ -100,7 +100,7 @@ export default function PredictionFilesClient({ files }: { files: PredictionFile
               className="w-full h-9 px-4 bg-canvas-soft-2 border border-hairline hover:bg-canvas-soft text-ink font-medium text-xs rounded-md transition duration-150 flex items-center justify-center gap-2"
             >
               <FileDown className="w-3.5 h-3.5" />
-              <span>Download PDF</span>
+              <span>Download File</span>
             </button>
           </div>
         ))}

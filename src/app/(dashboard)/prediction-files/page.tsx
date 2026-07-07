@@ -7,6 +7,7 @@ import { planName, type PlanId } from "@/lib/plans";
 import PredictionFilesClient from "./PredictionFilesClient";
 
 const PREDICTION_FILES = [
+  { module: "This Month", title: "Exam This Month", filename: "Exam-This-Month.html" },
   { module: "Speaking", title: "Repeat Sentence", filename: "Repeat-Sentence.pdf" },
   { module: "Speaking", title: "Describe Image", filename: "Describe-Image.pdf" },
   { module: "Speaking", title: "Responding to Situation", filename: "Responding-to-Situation.pdf" },

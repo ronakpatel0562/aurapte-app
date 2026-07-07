@@ -10,7 +10,6 @@ import {
   ChevronRight,
   BookOpen,
 } from "lucide-react";
-import { interleaveByDifficulty } from "@/lib/questionOrder";
 
 interface Question {
   id: string;
@@ -56,21 +55,18 @@ export default function QuestionListClient({
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Questions arrive from the server sorted by created_at, which (because
-  // they were seeded/imported difficulty-by-difficulty) reads as a visible
-  // easy → medium → hard grouping. Interleave difficulties round-robin
-  // (easy, medium, hard, easy, medium, hard, ...) so the unfiltered list
-  // reads as mixed instead of grouped. This is a deterministic function of
-  // initialQuestions — same order every time the user lands, no reshuffling
-  // on each visit, and no server/client hydration mismatch since it doesn't
-  // depend on Math.random().
-  const mixedQuestions = useMemo(
-    () => interleaveByDifficulty(initialQuestions),
+  // Serial number reflects each question's fixed position in the server's
+  // created_at-ordered list (i.e. DB/import order), so it maps 1:1 to the
+  // numbering in the source material. It must stay stable no matter which
+  // filters are applied — computed once from initialQuestions, never from
+  // the filtered/displayed array's own index.
+  const questionsWithSrNo = useMemo(
+    () => initialQuestions.map((q, idx) => ({ ...q, srNo: idx + 1 })),
     [initialQuestions]
   );
 
   const filteredQuestions = useMemo(() => {
-    const filtered = mixedQuestions.filter((q) => {
+    const filtered = questionsWithSrNo.filter((q) => {
       // 1. Search Query Match
       const previewText =
         q.content?.passage ||
@@ -98,8 +94,8 @@ export default function QuestionListClient({
       return searchMatch && difficultyMatch && statusMatch;
     });
 
-    return filtered;
-  }, [mixedQuestions, search, difficultyFilter, statusFilter, attemptMap]);
+    return filtered.sort((a, b) => a.srNo - b.srNo);
+  }, [questionsWithSrNo, search, difficultyFilter, statusFilter, attemptMap]);
 
   // Helper formatting for PTE type display
   const getDifficultyColor = (diff: string) => {
@@ -263,9 +259,9 @@ export default function QuestionListClient({
       {/* Questions Card List */}
       <div className="space-y-4">
         {filteredQuestions.length > 0 ? (
-          filteredQuestions.map((q, idx) => {
+          filteredQuestions.map((q) => {
             const attempt = attemptMap[q.id];
-            const srNo = (idx + 1).toString();
+            const srNo = q.srNo.toString();
             const isWFD = taskTypeName === "write-from-dictation";
             const isASQ = taskTypeName === "answer-short-question";
             const isRS = taskTypeName === "repeat-sentence";
