@@ -4,7 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 
 const ALLOWED_FILES = new Set([
-  "Exam-This-Month.html",
+  "Exam-This-Month.pdf",
   "Answer-Short-Question.pdf",
   "Describe-Image.pdf",
   "Fill-in-the-Blanks.pdf",
@@ -17,7 +17,6 @@ const ALLOWED_FILES = new Set([
 
 const CONTENT_TYPES: Record<string, string> = {
   ".pdf": "application/pdf",
-  ".html": "text/html",
 };
 
 const FILES_DIR = path.join(process.cwd(), "private-assets", "prediction-files");
