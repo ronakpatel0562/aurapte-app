@@ -74,7 +74,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               <div>
                 <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-white transition-colors">Exact Exam Simulation</h3>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Get comfortable with the test interface using modules designed to mirror Pearson Academic formatting.
+                  Get comfortable with the test interface using modules designed to mirror the real Pearson PTE Core formatting.
                 </p>
               </div>
             </div>

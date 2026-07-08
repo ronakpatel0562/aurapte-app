@@ -75,7 +75,7 @@ export default async function MockTestsPage() {
               <h1 className="text-2xl sm:text-3xl tracking-tight font-semibold text-ink">Full Mock Tests</h1>
             </div>
             <p className="text-sm text-mute max-w-xl leading-relaxed">
-              Experience the actual PTE Academic exam conditions. Complete, timed simulations with automated grading across speaking, writing, reading, and listening modules.
+              Experience the actual PTE Core exam conditions. Complete, timed simulations with automated grading across speaking, writing, reading, and listening modules.
             </p>
           </div>
 

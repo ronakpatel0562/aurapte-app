@@ -40,7 +40,7 @@ export default async function SpecialisedTipsPage() {
             Specialised Tips & Templates
           </h1>
           <p className="text-sm text-mute mt-1">
-            {planName(plan)} member — expert strategies and proven templates for PTE Academic.
+            {planName(plan)} member — expert strategies and proven templates for PTE Core.
           </p>
         </div>
       </div>

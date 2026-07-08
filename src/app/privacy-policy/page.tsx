@@ -7,7 +7,7 @@ import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink, mailtoLink } fro
 export const metadata: Metadata = {
   title: "Privacy Policy — AuraPTE",
   description:
-    "Read AuraPTE's privacy policy to understand how we collect, use, and protect your account, practice, and payment data on our PTE Academic prep platform.",
+    "Read AuraPTE's privacy policy to understand how we collect, use, and protect your account, practice, and payment data on our PTE Core prep platform.",
   alternates: { canonical: "https://aurapte.com/privacy-policy" },
   openGraph: {
     title: "Privacy Policy — AuraPTE",
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <Section title="1. Introduction">
             <p>
-              AuraPTE (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) provides an online PTE Academic exam
+              AuraPTE (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) provides an online PTE Core exam
               preparation platform at aurapte.com, including question practice, mock tests,
               instant scoring, and prediction files (the &quot;Service&quot;). This policy explains what
               information we collect when you use the Service, how we use it, and the choices you
@@ -114,7 +114,7 @@ export default function PrivacyPolicyPage() {
 
           <Section title="8. Children&apos;s privacy">
             <p>
-              AuraPTE is intended for users preparing for the PTE Academic exam, typically 16 years
+              AuraPTE is intended for users preparing for the PTE Core exam, typically 16 years
               or older. We do not knowingly collect data from children under 13.
             </p>
           </Section>

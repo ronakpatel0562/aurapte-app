@@ -7,11 +7,11 @@ import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink, mailtoLink } fro
 export const metadata: Metadata = {
   title: "Terms & Conditions — AuraPTE",
   description:
-    "Read the Terms & Conditions for using AuraPTE's PTE Academic exam preparation platform, including account rules, billing, and acceptable use.",
+    "Read the Terms & Conditions for using AuraPTE's PTE Core exam preparation platform, including account rules, billing, and acceptable use.",
   alternates: { canonical: "https://aurapte.com/terms-and-conditions" },
   openGraph: {
     title: "Terms & Conditions — AuraPTE",
-    description: "The terms that govern your use of AuraPTE's PTE Academic prep platform.",
+    description: "The terms that govern your use of AuraPTE's PTE Core prep platform.",
     url: "https://aurapte.com/terms-and-conditions",
     type: "website",
   },
@@ -52,10 +52,10 @@ export default function TermsAndConditionsPage() {
 
           <Section title="2. The Service">
             <p>
-              AuraPTE provides PTE Academic exam preparation tools, including a question bank,
+              AuraPTE provides PTE Core exam preparation tools, including a question bank,
               practice tests, full-length mock tests, instant AI-assisted scoring, and prediction
               file downloads. AuraPTE is an independent preparation platform and is not affiliated
-              with, endorsed by, or connected to Pearson PLC or the official PTE Academic exam.
+              with, endorsed by, or connected to Pearson PLC or the official PTE Core exam.
             </p>
           </Section>
 

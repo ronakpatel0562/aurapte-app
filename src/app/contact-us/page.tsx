@@ -8,13 +8,13 @@ import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink, mailtoLink } from "@/lib/contact";
 
 export const metadata: Metadata = {
-  title: "Contact Us — AuraPTE | PTE Academic Prep Support",
+  title: "Contact Us — AuraPTE | PTE Core Prep Support",
   description:
-    "Get in touch with the AuraPTE team by email or WhatsApp for support with your PTE Academic practice account, billing, prediction files, or general questions — whether or not you've purchased a plan.",
+    "Get in touch with the AuraPTE team by email or WhatsApp for support with your PTE Core practice account, billing, prediction files, or general questions — whether or not you've purchased a plan.",
   alternates: { canonical: "https://aurapte.com/contact-us" },
   openGraph: {
     title: "Contact Us — AuraPTE",
-    description: "Reach the AuraPTE team by email or WhatsApp for support, billing, or general questions about PTE Academic prep.",
+    description: "Reach the AuraPTE team by email or WhatsApp for support, billing, or general questions about PTE Core prep.",
     url: "https://aurapte.com/contact-us",
     type: "website",
   },

@@ -7,14 +7,14 @@ import StaticPageNav from "@/components/layout/StaticPageNav";
 import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink, mailtoLink } from "@/lib/contact";
 
 export const metadata: Metadata = {
-  title: "About Us — AuraPTE | PTE Academic Prep Platform",
+  title: "About Us — AuraPTE | PTE Core Prep Platform",
   description:
-    "AuraPTE is a PTE Academic exam preparation platform built for students targeting Australia, UK, Canada, and New Zealand. Learn about our mission, the team, and how we help you score 79+.",
+    "AuraPTE is a PTE Core exam preparation platform built first for PR aspirants targeting CLB 10 and maximum CRS points, and for students targeting Australia, UK, Canada, and New Zealand. Learn about our mission, the team, and how we help you score 79+.",
   alternates: { canonical: "https://aurapte.com/about-us" },
   openGraph: {
     title: "About Us — AuraPTE",
     description:
-      "Learn about AuraPTE's mission to help PTE Academic candidates prepare smarter with real exam simulation, instant AI scoring, and curated prediction files.",
+      "Learn about AuraPTE's mission to help PTE Core candidates prepare smarter with real exam simulation, instant AI scoring, and curated prediction files.",
     url: "https://aurapte.com/about-us",
     type: "website",
   },
@@ -33,14 +33,15 @@ export default function AboutUsPage() {
             About AuraPTE
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-ink leading-[1.1]">
-            Helping PTE Academic candidates prepare with confidence
+            Helping PTE Core candidates prepare with confidence
           </h1>
           <p className="text-base sm:text-lg text-mute leading-relaxed">
-            AuraPTE is a PTE Academic exam preparation platform built for students working toward
-            university admission or migration to Australia, the UK, Canada, and New Zealand. We
-            combine a large, exam-accurate question bank with real-format mock tests, instant
-            AI-assisted scoring, and curated prediction files — so you always know where you
-            stand and what to fix next.
+            AuraPTE is a PTE Core exam preparation platform built first for PR aspirants working
+            toward CLB 10 and maximum CRS points, and for students working toward university
+            admission, across Australia, the UK, Canada, and New Zealand. We combine a large,
+            exam-accurate question bank with real-format mock tests, instant AI-assisted
+            scoring, and curated prediction files — so you always know where you stand and what
+            to fix next.
           </p>
         </div>
       </section>
@@ -50,13 +51,13 @@ export default function AboutUsPage() {
           <div className="space-y-3">
             <h2 className="text-2xl font-bold tracking-tight text-ink">Our mission</h2>
             <p className="text-base text-mute leading-relaxed">
-              A PTE Academic score is often the single biggest gate standing between a student and
-              their university offer or migration visa. We built AuraPTE because too much PTE
-              prep content online is generic, outdated, or locked behind expensive coaching
-              packages. Our goal is to give every candidate access to exam-realistic practice,
-              transparent scoring, and up-to-date prediction material at a fair, affordable price —
-              and to be genuinely reachable when they have a question, whether or not they&apos;ve
-              purchased a plan yet.
+              A PTE Core score is often the single biggest gate standing between a PR aspirant
+              and CLB 10 for maximum CRS points, or between a student and their university offer.
+              We built AuraPTE because too much PTE prep content online is generic, outdated, or
+              locked behind expensive coaching packages. Our goal is to give every candidate
+              access to exam-realistic practice, transparent scoring, and up-to-date prediction
+              material at a fair, affordable price — and to be genuinely reachable when they have
+              a question, whether or not they&apos;ve purchased a plan yet.
             </p>
           </div>
 
@@ -93,9 +94,10 @@ export default function AboutUsPage() {
             <h2 className="text-2xl font-bold tracking-tight text-ink">What we offer</h2>
             <p className="text-base text-mute leading-relaxed">
               A question bank covering Speaking, Writing, Reading, and Listening across every PTE
-              Academic task type, full-length mock tests with real exam timing, practice tests you
-              can generate on demand, and monthly-updated prediction files for students sitting
-              the exam soon. AuraPTE works on desktop, tablet, and mobile, with dark mode included.
+              Core task type, full-length mock tests with real exam timing, practice tests you
+              can generate on demand, and monthly-updated prediction files for candidates working
+              toward CLB 10 and their PR points target. AuraPTE works on desktop, tablet, and
+              mobile, with dark mode included.
             </p>
           </div>
 

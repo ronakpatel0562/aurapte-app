@@ -21,8 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AuraPTE — Premium PTE Academic Prep",
-  description: "Experience the next generation of PTE Academic exam preparation, styled by design engineers.",
+  title: "AuraPTE — Premium PTE Core Prep",
+  description: "Experience the next generation of PTE Core exam preparation — built to help PR aspirants hit CLB 10 for maximum CRS points, and students reach the score their university needs.",
 };
 
 export const viewport: Viewport = {

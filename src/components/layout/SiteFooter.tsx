@@ -27,7 +27,7 @@ export default function SiteFooter() {
           </nav>
         </div>
         <p className="text-2xs text-mute text-center sm:text-left">
-          © {new Date().getFullYear()} AuraPTE · Built for PTE Academic candidates
+          © {new Date().getFullYear()} AuraPTE · Built for PTE Core candidates
         </p>
       </div>
     </footer>

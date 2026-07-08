@@ -219,7 +219,7 @@ export default async function DashboardPage() {
           Welcome back, {userName}
         </h1>
         <p className="text-sm sm:text-base text-mute">
-          Here&apos;s an overview of your PTE Academic preparation progress.
+          Here&apos;s an overview of your PTE Core preparation progress.
         </p>
       </div>
 

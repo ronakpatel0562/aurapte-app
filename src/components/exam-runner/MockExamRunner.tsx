@@ -48,7 +48,7 @@ const BREAK_SECONDS = 10 * 60;
  * Continuous, multi-module Mock Test session — chains Speaking, Writing,
  * Reading and Listening into one sitting behind a single Test Overview /
  * Test Introduction / Headset Check / Microphone Check opening, exactly
- * like the real PTE Academic test driver. Single-module practice tests use
+ * like the real PTE Core test driver. Single-module practice tests use
  * the simpler `ExamRunner` instead; this one is mock-test only.
  */
 export default function MockExamRunner({

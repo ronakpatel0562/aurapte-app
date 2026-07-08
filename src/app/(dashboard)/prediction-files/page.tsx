@@ -41,7 +41,7 @@ export default async function PredictionFilesPage() {
             Prediction Files
           </h1>
           <p className="text-sm text-mute mt-1">
-            {planName(plan)} member — the latest predicted questions for every PTE Academic task type.
+            {planName(plan)} member — the latest predicted questions for every PTE Core task type.
           </p>
         </div>
       </div>

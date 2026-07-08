@@ -36,14 +36,14 @@ import { createClient } from "@/lib/supabase/server";
 
 const FAQS: { question: string; answer: string }[] = [
   {
-    question: "How can I score 79+ in PTE Academic?",
+    question: "How can I score 79+ in PTE Core?",
     answer:
       "Scoring 79+ takes consistent, exam-format practice across all four skills — not just grammar or vocabulary study. Focus on templates for Describe Image and Summarize Written Text, drill Read Aloud and Repeat Sentence for fluency and pronunciation, and take full-length mock tests under real exam timing so test-day pressure doesn't cost you marks. AuraPTE's question bank and instant scoring are built specifically to help you find and fix weak task types quickly.",
   },
   {
-    question: "Is PTE Academic easier than IELTS?",
+    question: "Is PTE Core easier than IELTS?",
     answer:
-      "Many candidates find PTE Academic easier than IELTS because it's fully computer-scored — there's no live examiner, which removes a lot of the speaking-interview anxiety. Pearson's AI scores speaking on fluency and pronunciation, not on accent, so a strong Indian accent does not lower your score as long as it's clear and natural. Results also arrive faster, typically within 1-2 business days.",
+      "Many candidates find PTE Core easier than IELTS because it's fully computer-scored — there's no live examiner, which removes a lot of the speaking-interview anxiety. Pearson's AI scores speaking on fluency and pronunciation, not on accent, so a strong Indian accent does not lower your score as long as it's clear and natural. Results also arrive faster, typically within 1-2 business days.",
   },
   {
     question: "What is a PTE prediction file and how accurate is it?",
@@ -58,12 +58,12 @@ const FAQS: { question: string; answer: string }[] = [
   {
     question: "What PTE score do I need for Australia, Canada, UK, or New Zealand?",
     answer:
-      "Requirements vary by visa or university pathway. For Australia, Competent English generally requires at least 47 in Listening, 48 in Reading, 54 in Speaking, and 51 in Writing, while Superior English (for maximum migration points) requires around 69-88 across bands. For Canada Express Entry, only PTE Core (not PTE Academic) is accepted by IRCC. Always check the current threshold for your specific visa subclass or university offer, since these are updated periodically.",
+      "Requirements vary by visa or university pathway. For Canada Express Entry, only PTE Core — not the general PTE Academic test — is accepted by IRCC for CLB scoring; a CLB 10 (Level 10) result across all four skills maximizes your CRS points. For Australia, Competent English generally requires at least 47 in Listening, 48 in Reading, 54 in Speaking, and 51 in Writing, while Superior English (for maximum migration points) requires around 69-88 across bands. Always check the current threshold for your specific visa subclass or university offer, since these are updated periodically.",
   },
   {
     question: "Does AuraPTE offer AI scoring for Speaking and Writing?",
     answer:
-      "Yes. Every Speaking response (Read Aloud, Repeat Sentence, Describe Image, and more) and Writing task (Summarize Written Text, Write an Email) is scored automatically within seconds, benchmarked against the official PTE Academic rubric, so you get accurate feedback without waiting on a human reviewer.",
+      "Yes. Every Speaking response (Read Aloud, Repeat Sentence, Describe Image, and more) and Writing task (Summarize Written Text, Write an Email) is scored automatically within seconds, benchmarked against the official PTE Core rubric, so you get accurate feedback without waiting on a human reviewer.",
   },
   {
     question: "Does AuraPTE have a free plan?",
@@ -76,7 +76,7 @@ const FAQS: { question: string; answer: string }[] = [
       "Reach out any time by email or WhatsApp — you don't need to have purchased a plan first. We help with questions before you buy, billing issues, and doubts about any module or specific question. Look for the support button in the corner of every page, or visit the Contact Us page.",
   },
   {
-    question: "Which PTE Academic task types can I practice on AuraPTE?",
+    question: "Which PTE Core task types can I practice on AuraPTE?",
     answer:
       "All of them: Speaking (Read Aloud, Repeat Sentence, Describe Image, Respond to a Situation, Answer Short Question), Writing (Summarize Written Text, Write an Email), Reading (Fill in the Blanks, Multiple Choice, Re-order Paragraphs), and Listening (Summarize Spoken Text, Multiple Choice, Fill in the Blanks, Highlight Incorrect Words, Select Missing Word, Write from Dictation).",
   },
@@ -137,7 +137,9 @@ export default async function LandingPage() {
               </h1>
 
               <p className="text-base sm:text-lg text-mute leading-relaxed max-w-xl">
-                AuraPTE is a complete PTE Academic preparation platform — real exam simulations,
+                AuraPTE is a complete PTE Core preparation platform — built first for PR
+                aspirants chasing CLB 10 and maximum CRS points, and just as effective for
+                students working toward their university's PTE score. Real exam simulations,
                 module-by-module practice, automated scoring, and progress tracking that
                 actually tells you where you stand.
               </p>
@@ -227,7 +229,7 @@ export default async function LandingPage() {
           <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
               <Target className="w-3 h-3 text-gradient-brand-start" />
-              Why students choose AuraPTE
+              Why PR aspirants and students choose AuraPTE
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
               Everything you need to prepare smarter
@@ -247,7 +249,7 @@ export default async function LandingPage() {
               },
               {
                 title: "Easy Navigation",
-                desc: "Practice on an interface modeled on the real PTE Academic screens — no confusing test software to slow you down.",
+                desc: "Practice on an interface modeled on the real PTE Core screens — no confusing test software to slow you down.",
                 gradient: "from-gradient-preview-start to-gradient-preview-end",
                 icon: Compass,
               },
@@ -293,7 +295,7 @@ export default async function LandingPage() {
               Every module, up close
             </h2>
             <p className="text-base text-mute leading-relaxed">
-              The exact interface you&apos;ll practice on — modeled after the real PTE Academic
+              The exact interface you&apos;ll practice on — modeled after the real PTE Core
               screens for each skill.
             </p>
           </ScrollReveal>
@@ -434,7 +436,7 @@ export default async function LandingPage() {
               Real prep, real results
             </h2>
             <p className="text-base text-mute leading-relaxed">
-              A few candidates who used AuraPTE to prepare for their PTE Academic exam.
+              A few candidates who used AuraPTE to prepare for their PTE Core exam.
             </p>
           </ScrollReveal>
 
@@ -521,7 +523,8 @@ export default async function LandingPage() {
               We help you achieve your dreams
             </h2>
             <p className="text-base text-mute leading-relaxed">
-              At AuraPTE, we&apos;re dedicated to helping you succeed in your PTE Academic exam with
+              At AuraPTE, we&apos;re dedicated to helping PR aspirants hit CLB 10 for maximum CRS
+              points, and helping students reach the score their university needs — both with
               confidence. Our platform offers a comprehensive range of carefully designed mock
               tests and practice sets that closely replicate the real test environment.
             </p>
@@ -665,7 +668,7 @@ export default async function LandingPage() {
               Frequently asked questions
             </h2>
             <p className="text-base text-mute leading-relaxed">
-              Everything candidates ask us before starting PTE Academic prep on AuraPTE.
+              Everything candidates ask us before starting PTE Core prep on AuraPTE.
             </p>
           </ScrollReveal>
 
