@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -20,6 +19,9 @@ import {
   Compass,
   Target,
   Brain,
+  TrendingUp,
+  XCircle,
+  CheckCircle2,
 } from "lucide-react";
 import HeroDashboardMockup from "@/components/landing/HeroDashboardMockup";
 import HeroMockup from "@/components/landing/HeroMockup";
@@ -220,6 +222,79 @@ export default async function LandingPage() {
               </span>
             ))
           )}
+        </div>
+      </section>
+
+      {/* ------------------ PR URGENCY / SYSTEM ------------------ */}
+      <section className="relative py-20 sm:py-28 border-b border-hairline">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
+              <TrendingUp className="w-3 h-3 text-gradient-brand-start" />
+              Built for CLB 10 and a 90/90 goal
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
+              Your PTE Core score isn&apos;t just an English score
+            </h2>
+            <p className="text-base text-mute leading-relaxed">
+              For most of our candidates, it&apos;s a deciding factor in their Canadian PR
+              journey — a higher score means a stronger CRS profile, a better PR opportunity, and
+              more confidence in the plan. So the real question isn&apos;t &ldquo;can I improve my
+              English,&rdquo; it&apos;s &ldquo;am I preparing in a way that actually moves me
+              toward CLB 10 and a 90/90 goal.&rdquo;
+            </p>
+          </ScrollReveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 max-w-4xl mx-auto md:items-stretch">
+            <ScrollReveal className="h-full">
+              <div className="h-full bg-canvas border border-hairline rounded-2xl p-6 sm:p-7 shadow-vercel-card space-y-4">
+                <h3 className="text-xs font-semibold text-mute uppercase tracking-wider">
+                  Most candidates
+                </h3>
+                <ul className="space-y-3">
+                  {[
+                    "Hundreds of PDFs collected from different sources",
+                    "Endless YouTube videos with conflicting advice",
+                    "Random practice files with no clear pattern",
+                    "A different strategy every week, right up to exam day",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-body">
+                      <XCircle className="w-4 h-4 text-danger shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={100} className="h-full">
+              <div className="h-full bg-canvas border border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20 rounded-2xl p-6 sm:p-7 shadow-vercel-card space-y-4">
+                <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">
+                  Candidates on AuraPTE
+                </h3>
+                <ul className="space-y-3">
+                  {[
+                    "Real, exam-focused materials — organized, not scattered",
+                    "Section-wise strategies for every task type",
+                    "Specialised scoring techniques that protect your marks",
+                    "One clear system, followed for 30 focused days",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-body">
+                      <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </ScrollReveal>
+          </div>
+
+          <ScrollReveal className="text-center">
+            <ScrollToPricingLink className="pulse-ring inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg bg-primary text-on-primary font-semibold shadow-vercel-popover hover:bg-opacity-90 active:scale-[0.99] transition">
+              Start your 30-day system
+              <ArrowRight className="w-4 h-4" />
+            </ScrollToPricingLink>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -445,44 +520,44 @@ export default async function LandingPage() {
               {
                 quote:
                   "Perfect target hit. The Writing templates for Summarize Written Text and Essay were the difference between a 79 and a 90.",
-                name: "Karan Verma",
+                name: "Gurpreet Singh",
                 role: "Scored 90 overall · Vancouver",
-                avatar: "/testimonials/karan-verma.jpg",
+                initials: "GS",
               },
               {
                 quote:
                   "The Reading drills — especially Reorder Paragraphs and Fill in the Blanks — took my score from 72 to 88 in three weeks.",
-                name: "Meera Iyer",
-                role: "Scored 88 overall · Auckland",
-                avatar: "/testimonials/meera-iyer.jpg",
+                name: "Simran Kaur",
+                role: "Scored 88 overall · Surrey",
+                initials: "SK",
               },
               {
                 quote:
                   "Practicing Write from Dictation and Summarize Spoken Text on here made Listening my strongest section by far.",
-                name: "Priya Nair",
+                name: "Manpreet Kaur",
                 role: "Scored 85 overall · Toronto",
-                avatar: "/testimonials/priya-nair.jpg",
+                initials: "MK",
               },
               {
                 quote:
                   "The mock tests felt exactly like the real exam — same timer, same interface. I walked into test day with zero surprises.",
-                name: "Ananya Sharma",
-                role: "Scored 82 overall · Melbourne",
-                avatar: "/testimonials/ananya-sharma.jpg",
+                name: "Kavya Shah",
+                role: "Scored 86 overall · Brampton",
+                initials: "KS",
               },
               {
                 quote:
                   "I was stuck at 65 in Speaking for weeks. The instant scoring on Read Aloud and Repeat Sentence showed me exactly what to fix.",
-                name: "Rahul Mehta",
-                role: "Scored 79 overall · Sydney",
-                avatar: "/testimonials/rahul-mehta.jpg",
+                name: "Harpreet Sidhu",
+                role: "Scored 89 overall · Calgary",
+                initials: "HS",
               },
               {
                 quote:
                   "Random Practice Test Generation kept every session fresh — I never felt like I was just grinding the same five sets.",
-                name: "Devansh Rao",
-                role: "Scored 76 overall · Brisbane",
-                avatar: "/testimonials/devansh-rao.jpg",
+                name: "Nirav Patel",
+                role: "Scored 87 overall · Mississauga",
+                initials: "NP",
               },
             ].map((t, i) => (
               <ScrollReveal key={t.name} delay={i * 90}>
@@ -492,13 +567,9 @@ export default async function LandingPage() {
                     &ldquo;{t.quote}&rdquo;
                   </p>
                   <div className="flex items-center gap-3 pt-2 border-t border-hairline">
-                    <Image
-                      src={t.avatar}
-                      alt={t.name}
-                      width={36}
-                      height={36}
-                      className="w-9 h-9 rounded-full object-cover shrink-0 border border-hairline"
-                    />
+                    <div className="w-9 h-9 rounded-full shrink-0 border border-hairline bg-gradient-to-br from-gradient-brand-start to-gradient-brand-end flex items-center justify-center text-2xs font-semibold text-white">
+                      {t.initials}
+                    </div>
                     <div>
                       <div className="text-sm font-semibold text-ink">{t.name}</div>
                       <div className="text-2xs text-mute">{t.role}</div>

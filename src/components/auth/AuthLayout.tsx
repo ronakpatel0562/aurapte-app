@@ -50,6 +50,10 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               Real exam simulations, module-by-module practice, and scoring that
               actually tells you where you stand — for speaking, writing, reading, and listening.
             </p>
+            <p className="text-sm text-zinc-400 max-w-sm mt-3">
+              Built for CLB 10 and a 90/90 goal — real exam-focused materials and section-wise
+              strategy, not another random PDF.
+            </p>
           </div>
 
           <div className="space-y-6 max-w-md">
