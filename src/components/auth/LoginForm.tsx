@@ -4,7 +4,7 @@ import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { login } from "@/app/auth/actions";
+import { establishSession } from "@/app/auth/actions";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react";
 
 function LoginFormInner() {
@@ -32,12 +32,31 @@ function LoginFormInner() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const result = await login(null, formData);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // Sign in on the browser client first (not just via the server action) so
+    // the client's in-memory auth state updates and onAuthStateChange fires
+    // immediately — otherwise Pro-only UI (e.g. the theme toggle) stays stuck
+    // showing the logged-out/free state until a manual page refresh.
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+
+    const result = await establishSession();
 
     if (result && result.error) {
       setError(result.error);
       setLoading(false);
+      return;
     }
+
+    router.push("/dashboard");
   };
 
   const handleGoogleLogin = async () => {

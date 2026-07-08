@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AuraPTE - Write an Email</title>
+    <style>
+        @page { size: A4; margin: 25mm 20mm; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #2d3748; margin: 0 auto; max-width: 800px; line-height: 1.6; font-size: 12.5pt; }
+        .header { border-bottom: 3px solid #2196f3; padding-bottom: 12px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .brand-title { font-size: 30pt; font-weight: 800; color: #1a365d; margin: 0; }
+        .brand-link { color: #2196f3; text-decoration: none; font-weight: bold; }
+        .contact-info { text-align: right; font-size: 11pt; color: #4a5568; line-height: 1.4; }
+        .section-title { font-size: 18pt; font-weight: bold; color: white; background-color: #1a365d; padding: 8px 16px; margin-bottom: 25px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .email-block { margin-bottom: 35px; page-break-inside: avoid; }
+        .email-heading { font-weight: bold; color: #1a365d; margin-bottom: 8px; font-size: 13.5pt; text-transform: uppercase; border-bottom: 1px solid #cbd5e0; padding-bottom: 4px; }
+        .prompt-box { background-color: #f7fafc; border: 1px solid #e2e8f0; padding: 12px 16px; font-size: 11.5pt; margin-bottom: 10px; border-radius: 6px; color: #4a5568; text-align: justify; }
+        .ans-box { background-color: #fff; border-left: 5px solid #2196f3; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 14px 18px; font-size: 12pt; border-radius: 0 6px 6px 0; color: #2d3748; white-space: pre-line; }
+
+        /* Email formatting */
+        .email-client {
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 12px;
+            font-family: Arial, sans-serif;
+            background: #fff;
+        }
+        .email-toolbar {
+            background: #f6f8fa;
+            border-bottom: 1px solid #d0d7de;
+            padding: 8px 14px;
+            display: flex;
+            gap: 6px;
+        }
+        .email-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot-red { background: #ff5f57; }
+        .dot-yellow { background: #febc2e; }
+        .dot-green { background: #28c840; }
+        .email-header-fields {
+            background: #fff;
+            border-bottom: 1px solid #eaecef;
+            padding: 0;
+        }
+        .email-field {
+            display: flex;
+            align-items: flex-start;
+            padding: 7px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 10pt;
+        }
+        .email-field:last-child { border-bottom: none; }
+        .email-label {
+            font-weight: bold;
+            color: #57606a;
+            min-width: 70px;
+            font-size: 9.5pt;
+        }
+        .email-value { color: #1f2328; }
+        .email-subject-bar {
+            background: #f6f8fa;
+            border-bottom: 1px solid #d0d7de;
+            padding: 9px 14px;
+            font-weight: bold;
+            font-size: 11pt;
+            color: #1f2328;
+        }
+        .email-body {
+            padding: 18px 20px;
+            font-size: 10.5pt;
+            color: #1f2328;
+            line-height: 1.7;
+            background: #fff;
+        }
+        .email-body p { margin: 0 0 10px 0; }
+        .email-body p:last-child { margin-bottom: 0; }
+        .email-signature {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #eaecef;
+            color: #57606a;
+            font-size: 10pt;
+        }
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0 12px 0;
+        }
+        .bullet-list li::before { content: "• "; font-weight: bold; }
+        .bullet-list li { padding: 2px 0; font-size: 10pt; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <img src="logo.png" alt="AuraPTE Logo" style="width:46px; height:46px; border-radius:10px; display:block;">
+            <div>
+            <div class="brand-title">AuraPTE</div>
+            <div style="color: #2196f3; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; font-size: 10.5pt; margin-top: 4px;">PTE Academic Practice Core</div>
+        </div>
+                </div>
+    <div class="contact-info">
+            <strong>🌐 <a class="brand-link" href="https://aurapte.com" target="_blank">https://aurapte.com</a></strong><br>
+            📞 +91 9409956679
+        </div>
+    </div>
+
+    <div class="section-title">Write An Email Tasks</div>
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 1: ENNA'S BIRTHDAY ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> Your daughter Enna's birthday is next month. You are preparing an email invitation for all her elementary school classmates, and it will be sent to their parents. You should write between 80 and 120 words. Your ideas must come from the following three themes:
+            <ul class="bullet-list">
+                <li>Date, time and location of the party</li>
+<li>Food that will be served</li>
+<li>Activities planned for the party</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Parents,</p>
+                <p>I'm thrilled to invite you and your children to Enna's birthday party on Saturday, September 14th, at 3:00 PM. The celebration will be held at 123 Elm Street, Springfield.</p>
+<p>We have a delicious spread planned, including pizza, sandwiches, fruit platters, and a variety of snacks and desserts to enjoy throughout the event.</p>
+<p>The party will feature a treasure hunt, exciting games, and a craft station where you can create your own party hats. We'll also have a photo booth set up to capture all the fun moments and memories.</p>
+<p>We are excited to celebrate with you and make this day truly special for Enna.</p>
+                <div class="email-signature">Best regards,<br>Alex Thompson</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 2: VACATION ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You need to take a vacation for 2 weeks and your manager Dani wants you to send him an email with all the details. Write about:
+            <ul class="bullet-list">
+                <li>Exact dates of the vacation</li>
+<li>Reason for the leave</li>
+<li>Who will cover for you during that time and how can they contact you, if they have to</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Dani,</p>
+                <p>I hope you're doing well. I wanted to inform you that I will be on vacation from Monday, October 7th to Friday, October 18th.</p>
+<p>I am taking this time off to attend to personal matters and recharge. During my absence, Sarah Davis will be covering my responsibilities. She is well-informed about ongoing projects and will handle any issues that may arise. You can reach Sarah at sarah.davis@email.com or (555) 123-4567 for any work-related concerns.</p>
+<p>If an urgent matter requires my attention, I will be available via email at myemail@example.com. Please note that I will check my email less frequently.</p>
+<p>Thank you for your understanding.</p>
+                <div class="email-signature">Best regards,<br>Alex Thompson</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 3: BIRTHDAY CELEBRATION ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You are planning a group dinner for your friend's birthday. Write an email to Oscar's Kitchen to make a group booking for 20 people as they do not allow group bookings for more than 6 people online. Include the following information:
+            <ul class="bullet-list">
+                <li>You will tell the manager the situation and the exact time</li>
+<li>Birthday details and what you will do in the party</li>
+<li>Ask if there is a parking space in the building</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Oscar's Kitchen Team,</p>
+                <p>I hope this message finds you well. I would like to make a group reservation for 20 people at your restaurant on Friday, September 13th. We would prefer to dine at 7:00 PM.</p>
+<p>This booking is to celebrate my friend's birthday, and we are all excited about enjoying a meal at your establishment.</p>
+<p>Could you please provide details on parking options available for our group? We want to ensure that everyone will have a convenient place to park.</p>
+<p>Thank you for accommodating our request. Please let me know if you need any additional information or if there are any special arrangements we need to make.</p>
+                <div class="email-signature">Best regards,<br>Jamie Lee</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 4: ISSUES IN APARTMENT ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You are renting an apartment, but there are some problems with it. You are writing an email to the building manager/owner to complain that the neighbors above you are noisy and the hot water system is not well. You are writing an email to Marvin, the owner of the building, to solve this problem. You should write between 80 and 120 words. You should include:
+            <ul class="bullet-list">
+                <li>What problems you have encountered</li>
+<li>How you are affected</li>
+<li>How to fix the problems</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Marvin,</p>
+                <p>I hope you are doing well. I am writing to inform you about two problems I am facing in my apartment. The neighbors living above me are very noisy, especially during the evening and night. It is becoming hard for me to sleep, study, or relax at my home.</p>
+<p>Also, the hot water system is not working properly again. This is not the first time it has happened, and it is making daily tasks like showering very uncomfortable.</p>
+<p>I would really appreciate it if you could kindly talk to the neighbors about the noise and also arrange for someone to fix the hot water system as soon as possible.</p>
+<p>Thank you for your attention.</p>
+                <div class="email-signature">Best regards,<br>Sarah Williams</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 5: MOVING FURNITURE ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> Your friend Jim is moving furniture this weekend. He originally asked you to help, but now your boss has asked you to work overtime to complete a task. So you're writing an email to explain why you can't help. You should write between 80 and 120 words. You should include the following reasons:
+            <ul class="bullet-list">
+                <li>Express gratitude for the invitation to help</li>
+<li>Apologize for not being able to assist</li>
+<li>Provide reasons such as work commitments, transportation limitations, and family responsibilities</li>
+<li>Offer alternative ways to help or support, if possible</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Emily,</p>
+                <p>Thank you so much for inviting me to help with moving the furniture. I truly appreciate the thought and would have loved to assist.</p>
+<p>I'm really sorry, due to work commitments, I am unable to be there. Additionally, I have limited transportation options at the moment and have pressing family responsibilities that require my attention.</p>
+<p>I am really sorry I can't be there to help in person. However, if there are other ways I can support you, such as helping with packing or offering to coordinate with someone else who might assist, please let me know.</p>
+<p>Thanks again for understanding, and best of luck with the move!</p>
+                <div class="email-signature">Best regards,<br>Jordan Lee</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 6: MOVIE INVITATION ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> Susan has invited you to watch a movie with her on Tuesday evening, but you can't go that time. Write a letter to explain why you can't go. You should write between 80 and 120 words. You should include:
+            <ul class="bullet-list">
+                <li>Thank for her invitation</li>
+<li>Apologize for it</li>
+<li>Suggest another time to go</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Ms. Susan,</p>
+                <p>Thank you so much for inviting me to the movie. I really appreciate your kind invitation.</p>
+<p>Unfortunately, I have to decline as I recently lost my bag, which contained my wallet and essential items. This unexpected situation has caused a few complications, and I need to sort things out urgently.</p>
+<p>I am really sorry for not being able to attend. Your invitation means a lot to me, and I regret that I can't be there.</p>
+<p>I would still love to watch a movie with you! Would you be free on Thursday or Saturday evening instead? Let me know what works best for you.</p>
+<p>Looking forward to spending time together soon.</p>
+                <div class="email-signature">Best regards,<br>Alex Thompson</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 7: LOST BAG ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You and your friends had dinner at a restaurant yesterday. You think you left a bag at the restaurant. Write an email to the restaurant manager. You should write between 80 and 120 words. Your ideas must come from the following three themes:
+            <ul class="bullet-list">
+                <li>Describe your situation: who you were with, where you sat, etc.</li>
+<li>What the bag looks like and what was in the bag</li>
+<li>Tell them how to contact you</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Manager,</p>
+                <p>I hope you are doing well. My friends and I had dinner at your restaurant yesterday evening around 7 PM. We were sitting at a table near the window, close to the entrance. After we left, I realized that I may have forgotten my bag at the restaurant.</p>
+<p>The bag is a small black backpack with a zip pocket in the front. Inside the bag, there was a notebook, a phone charger, a small water bottle, and some personal items.</p>
+<p>Could you please check if someone found it? If you find it, you can contact me at +1-555-234-6789 or email me at sara.james@email.com.</p>
+<p>Thank you for your help.</p>
+                <div class="email-signature">Best regards,<br>Sara James</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 8: SPORTS CLUB ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You are a member of a sports club and you are writing to the club manager Mrs. Singh to make some suggestions on how to hold a party. You should write between 80 and 120 words. Your ideas must come from the following three themes:
+            <ul class="bullet-list">
+                <li>Music</li>
+<li>Food</li>
+<li>Games</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Mrs. Singh,</p>
+                <p>I hope you're doing well. As we prepare for the upcoming sports club party, I'd like to suggest a few ideas to make it lively and memorable.</p>
+<p>For music, we could create an upbeat playlist or hire a local DJ who can take requests and keep the atmosphere energetic throughout the event.</p>
+<p>For food, offering a mix of finger foods, sandwiches, and vegetarian options would cater to different preferences. A food truck or catering service could add variety and convenience.</p>
+<p>We could also include activities such as quiz games, relay races, or a mini-tournament to encourage interaction and team spirit.</p>
+<p>Thanks for considering these ideas. I'm excited for a great event!</p>
+                <div class="email-signature">Best regards,<br>Alex Thompson</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 9: PRESENTATION ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You are going to give a presentation at your friend Jim's company, but you are not familiar with the venue, so you are writing to ask about some basic information. You should write between 80 and 120 words. Your ideas must come from the following three themes:
+            <ul class="bullet-list">
+                <li>Describe your situation, including the exact time</li>
+<li>Ask about the availability of technology equipment, such as computers and projectors</li>
+<li>Ask about the number of participants</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Jim,</p>
+                <p>I hope you are doing well. I am very excited to give a presentation at your company next week. The session is planned for Tuesday at 10:00 a.m., and I am preparing everything carefully.</p>
+<p>Since I am not familiar with the venue, I would like to know a few important details. This will help me manage my time and presentation better.</p>
+<p>Could you please confirm if there will be a computer and projector available? I want to be sure I can use my slides without any issue.</p>
+<p>Also, may I know the expected number of participants? This will help me prepare handouts.</p>
+<p>Looking forward to your reply.</p>
+                <div class="email-signature">Best regards,<br>Tom Cruise</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 10: ENERGY USAGE ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> Your company is trying to save energy, and you want to write an email to make some suggestions to the manager Mrs. Smith about energy reduction. You should write between 80 and 120 words. Your ideas must come from the following three themes:
+            <ul class="bullet-list">
+                <li>Turning off lights</li>
+<li>Shutting down computers</li>
+<li>Air conditioners/heaters</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Mrs. Smith,</p>
+                <p>I hope you're doing well. I'd like to share a few ideas to help reduce energy use in our office.</p>
+<p>First, we could encourage everyone to switch off lights in unused rooms, especially in less-frequented areas. This small habit could save a noticeable amount of electricity over time.</p>
+<p>Second, staff should be reminded to shut down computers at the end of the day to avoid unnecessary energy consumption overnight.</p>
+<p>Lastly, we could ask colleagues to adjust air conditioners or heaters according to the season and turn them off when not needed.</p>
+<p>These simple steps can have a meaningful impact. Thank you for considering these suggestions.</p>
+                <div class="email-signature">Best regards,<br>James Anderson</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 11: POOR LIGHTING IN BUILDING ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You live on the second floor of an apartment building with no elevator. There is only one weak light bulb at the entrance of the building and there is no light by the stairs. Please write an email to express these difficulties. You should write at least 100 words. Your ideas must come from the following three themes:
+            <ul class="bullet-list">
+                <li>Install more lights</li>
+<li>Brighter lights</li>
+<li>Motion sensing lighting</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Mr. Thompson,</p>
+                <p>I hope you are doing well. I am writing to share a concern about the lighting in our apartment building. I live on the second floor, and it is very dark at night.</p>
+<p>There is only one small light at the entrance, and it does not give enough light. It is hard to see clearly, which can be unsafe.</p>
+<p>There are also no lights near the stairs. This makes it difficult to walk up, especially when carrying bags or packages.</p>
+<p>Could we please have brighter lights and install more along the stairs? Motion-sensing lights would also help and save electricity.</p>
+<p>Thank you for your time and support.</p>
+                <div class="email-signature">Best regards,<br>Emily Carter</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 12: NEW NEIGHBOR ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> Write an email to your neighbor who has just moved in and ask him/her to address some issues. You should write between 80 and 120 words. The issues mentioned in the email should include the following three words:
+            <ul class="bullet-list">
+                <li>Noise</li>
+<li>Parking</li>
+<li>Garbage</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Mr. Jones,</p>
+                <p>Welcome to the neighborhood! It's wonderful to have you here, and I hope you're enjoying your new home.</p>
+<p>I am writing to express some concerns. Firstly, there has been some late-night noise, which is affecting the quiet enjoyment of nearby families.</p>
+<p>Secondly, there have been ongoing issues with parking, as you often park in spaces reserved for other tenants, causing inconvenience.</p>
+<p>Lastly, some garbage bags were left outside for several days, which can attract pests.</p>
+<p>I'm sure these are easy to fix. Thank you for your understanding, and I look forward to getting to know you better.</p>
+                <div class="email-signature">Best regards,<br>Sarah Williams</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 13: MOVING FURNITURE (Variant) ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> Your friend Jim is moving furniture this weekend. He originally asked you to help, but now your boss has asked you to work overtime to complete a task. So you're writing an email to explain why you can't help. You should write between 80 and 120 words. You should include the following reasons:
+            <ul class="bullet-list">
+                <li>Work</li>
+<li>Transportation</li>
+<li>Family</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Jim,</p>
+                <p>I hope you are fine. I was really happy when you asked me to help with your furniture this weekend, but sadly, I cannot make it.</p>
+<p>My boss has assigned me extra work and requested me to stay for overtime. This project is urgent, so I must give it priority.</p>
+<p>I am also facing a transportation problem. There are no convenient buses or trains available, and without proper transport, it will be hard for me to reach your place on time.</p>
+<p>In addition, I have some family responsibilities to take care of this weekend.</p>
+<p>I am truly sorry, Jim. Please let me know how it goes.</p>
+                <div class="email-signature">Best regards,<br>Jordan Lee</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="email-block">
+        <div class="email-heading">--- Email 14: TIME OFF ---</div>
+
+        <div class="prompt-box">
+            <strong>Prompt:</strong> You are a student at a university. Write an email to your professor requesting some time off due to health issues. In your email, you should include:
+            <ul class="bullet-list">
+                <li>Why you are requesting leave</li>
+<li>Details about your health condition</li>
+<li>How many extra days you need to complete the assignment</li>
+<li>Appreciation for the professor's understanding and support</li>
+            </ul>
+        </div>
+
+        <div class="email-client">
+            <div class="email-toolbar">
+                <span class="email-dot dot-red"></span>
+                <span class="email-dot dot-yellow"></span>
+                <span class="email-dot dot-green"></span>
+            </div>
+            <div class="email-subject-bar">Sample Answer</div>
+            <div class="email-body">
+                <p>Dear Professor,</p>
+                <p>I hope you are doing well. I am writing this email to request some time off because of my health condition.</p>
+<p>For the last few days, I have been suffering from fever and weakness. Due to this, I am unable to attend my classes properly and focus on my assignment.</p>
+<p>I kindly request you to give me an extension for completing the assignment. I need around five more days to finish my work carefully.</p>
+<p>I assure you that I will submit the assignment as soon as possible after recovering.</p>
+<p>Thank you very much for your understanding and support. I am really thankful to you for your kindness.</p>
+                <div class="email-signature">Yours sincerely,<br>Anna Johnson</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

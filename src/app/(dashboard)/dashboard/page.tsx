@@ -183,7 +183,7 @@ export default async function DashboardPage() {
       count: questionCounts.speaking,
       href: "/questions/speaking",
       icon: Mic,
-      gradientClass: "from-gradient-develop-start to-gradient-develop-end",
+      gradientClass: "from-error to-error-deep",
     },
     {
       name: "Writing",
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
       count: questionCounts.writing,
       href: "/questions/writing",
       icon: PenTool,
-      gradientClass: "from-gradient-preview-start to-gradient-preview-end",
+      gradientClass: "from-link to-link-deep",
     },
     {
       name: "Reading",
@@ -199,7 +199,7 @@ export default async function DashboardPage() {
       count: questionCounts.reading,
       href: "/questions/reading",
       icon: BookOpenCheck,
-      gradientClass: "from-gradient-ship-start to-gradient-ship-end",
+      gradientClass: "from-warning to-warning-deep",
     },
     {
       name: "Listening",
@@ -207,7 +207,7 @@ export default async function DashboardPage() {
       count: questionCounts.listening,
       href: "/questions/listening",
       icon: Headphones,
-      gradientClass: "from-gradient-develop-start to-gradient-preview-start",
+      gradientClass: "from-cyan to-cyan-deep",
     },
   ];
 

@@ -102,6 +102,11 @@ export function formatRelativeDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+/** Strips the trailing difficulty-rank marker (e.g. "Title #20") that's baked into stored question titles. */
+function displayTitle(title: string): string {
+  return title.replace(/\s*#\d+\s*$/, "");
+}
+
 function typeLabel(e: ActivityEntry): string {
   if (e.kind === "test") return e.testKind === "mock" ? "Mock Test" : "Practice Test";
   return `${e.module} · ${getTaskTypeFriendlyName(e.taskType)}`;
@@ -120,7 +125,7 @@ function ActivityCard({ entry: e }: { entry: ActivityEntry }) {
       className="card-hover min-w-[260px] max-w-[260px] snap-start bg-canvas border border-hairline rounded-xl p-4 flex flex-col gap-3"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="text-xs font-semibold text-ink line-clamp-2">{e.title}</div>
+        <div className="text-xs font-semibold text-ink line-clamp-2">{displayTitle(e.title)}</div>
         {e.kind === "test" ? (
           e.testKind === "mock" ? (
             <Award className="w-4 h-4 text-mute shrink-0" />
@@ -159,7 +164,7 @@ function ActivityRow({ entry: e }: { entry: ActivityEntry }) {
           href={e.href}
           className="text-body-sm-strong font-medium text-ink hover:text-link hover:underline transition truncate max-w-[280px] block"
         >
-          {e.title}
+          {displayTitle(e.title)}
         </Link>
       </td>
       <td className="py-4 px-6 text-xs text-body capitalize">{typeLabel(e)}</td>

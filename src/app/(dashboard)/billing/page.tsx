@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Check, ChevronRight, Sparkles, Award } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
-import { PLANS, planName, isPremiumPlan, type PlanId } from "@/lib/plans";
+import { PLANS, planName, isPremiumPlan, discountPercent, type PlanId } from "@/lib/plans";
 import BankPaymentPanel from "@/components/billing/BankPaymentPanel";
 
 export default async function BillingPage({
@@ -83,19 +83,27 @@ export default async function BillingPage({
         {orderedPlans.map((plan) => {
           const isCurrent = plan.id === currentPlan && hasActivePlan;
           const isFeatured = plan.id === "premium";
+          const discount = discountPercent(plan);
+          const savings = plan.originalPriceInr - plan.priceInr;
           return (
             <div
               key={plan.id}
-              className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col ${
+              className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 pt-9 sm:pt-10 shadow-vercel-card flex flex-col ${
                 isFeatured
                   ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20"
                   : "border-hairline"
               }`}
             >
-              {isFeatured && (
-                <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
-                  Most Popular
+              {isFeatured ? (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
+                  Most Popular · Save {discount}%
                 </div>
+              ) : (
+                discount > 0 && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-canvas-soft-2 text-mute border border-hairline text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
+                    {discount}% OFF
+                  </div>
+                )
               )}
 
               <div className="space-y-1">
@@ -111,26 +119,48 @@ export default async function BillingPage({
                 <p className="text-sm text-mute leading-relaxed">{plan.tagline}</p>
               </div>
 
-              <div className="mt-5 flex items-baseline gap-1">
-                <span className="text-4xl font-bold text-ink tracking-tight">
-                  ₹{plan.priceInr.toLocaleString("en-IN")}
-                </span>
-                <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
+              <div className="mt-5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-ink tracking-tight">
+                    ₹{plan.priceInr.toLocaleString("en-IN")}
+                  </span>
+                  <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-sm text-mute line-through">
+                      ₹{plan.originalPriceInr.toLocaleString("en-IN")}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold ${
+                        isFeatured ? "text-success" : "text-mute"
+                      }`}
+                    >
+                      Save ₹{savings.toLocaleString("en-IN")} ({discount}% off)
+                    </span>
+                  </div>
+                )}
               </div>
 
               <ul className="mt-5 space-y-2.5 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-body">
-                    <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                        isFeatured ? "bg-gradient-brand-start/10 text-gradient-brand-start" : "bg-success/10 text-success"
-                      }`}
-                    >
-                      <Check className="w-3 h-3" />
-                    </span>
-                    <span className="leading-relaxed">{f}</span>
-                  </li>
-                ))}
+                {plan.features.map((f) =>
+                  f.endsWith(":") ? (
+                    <li key={f} className="pt-1 text-sm font-semibold text-ink">
+                      {f}
+                    </li>
+                  ) : (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-body">
+                      <span
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                          isFeatured ? "bg-gradient-brand-start/10 text-gradient-brand-start" : "bg-success/10 text-success"
+                        }`}
+                      >
+                        <Check className="w-3 h-3" />
+                      </span>
+                      <span className="leading-relaxed">{f}</span>
+                    </li>
+                  ),
+                )}
               </ul>
 
               <div className="mt-6 pt-5 border-t border-hairline">

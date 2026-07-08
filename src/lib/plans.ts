@@ -28,6 +28,8 @@ export interface PlanDefinition {
   tagline: string;
   /** Price in INR. 0 = free tier. */
   priceInr: number;
+  /** Pre-discount "strikethrough" price in INR shown alongside priceInr. */
+  originalPriceInr: number;
   /** Billing period label, e.g. "month", "one-time". */
   billingPeriod: string;
   /** Whether this tier shows the upgrade CTA. */
@@ -48,13 +50,14 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     name: "Aura Starter",
     tagline: "A focused set of practice and mock tests to get you started.",
     priceInr: 33499,
+    originalPriceInr: 39999,
     billingPeriod: "month",
     isPaid: true,
     features: [
-      "10 Practice Tests across all 4 modules",
-      "5 Full Mock Tests (PTE-simulated, timed)",
-      "Specialised Tips & Templates (Describe Image, WFD strategy, …)",
-      "Real exam timer and interface",
+      "Full Question Bank access",
+      "10 Practice Tests & 5 Mock Tests",
+      "Prediction Files & Specialised Tips",
+      "Real exam timer & interface",
     ],
     limits: {
       practiceTests: 10,
@@ -67,14 +70,18 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     name: "Aura Pro",
     tagline: "Unlimited tests with full scoring and progress tracking.",
     priceInr: 46999,
+    originalPriceInr: 74999,
     billingPeriod: "month",
     isPaid: true,
     features: [
-      "Unlimited Practice Tests and Full Mock Tests",
-      "See your score on every question (Starter scores stay hidden)",
-      "Score history, best-score tracking, and dashboard stats",
-      "Random Practice Test — custom mixed-difficulty sets",
-      "Dark mode",
+      "Everything in Starter, plus:",
+      "Unlimited Practice Tests",
+      "15 Full Mock Tests",
+      "Random Practice Test Generation",
+      "See your score on every question",
+      "Full Score History",
+      "Filter by difficulty & completion status",
+      "Dashboard Stats & Dark Mode",
     ],
     limits: {
       practiceTests: null,
@@ -83,6 +90,14 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     },
   },
 };
+
+/** Discount percent off originalPriceInr, rounded to the nearest whole number. */
+export function discountPercent(plan: PlanDefinition): number {
+  if (!plan.originalPriceInr || plan.originalPriceInr <= plan.priceInr) return 0;
+  return Math.round(
+    ((plan.originalPriceInr - plan.priceInr) / plan.originalPriceInr) * 100,
+  );
+}
 
 /**
  * Returns the display name for a plan id. Falls back to the id itself so

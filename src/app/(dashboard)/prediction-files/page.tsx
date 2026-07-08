@@ -4,19 +4,8 @@ import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { planName, type PlanId } from "@/lib/plans";
+import { PREDICTION_FILES } from "@/lib/predictionFiles";
 import PredictionFilesClient from "./PredictionFilesClient";
-
-const PREDICTION_FILES = [
-  { module: "This Month", title: "Exam This Month", filename: "Exam-This-Month.pdf" },
-  { module: "Speaking", title: "Repeat Sentence", filename: "Repeat-Sentence.pdf" },
-  { module: "Speaking", title: "Describe Image", filename: "Describe-Image.pdf" },
-  { module: "Speaking", title: "Responding to Situation", filename: "Responding-to-Situation.pdf" },
-  { module: "Speaking", title: "Answer Short Question", filename: "Answer-Short-Question.pdf" },
-  { module: "Writing", title: "Write an Email", filename: "Write-an-Email.pdf" },
-  { module: "Reading", title: "Fill in the Blanks", filename: "Fill-in-the-Blanks.pdf" },
-  { module: "Listening", title: "Summarize Spoken Text", filename: "Summarize-Spoken-Text.pdf" },
-  { module: "Listening", title: "Write from Dictation", filename: "Write-from-Dictation.pdf" },
-];
 
 export default async function PredictionFilesPage() {
   const supabase = createClient();

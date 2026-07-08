@@ -5,27 +5,23 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signSessionId } from "@/lib/session";
 
-export async function login(prevState: any, formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  if (!email || !password) {
-    return { error: "Email and password are required." };
-  }
-
+// Called from LoginForm *after* the browser has already authenticated via
+// supabase.auth.signInWithPassword() client-side. Doing the sign-in on the
+// client (rather than here) is required so the browser's Supabase client
+// updates its in-memory session and fires onAuthStateChange immediately —
+// this server action only reads the auth cookies that call already set, to
+// finish setting up the app's own session_id tracking. If sign-in also
+// happened here (server-only), the browser client would never learn about
+// the new session until a full page reload, leaving ThemeProvider's
+// isPremium (and anything else keyed off the client's auth state) stuck at
+// its pre-login value until the user manually refreshes.
+export async function establishSession() {
   const supabase = createClient();
 
-  // 1. Authenticate with Supabase
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (error) {
-    return { error: error.message };
-  }
-
-  const user = data.user;
   if (!user) {
     return { error: "Authentication failed. User not found." };
   }
@@ -67,8 +63,7 @@ export async function login(prevState: any, formData: FormData) {
     maxAge: 60 * 60 * 24 * 7, // 1 week
   });
 
-  // Redirect to dashboard
-  redirect("/dashboard");
+  return { success: true };
 }
 
 export async function signup(prevState: any, formData: FormData) {

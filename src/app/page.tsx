@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -20,10 +21,11 @@ import HeroDashboardMockup from "@/components/landing/HeroDashboardMockup";
 import HeroMockup from "@/components/landing/HeroMockup";
 import { WritingMockup, ReadingMockup, ListeningMockup } from "@/components/landing/ModuleMockups";
 import LandingThemeToggle from "@/components/landing/LandingThemeToggle";
+import ScrollToPricingLink from "@/components/landing/ScrollToPricingLink";
 import ScrollReveal from "@/components/landing/ScrollReveal";
 import ScrollProgressBar from "@/components/landing/ScrollProgressBar";
 import ParallaxLayer from "@/components/landing/ParallaxLayer";
-import { PLANS } from "@/lib/plans";
+import { PLANS, discountPercent } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
 
 const LANDING_THEME_INIT_SCRIPT = `
@@ -113,13 +115,10 @@ export default async function LandingPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                <Link
-                  href="#pricing"
-                  className="pulse-ring inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg bg-primary text-on-primary font-semibold shadow-vercel-popover hover:bg-opacity-90 active:scale-[0.99] transition"
-                >
+                <ScrollToPricingLink className="pulse-ring inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg bg-primary text-on-primary font-semibold shadow-vercel-popover hover:bg-opacity-90 active:scale-[0.99] transition">
                   Choose your plan
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </ScrollToPricingLink>
                 <Link
                   href="/login"
                   className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-lg border border-hairline bg-canvas hover:bg-canvas-soft-2 text-ink font-semibold transition"
@@ -175,77 +174,6 @@ export default async function LandingPage() {
               </span>
             ))
           )}
-        </div>
-      </section>
-
-      {/* ------------------ MODULES ------------------ */}
-      <section className="relative py-20 sm:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
-              <Zap className="w-3 h-3" />
-              Every module, every task type
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
-              Built around the actual PTE exam
-            </h2>
-            <p className="text-base text-mute leading-relaxed">
-              Each module mirrors the real PTE structure, with the same task types, scoring,
-              and timing you&apos;ll face on test day.
-            </p>
-          </ScrollReveal>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {[
-              {
-                icon: Mic,
-                name: "Speaking",
-                gradient: "from-gradient-develop-start to-gradient-develop-end",
-                count: 5,
-                desc: "Read Aloud, Repeat Sentence, Describe Image, Respond to Situation, Answer Short Question",
-              },
-              {
-                icon: PenTool,
-                name: "Writing",
-                gradient: "from-gradient-preview-start to-gradient-preview-end",
-                count: 2,
-                desc: "Summarize Written Text, Write an Email — both with word-count enforcement",
-              },
-              {
-                icon: BookOpenCheck,
-                name: "Reading",
-                gradient: "from-gradient-ship-start to-gradient-ship-end",
-                count: 5,
-                desc: "Fill in the Blanks, Re-order Paragraphs, Multiple Choice single & multiple",
-              },
-              {
-                icon: Headphones,
-                name: "Listening",
-                gradient: "from-gradient-develop-start to-gradient-preview-start",
-                count: 7,
-                desc: "Summarize Spoken Text, MCQ, Fill Blanks, Highlight Incorrect Words, Write from Dictation",
-              },
-            ].map((m, i) => {
-              const Icon = m.icon;
-              return (
-                <ScrollReveal key={m.name} delay={i * 90}>
-                  <div className="card-hover bg-canvas border border-hairline rounded-2xl p-6 shadow-vercel-card flex flex-col gap-4 overflow-hidden relative h-full">
-                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${m.gradient}`} />
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${m.gradient} flex items-center justify-center shadow-sm`}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-ink">{m.name}</h3>
-                      <p className="text-2xs font-mono uppercase tracking-wider text-mute">
-                        {m.count} task types
-                      </p>
-                    </div>
-                    <p className="text-sm text-mute leading-relaxed">{m.desc}</p>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
         </div>
       </section>
 
@@ -410,21 +338,45 @@ export default async function LandingPage() {
             {[
               {
                 quote:
-                  "The mock tests felt exactly like the real exam — same timer, same interface. I walked into test day with zero surprises.",
-                name: "Ananya Sharma",
-                role: "Scored 82 overall · Melbourne",
+                  "Perfect target hit. The Writing templates for Summarize Written Text and Essay were the difference between a 79 and a 90.",
+                name: "Karan Verma",
+                role: "Scored 90 overall · Vancouver",
+                avatar: "/testimonials/karan-verma.jpg",
               },
               {
                 quote:
-                  "I was stuck at 65 in Speaking for weeks. The instant scoring on Read Aloud and Repeat Sentence showed me exactly what to fix.",
-                name: "Rahul Mehta",
-                role: "Scored 79 overall · Sydney",
+                  "The Reading drills — especially Reorder Paragraphs and Fill in the Blanks — took my score from 72 to 88 in three weeks.",
+                name: "Meera Iyer",
+                role: "Scored 88 overall · Auckland",
+                avatar: "/testimonials/meera-iyer.jpg",
               },
               {
                 quote:
                   "Practicing Write from Dictation and Summarize Spoken Text on here made Listening my strongest section by far.",
                 name: "Priya Nair",
                 role: "Scored 85 overall · Toronto",
+                avatar: "/testimonials/priya-nair.jpg",
+              },
+              {
+                quote:
+                  "The mock tests felt exactly like the real exam — same timer, same interface. I walked into test day with zero surprises.",
+                name: "Ananya Sharma",
+                role: "Scored 82 overall · Melbourne",
+                avatar: "/testimonials/ananya-sharma.jpg",
+              },
+              {
+                quote:
+                  "I was stuck at 65 in Speaking for weeks. The instant scoring on Read Aloud and Repeat Sentence showed me exactly what to fix.",
+                name: "Rahul Mehta",
+                role: "Scored 79 overall · Sydney",
+                avatar: "/testimonials/rahul-mehta.jpg",
+              },
+              {
+                quote:
+                  "Random Practice Test Generation kept every session fresh — I never felt like I was just grinding the same five sets.",
+                name: "Devansh Rao",
+                role: "Scored 76 overall · Brisbane",
+                avatar: "/testimonials/devansh-rao.jpg",
               },
             ].map((t, i) => (
               <ScrollReveal key={t.name} delay={i * 90}>
@@ -434,9 +386,13 @@ export default async function LandingPage() {
                     &ldquo;{t.quote}&rdquo;
                   </p>
                   <div className="flex items-center gap-3 pt-2 border-t border-hairline">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gradient-brand-start to-gradient-brand-end flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                      {t.name.split(" ").map((n) => n[0]).join("")}
-                    </div>
+                    <Image
+                      src={t.avatar}
+                      alt={t.name}
+                      width={36}
+                      height={36}
+                      className="w-9 h-9 rounded-full object-cover shrink-0 border border-hairline"
+                    />
                     <div>
                       <div className="text-sm font-semibold text-ink">{t.name}</div>
                       <div className="text-2xs text-mute">{t.role}</div>
@@ -450,7 +406,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ------------------ PRICING ------------------ */}
-      <section id="pricing" className="relative py-20 sm:py-28 scroll-mt-20">
+      <section id="pricing" className="relative py-20 sm:py-28 scroll-mt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
@@ -464,35 +420,61 @@ export default async function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
             {[PLANS.free, PLANS.premium].map((plan, i) => {
               const isFeatured = plan.id === "premium";
+              const discount = discountPercent(plan);
+              const savings = plan.originalPriceInr - plan.priceInr;
               return (
                 <ScrollReveal key={plan.id} delay={i * 100}>
                   <div
-                    className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 shadow-vercel-card flex flex-col h-full ${
+                    className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 pt-9 sm:pt-10 shadow-vercel-card flex flex-col h-full ${
                       isFeatured ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20" : "border-hairline"
                     }`}
                   >
-                    {isFeatured && (
-                      <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card">
-                        Most Popular
+                    {isFeatured ? (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
+                        Most Popular · Save {discount}%
                       </div>
+                    ) : (
+                      discount > 0 && (
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-canvas-soft-2 text-mute border border-hairline text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
+                          {discount}% OFF
+                        </div>
+                      )
                     )}
                     <h3 className="text-xl font-semibold text-ink">{plan.name}</h3>
                     <p className="text-sm text-mute leading-relaxed mt-1">{plan.tagline}</p>
-                    <div className="mt-5 flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-ink">
-                        ₹{plan.priceInr.toLocaleString("en-IN")}
-                      </span>
-                      <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
+                    <div className="mt-5">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold text-ink">
+                          ₹{plan.priceInr.toLocaleString("en-IN")}
+                        </span>
+                        <span className="text-sm text-mute">/ {plan.billingPeriod}</span>
+                      </div>
+                      {discount > 0 && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-sm text-mute line-through">
+                            ₹{plan.originalPriceInr.toLocaleString("en-IN")}
+                          </span>
+                          <span className={`text-xs font-semibold ${isFeatured ? "text-success" : "text-mute"}`}>
+                            Save ₹{savings.toLocaleString("en-IN")} ({discount}% off)
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <ul className="mt-5 space-y-2.5 flex-1">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-sm text-body">
-                          <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-success/10 text-success">
-                            <Check className="w-3 h-3" />
-                          </span>
-                          <span className="leading-relaxed">{f}</span>
-                        </li>
-                      ))}
+                      {plan.features.map((f) =>
+                        f.endsWith(":") ? (
+                          <li key={f} className="pt-1 text-sm font-semibold text-ink">
+                            {f}
+                          </li>
+                        ) : (
+                          <li key={f} className="flex items-start gap-2.5 text-sm text-body">
+                            <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-success/10 text-success">
+                              <Check className="w-3 h-3" />
+                            </span>
+                            <span className="leading-relaxed">{f}</span>
+                          </li>
+                        ),
+                      )}
                     </ul>
                     <div className="mt-6">
                       <Link
