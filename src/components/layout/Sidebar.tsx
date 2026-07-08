@@ -16,6 +16,7 @@ import {
   LogOut,
   Award,
   FileText,
+  LifeBuoy,
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -245,23 +246,6 @@ export default function Sidebar() {
           </Link>
 
           <Link
-            href="/specialised-tips"
-            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
-              pathname === "/specialised-tips"
-                ? "bg-canvas-soft-2 text-ink font-semibold"
-                : "text-body hover:bg-canvas-soft hover:text-ink"
-            }`}
-          >
-            <span className="flex items-center gap-3">
-              <PenTool className="w-4 h-4" />
-              Specialised Tips
-            </span>
-            <span className="text-[10px] bg-success/10 text-success border border-success/20 px-1.5 py-0.5 rounded font-mono font-medium uppercase">
-              PDF
-            </span>
-          </Link>
-
-          <Link
             href="/prediction-files"
             className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
               pathname === "/prediction-files"
@@ -273,8 +257,19 @@ export default function Sidebar() {
               <FileText className="w-4 h-4" />
               Prediction Files
             </span>
-            <span className="text-[10px] bg-success/10 text-success border border-success/20 px-1.5 py-0.5 rounded font-mono font-medium uppercase">
-              PDF
+          </Link>
+
+          <Link
+            href="/specialised-tips"
+            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
+              pathname === "/specialised-tips"
+                ? "bg-canvas-soft-2 text-ink font-semibold"
+                : "text-body hover:bg-canvas-soft hover:text-ink"
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <PenTool className="w-4 h-4" />
+              Specialised Tips
             </span>
           </Link>
 
@@ -293,6 +288,18 @@ export default function Sidebar() {
             <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
               {planName(plan)}
             </span>
+          </Link>
+
+          <Link
+            href="/contact-us"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
+              pathname === "/contact-us"
+                ? "bg-canvas-soft-2 text-ink font-semibold"
+                : "text-body hover:bg-canvas-soft hover:text-ink"
+            }`}
+          >
+            <LifeBuoy className="w-4 h-4" />
+            Help &amp; Support
           </Link>
         </div>
 

@@ -17,6 +17,7 @@ import {
   Award,
   X,
   FileText,
+  LifeBuoy,
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
@@ -253,16 +254,6 @@ export default function MobileNavDrawer({
               )}
             </Link>
             <Link
-              href="/specialised-tips"
-              onClick={onClose}
-              className="flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-body hover:bg-canvas-soft hover:text-ink transition"
-            >
-              <span className="flex items-center gap-3">
-                <PenTool className="w-4 h-4" />
-                Specialised Tips
-              </span>
-            </Link>
-            <Link
               href="/prediction-files"
               onClick={onClose}
               className="flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-body hover:bg-canvas-soft hover:text-ink transition"
@@ -270,6 +261,16 @@ export default function MobileNavDrawer({
               <span className="flex items-center gap-3">
                 <FileText className="w-4 h-4" />
                 Prediction Files
+              </span>
+            </Link>
+            <Link
+              href="/specialised-tips"
+              onClick={onClose}
+              className="flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-body hover:bg-canvas-soft hover:text-ink transition"
+            >
+              <span className="flex items-center gap-3">
+                <PenTool className="w-4 h-4" />
+                Specialised Tips
               </span>
             </Link>
             <Link
@@ -284,6 +285,14 @@ export default function MobileNavDrawer({
               <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
                 {planName(plan)}
               </span>
+            </Link>
+            <Link
+              href="/contact-us"
+              onClick={onClose}
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-body hover:bg-canvas-soft hover:text-ink transition"
+            >
+              <LifeBuoy className="w-4 h-4" />
+              Help &amp; Support
             </Link>
           </div>
 

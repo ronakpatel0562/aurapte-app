@@ -1,11 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Check, ChevronRight, Sparkles, Award } from "lucide-react";
+import { Check, ChevronRight, Sparkles, Award, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
 import { PLANS, planName, isPremiumPlan, discountPercent, type PlanId } from "@/lib/plans";
 import BankPaymentPanel from "@/components/billing/BankPaymentPanel";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
+import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink, mailtoLink } from "@/lib/contact";
 
 export default async function BillingPage({
   searchParams,
@@ -200,6 +202,37 @@ export default async function BillingPage({
             <p className="text-2xs text-mute leading-relaxed">{item.body}</p>
           </div>
         ))}
+      </div>
+
+      {/* Payment/plan support — stuck mid-payment, unsure which plan, or
+          activation taking longer than 24h. Same two channels as everywhere
+          else in the app, surfaced right where payment friction happens. */}
+      <div className="bg-canvas border border-hairline rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-vercel-card">
+        <div className="flex-1 space-y-0.5">
+          <h3 className="text-sm font-semibold text-ink">Stuck, or have a question about payment?</h3>
+          <p className="text-xs text-mute leading-relaxed">
+            Reach the team directly — before you pay, while you&apos;re waiting on activation, or
+            anytime after.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          <a
+            href={whatsappLink("Hi, I need help with my AuraPTE plan/payment.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-hairline bg-canvas hover:bg-canvas-soft-2 text-sm font-medium text-ink transition"
+          >
+            <WhatsAppIcon className="w-4 h-4 text-[#25D366]" />
+            WhatsApp {SUPPORT_WHATSAPP_DISPLAY}
+          </a>
+          <a
+            href={mailtoLink("Billing question")}
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-hairline bg-canvas hover:bg-canvas-soft-2 text-sm font-medium text-ink transition"
+          >
+            <Mail className="w-4 h-4" />
+            Email {SUPPORT_EMAIL}
+          </a>
+        </div>
       </div>
     </div>
   );

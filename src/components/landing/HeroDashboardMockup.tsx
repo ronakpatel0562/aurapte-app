@@ -15,13 +15,13 @@ import TiltStage from "./TiltStage";
  */
 const RADIUS = 52;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const SCORE_PERCENT = 0.92;
+const SCORE_PERCENT = 0.9;
 
 const MODULE_SCORES = [
-  { icon: Mic, label: "Speaking", score: 88, gradient: "from-gradient-develop-start to-gradient-develop-end" },
+  { icon: Mic, label: "Speaking", score: 87, gradient: "from-gradient-develop-start to-gradient-develop-end" },
   { icon: PenTool, label: "Writing", score: 79, gradient: "from-gradient-preview-start to-gradient-preview-end" },
-  { icon: BookOpenCheck, label: "Reading", score: 94, gradient: "from-gradient-ship-start to-gradient-ship-end" },
-  { icon: Headphones, label: "Listening", score: 91, gradient: "from-gradient-develop-start to-gradient-preview-start" },
+  { icon: BookOpenCheck, label: "Reading", score: 88, gradient: "from-gradient-ship-start to-gradient-ship-end" },
+  { icon: Headphones, label: "Listening", score: 89, gradient: "from-gradient-develop-start to-gradient-preview-start" },
 ];
 
 export default function HeroDashboardMockup() {
@@ -77,7 +77,7 @@ export default function HeroDashboardMockup() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center count-pop">
-                  <span className="text-xl font-bold text-ink leading-none">92</span>
+                  <span className="text-xl font-bold text-ink leading-none">90</span>
                   <span className="text-2xs text-mute mt-0.5">overall</span>
                 </div>
               </div>

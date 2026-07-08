@@ -8,6 +8,7 @@ import SupabaseSetupRequired from "@/components/layout/SupabaseSetupRequired";
 import NavigationLoader from "@/components/layout/NavigationLoader";
 import DisableContextMenu from "@/components/layout/DisableContextMenu";
 import { ThemeProvider, themeInitScript } from "@/components/providers/ThemeProvider";
+import SupportWidget from "@/components/support/SupportWidget";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -74,6 +75,7 @@ export default function RootLayout({
           <DisableContextMenu />
           <NavigationLoader />
           {children}
+          <SupportWidget />
         </ThemeProvider>
       </body>
     </html>

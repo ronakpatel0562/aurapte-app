@@ -1,9 +1,10 @@
 import React from "react";
 import Link from "next/link";
-import { FileDown, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { planName, type PlanId } from "@/lib/plans";
+import SpecialisedTipsClient from "./SpecialisedTipsClient";
 
 export default async function SpecialisedTipsPage() {
   const supabase = createClient();
@@ -34,71 +35,17 @@ export default async function SpecialisedTipsPage() {
           <span className="text-body font-semibold">Specialised Tips</span>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl tracking-tight font-semibold text-ink flex items-center gap-2">
-              Specialised Tips & Templates
-            </h1>
-            <p className="text-sm text-mute mt-1">
-              {planName(plan)} member — expert strategies and high-scoring templates for PTE Academic.
-            </p>
-          </div>
-
-          <a
-            href="data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iagogIDw8IC9UeXBlIC9DYXRhbG9nCiAgICAgL1BhZ2VzIDIgMCBSCiAgPj4KZW5kb2JqCjIgMCBvYmoKICA8PCAvVHlwZSAvUGFnZXMKICAgICAvS2lkcyBbIDMgMCBSIF0KICAgICAvQ291bnQgMQogID4+CmVuZG9iagozIDAgb2JqCiAgPDwgL1R5cGUgL1BhZ2UKICAgICAvUGFyZW50IDIgMCBSCiAgICAgL01lZGlhQm94IFsgMCAwIDU5NSA4NDIgXQogICAgIC9Db250ZW50cyA0IDAgUgogICAgIC9SZXNvdXJjZXMgPDwgL0ZvbnQgPDwgL0YxIDUgMCBSID4+ID4+CiAgPj4KZW5kb2JqCjQgMCBvYmoKICA8PCAvTGVuZ3RoIDY5ID4+CnN0cmVhbQpCVAovRjEgMjQgVGYKMTAwIDcwMCBUZAooQXVyYVBURSBQcmVtaXVtIFNwZWNpYWxpc2VkIFRpcHMgUERGKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKICA8PCAvVHlwZSAvRm9udAogICAgIC9TdWJ0eXBlIC9UeXBlMQogICAgIC9CYXNlRm9udCAvSGVsdmV0aWNhCiAgPj4KZW5kb2JqCnRyYWlsZXIKICA8PCAvUm9vdCAxIDAgUgogID4+CiUlRU9GCg=="
-            download="AuraPTE_Specialised_Tips.pdf"
-            className="h-10 px-5 bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 font-medium text-sm rounded-md shadow-md transition duration-150 flex items-center justify-center gap-2 active:scale-[0.99]"
-          >
-            <FileDown className="w-4 h-4" />
-            <span>Download PDF Guide</span>
-          </a>
+        <div>
+          <h1 className="text-2xl sm:text-3xl tracking-tight font-semibold text-ink flex items-center gap-2">
+            Specialised Tips & Templates
+          </h1>
+          <p className="text-sm text-mute mt-1">
+            {planName(plan)} member — expert strategies and proven templates for PTE Academic.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pt-4">
-        {[
-          {
-            module: "Speaking",
-            title: "Describe Image Template",
-            strategy: "Maintain a steady, continuous oral fluency rate without pauses. Focus strictly on key visual indicators (highest/lowest points, titles, and legends) rather than analyzing the data.",
-            tip: "Template: 'The given bar chart provides information about [Title]. It is clear from the image that the highest value is represented by [Category A], which is around [Value]. On the other hand, the lowest value is represented by [Category B], which is around [Value]. In conclusion, the chart shows key trends over the given period.'",
-          },
-          {
-            module: "Writing",
-            title: "Summarize Written Text Rule",
-            strategy: "Your response must be a single, complete sentence of 5 to 75 words. Use simple compound or complex connectors (like 'and', 'but', 'although', 'which') to join your main clauses.",
-            tip: "Score Checklist: Correct grammar, punctuation (exactly one capital letter at the start, exactly one period at the end), and spell check. Keep it simple; copy-paste key clauses directly.",
-          },
-          {
-            module: "Reading",
-            title: "Fill in the Blanks Collocations",
-            strategy: "PTE heavily tests collocations (words that naturally fit together). Memorize lists of common prepositional combinations and verb-noun patterns.",
-            tip: "Examples: 'play a role in', 'conduct a study', 'wide range of options', 'highly recommended', 'crucial factor', 'significant impact'.",
-          },
-          {
-            module: "Listening",
-            title: "Write from Dictation Memory Tip",
-            strategy: "This is the single highest-scoring item type. Listen to the sentence structure, visualize the meaning, and type it immediately. Write alternative spellings or extra words at the end if unsure.",
-            tip: "PTE scoring registers matching words. If you are unsure whether a word was singular or plural (e.g. 'student' vs 'students'), write both! There is no negative marking for extra words.",
-          },
-        ].map((item, idx) => (
-          <div key={idx} className="card-hover bg-canvas border border-hairline rounded-xl p-6 shadow-vercel-card space-y-4">
-            <div className="flex items-center justify-between border-b border-hairline pb-3">
-              <span className="text-2xs font-mono font-bold text-success uppercase bg-success/5 border border-success/10 px-2 py-0.5 rounded-full">
-                {item.module}
-              </span>
-              <span className="text-xs font-semibold text-ink">{item.title}</span>
-            </div>
-            <p className="text-xs text-body leading-relaxed">
-              <strong className="text-ink">Strategy: </strong>
-              {item.strategy}
-            </p>
-            <div className="bg-canvas-soft-2 p-3 rounded-lg border border-hairline text-2xs text-mute leading-normal">
-              {item.tip}
-            </div>
-          </div>
-        ))}
-      </div>
+      <SpecialisedTipsClient />
     </div>
   );
 }

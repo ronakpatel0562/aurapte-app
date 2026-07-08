@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { Landmark, Copy, Check, Mail, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import type { PlanId } from "@/lib/plans";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
+import { SUPPORT_WHATSAPP_DISPLAY, whatsappLink } from "@/lib/contact";
 
 /**
  * BankPaymentPanel — replaces the payment-gateway checkout button. Payment
@@ -191,6 +193,22 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
             {CONTACT_EMAIL}
           </a>{" "}
           instead.
+        </span>
+      </div>
+
+      <div className="flex items-start gap-2 p-3 bg-canvas-soft-2 border border-hairline rounded-lg text-xs text-mute leading-relaxed">
+        <WhatsAppIcon className="w-4 h-4 shrink-0 mt-0.5 text-[#25D366]" />
+        <span>
+          Stuck, or just want to double-check before paying? Message us on WhatsApp at{" "}
+          <a
+            href={whatsappLink(`Hi, I have a question about payment for the ${planName} plan.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-link hover:underline"
+          >
+            {SUPPORT_WHATSAPP_DISPLAY}
+          </a>{" "}
+          (WhatsApp only, not for calls) — you don&apos;t need to have paid yet to ask.
         </span>
       </div>
     </div>

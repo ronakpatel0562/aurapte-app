@@ -2,11 +2,6 @@
 
 import React from "react";
 
-/**
- * The default anchor-link scroll (href="#pricing") aligns the section's
- * *top* to the viewport top, which crops the pricing cards on shorter
- * screens. This centers the section vertically in the viewport instead.
- */
 export default function ScrollToPricingLink({
   className,
   children,
@@ -16,7 +11,20 @@ export default function ScrollToPricingLink({
 }) {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const target = document.getElementById("pricing-heading") || document.getElementById("pricing");
+    if (target) {
+      const headerOffset = 88;
+      let top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+
+      const footer = document.querySelector("footer");
+      if (footer) {
+        const footerTop = footer.getBoundingClientRect().top + window.scrollY;
+        const maxTopWithoutFooter = footerTop - window.innerHeight;
+        top = Math.min(top, maxTopWithoutFooter);
+      }
+
+      window.scrollTo({ top, behavior: "smooth" });
+    }
     history.pushState(null, "", "#pricing");
   };
 

@@ -16,17 +16,71 @@ import {
   Award,
   Star,
   Quote,
+  Rocket,
+  Compass,
+  Target,
+  Brain,
 } from "lucide-react";
 import HeroDashboardMockup from "@/components/landing/HeroDashboardMockup";
 import HeroMockup from "@/components/landing/HeroMockup";
 import { WritingMockup, ReadingMockup, ListeningMockup } from "@/components/landing/ModuleMockups";
-import LandingThemeToggle from "@/components/landing/LandingThemeToggle";
 import ScrollToPricingLink from "@/components/landing/ScrollToPricingLink";
 import ScrollReveal from "@/components/landing/ScrollReveal";
 import ScrollProgressBar from "@/components/landing/ScrollProgressBar";
 import ParallaxLayer from "@/components/landing/ParallaxLayer";
+import SiteHeader from "@/components/layout/SiteHeader";
+import SiteFooter from "@/components/layout/SiteFooter";
+import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink, mailtoLink } from "@/lib/contact";
 import { PLANS, discountPercent } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
+
+const FAQS: { question: string; answer: string }[] = [
+  {
+    question: "How can I score 79+ in PTE Academic?",
+    answer:
+      "Scoring 79+ takes consistent, exam-format practice across all four skills — not just grammar or vocabulary study. Focus on templates for Describe Image and Summarize Written Text, drill Read Aloud and Repeat Sentence for fluency and pronunciation, and take full-length mock tests under real exam timing so test-day pressure doesn't cost you marks. AuraPTE's question bank and instant scoring are built specifically to help you find and fix weak task types quickly.",
+  },
+  {
+    question: "Is PTE Academic easier than IELTS?",
+    answer:
+      "Many candidates find PTE Academic easier than IELTS because it's fully computer-scored — there's no live examiner, which removes a lot of the speaking-interview anxiety. Pearson's AI scores speaking on fluency and pronunciation, not on accent, so a strong Indian accent does not lower your score as long as it's clear and natural. Results also arrive faster, typically within 1-2 business days.",
+  },
+  {
+    question: "What is a PTE prediction file and how accurate is it?",
+    answer:
+      "A PTE prediction file is a curated list of recently repeated exam questions — Read Aloud texts, Repeat Sentence audio, Write from Dictation sentences, Essay topics, and more — compiled from real candidates' post-exam reports. Because the question pool shifts month to month, prediction files are only useful when refreshed regularly. AuraPTE's prediction files are updated to reflect current exam patterns rather than left stale.",
+  },
+  {
+    question: "How many PTE mock tests should I take before the exam?",
+    answer:
+      "Most candidates benefit from 3-5 full-length mock tests in the two weeks before their exam, alongside daily task-specific practice. Mock tests build the stamina to stay accurate across the full 2-hour exam and help you get comfortable with the real interface and timer, which is exactly what AuraPTE's mock tests are modeled on.",
+  },
+  {
+    question: "What PTE score do I need for Australia, Canada, UK, or New Zealand?",
+    answer:
+      "Requirements vary by visa or university pathway. For Australia, Competent English generally requires at least 47 in Listening, 48 in Reading, 54 in Speaking, and 51 in Writing, while Superior English (for maximum migration points) requires around 69-88 across bands. For Canada Express Entry, only PTE Core (not PTE Academic) is accepted by IRCC. Always check the current threshold for your specific visa subclass or university offer, since these are updated periodically.",
+  },
+  {
+    question: "Does AuraPTE offer AI scoring for Speaking and Writing?",
+    answer:
+      "Yes. Every Speaking response (Read Aloud, Repeat Sentence, Describe Image, and more) and Writing task (Summarize Written Text, Write an Email) is scored automatically within seconds, benchmarked against the official PTE Academic rubric, so you get accurate feedback without waiting on a human reviewer.",
+  },
+  {
+    question: "Does AuraPTE have a free plan?",
+    answer:
+      "No — AuraPTE doesn't have a free tier. Both plans are paid: Aura Starter and Aura Pro, billed monthly with no lock-in, so you can cancel anytime by simply not renewing. If you'd like to understand what's included before you commit, email or WhatsApp us and we'll walk you through it.",
+  },
+  {
+    question: "How do I get support if I have a question or doubt?",
+    answer:
+      "Reach out any time by email or WhatsApp — you don't need to have purchased a plan first. We help with questions before you buy, billing issues, and doubts about any module or specific question. Look for the support button in the corner of every page, or visit the Contact Us page.",
+  },
+  {
+    question: "Which PTE Academic task types can I practice on AuraPTE?",
+    answer:
+      "All of them: Speaking (Read Aloud, Repeat Sentence, Describe Image, Respond to a Situation, Answer Short Question), Writing (Summarize Written Text, Write an Email), Reading (Fill in the Blanks, Multiple Choice, Re-order Paragraphs), and Listening (Summarize Spoken Text, Multiple Choice, Fill in the Blanks, Highlight Incorrect Words, Select Missing Word, Write from Dictation).",
+  },
+];
 
 const LANDING_THEME_INIT_SCRIPT = `
 (function() {
@@ -53,33 +107,7 @@ export default async function LandingPage() {
     <main id="landing-root" className="relative min-h-screen overflow-x-hidden bg-canvas text-ink font-geist">
       <script dangerouslySetInnerHTML={{ __html: LANDING_THEME_INIT_SCRIPT }} />
 
-      {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur-md bg-canvas/70 border-b border-hairline">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="AuraPTE" className="w-8 h-8 rounded-lg shadow-md object-cover" />
-            <span className="text-lg font-bold tracking-tight text-ink">
-              Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent">PTE</span>
-            </span>
-          </Link>
-          <nav className="flex items-center gap-2">
-            <LandingThemeToggle />
-            <Link
-              href="/login"
-              className="hidden sm:inline-flex h-9 px-4 items-center text-sm font-medium text-body hover:text-ink transition rounded-md"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="h-9 px-4 inline-flex items-center gap-1.5 bg-primary text-on-primary text-sm font-semibold rounded-md hover:bg-opacity-90 active:scale-[0.99] transition"
-            >
-              Get started
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
       <ScrollProgressBar />
 
       {/* ------------------ HERO ------------------ */}
@@ -142,6 +170,22 @@ export default async function LandingPage() {
                   Cancel anytime
                 </span>
               </div>
+
+              {/* Quick links to key pages, for crawlability and easy access */}
+              <nav aria-label="Quick links" className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-2xs text-mute pt-1">
+                <Link href="/about-us" className="hover:text-ink transition underline-offset-2 hover:underline">
+                  About Us
+                </Link>
+                <Link href="/contact-us" className="hover:text-ink transition underline-offset-2 hover:underline">
+                  Contact Us
+                </Link>
+                <Link href="/privacy-policy" className="hover:text-ink transition underline-offset-2 hover:underline">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms-and-conditions" className="hover:text-ink transition underline-offset-2 hover:underline">
+                  Terms &amp; Conditions
+                </Link>
+              </nav>
             </ParallaxLayer>
 
             {/* Right: 3D hero mockup */}
@@ -174,6 +218,66 @@ export default async function LandingPage() {
               </span>
             ))
           )}
+        </div>
+      </section>
+
+      {/* ------------------ WHY CHOOSE AURAPTE ------------------ */}
+      <section className="relative py-20 sm:py-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
+              <Target className="w-3 h-3 text-gradient-brand-start" />
+              Why students choose AuraPTE
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
+              Everything you need to prepare smarter
+            </h2>
+            <p className="text-base text-mute leading-relaxed">
+              Practice smarter, get feedback faster, and walk into test day with confidence.
+            </p>
+          </ScrollReveal>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              {
+                title: "Fast Processing",
+                desc: "Every question is scored by AI in seconds, not days — so you always know where you stand.",
+                gradient: "from-gradient-develop-start to-gradient-develop-end",
+                icon: Rocket,
+              },
+              {
+                title: "Easy Navigation",
+                desc: "Practice on an interface modeled on the real PTE Academic screens — no confusing test software to slow you down.",
+                gradient: "from-gradient-preview-start to-gradient-preview-end",
+                icon: Compass,
+              },
+              {
+                title: "Precision Scoring",
+                desc: "AI-powered scoring benchmarked against the real exam rubric, so your feedback is accurate and something you can trust.",
+                gradient: "from-gradient-ship-start to-gradient-ship-end",
+                icon: Target,
+              },
+              {
+                title: "Integrated Skills",
+                desc: "Tasks that blend Reading, Writing, Speaking, and Listening together — just like the real exam expects.",
+                gradient: "from-gradient-develop-start to-gradient-preview-start",
+                icon: Brain,
+              },
+            ].map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <ScrollReveal key={f.title} delay={i * 80}>
+                  <div className="card-hover bg-canvas border border-hairline rounded-xl p-5 shadow-vercel-card space-y-3 h-full">
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center shadow-sm`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-ink">{f.title}</h3>
+                    <p className="text-xs text-mute leading-relaxed">{f.desc}</p>
+                  </div>
+                </ScrollReveal>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -405,10 +509,36 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ------------------ MISSION ------------------ */}
+      <section className="relative py-20 sm:py-28 bg-canvas-soft border-y border-hairline">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <ScrollReveal className="space-y-5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
+              <Sparkles className="w-3 h-3 text-gradient-brand-start" />
+              Our mission
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
+              We help you achieve your dreams
+            </h2>
+            <p className="text-base text-mute leading-relaxed">
+              At AuraPTE, we&apos;re dedicated to helping you succeed in your PTE Academic exam with
+              confidence. Our platform offers a comprehensive range of carefully designed mock
+              tests and practice sets that closely replicate the real test environment.
+            </p>
+            <p className="text-base text-mute leading-relaxed">
+              Powered by AI-driven scoring, we give you instant, accurate, and detailed feedback
+              on your performance — so you know exactly where you stand and what to work on next.
+              With AuraPTE, you don&apos;t just practice — you prepare smarter, build confidence,
+              and move closer to the score you need.
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* ------------------ PRICING ------------------ */}
       <section id="pricing" className="relative py-20 sm:py-28 scroll-mt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <ScrollReveal className="text-center max-w-2xl mx-auto space-y-3">
+          <ScrollReveal id="pricing-heading" className="text-center max-w-2xl mx-auto space-y-3">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
               Simple pricing
             </h2>
@@ -417,15 +547,15 @@ export default async function LandingPage() {
             </p>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto md:items-stretch">
             {[PLANS.free, PLANS.premium].map((plan, i) => {
               const isFeatured = plan.id === "premium";
               const discount = discountPercent(plan);
               const savings = plan.originalPriceInr - plan.priceInr;
               return (
-                <ScrollReveal key={plan.id} delay={i * 100}>
+                <ScrollReveal key={plan.id} delay={i * 100} className="h-full">
                   <div
-                    className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 pt-9 sm:pt-10 shadow-vercel-card flex flex-col h-full ${
+                    className={`card-hover relative h-full bg-canvas border rounded-2xl p-6 sm:p-7 pt-9 sm:pt-10 shadow-vercel-card flex flex-col ${
                       isFeatured ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20" : "border-hairline"
                     }`}
                   >
@@ -460,7 +590,7 @@ export default async function LandingPage() {
                         </div>
                       )}
                     </div>
-                    <ul className="mt-5 space-y-2.5 flex-1">
+                    <ul className="mt-5 space-y-2.5">
                       {plan.features.map((f) =>
                         f.endsWith(":") ? (
                           <li key={f} className="pt-1 text-sm font-semibold text-ink">
@@ -476,7 +606,7 @@ export default async function LandingPage() {
                         ),
                       )}
                     </ul>
-                    <div className="mt-6">
+                    <div className="mt-auto pt-6">
                       <Link
                         href="/signup"
                         className={`w-full h-11 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 ${
@@ -494,23 +624,70 @@ export default async function LandingPage() {
               );
             })}
           </div>
+
+          <p className="text-center text-sm text-mute">
+            Not sure which plan fits? Email{" "}
+            <a href={mailtoLink()} className="text-link hover:underline">{SUPPORT_EMAIL}</a> or WhatsApp{" "}
+            <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
+              {SUPPORT_WHATSAPP_DISPLAY}
+            </a>{" "}
+            — no purchase needed to ask.
+          </p>
         </div>
       </section>
 
-      {/* ------------------ FOOTER ------------------ */}
-      <footer className="relative border-t border-hairline bg-canvas-soft py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="AuraPTE" className="w-7 h-7 rounded-lg shadow-sm object-cover" />
-            <span className="text-sm font-bold text-ink">
-              Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent">PTE</span>
-            </span>
+      {/* ------------------ FAQ ------------------ */}
+      <section className="relative py-20 sm:py-28 border-t border-hairline">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: FAQS.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: faq.answer,
+                },
+              })),
+            }),
+          }}
+        />
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <ScrollReveal className="text-center space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-canvas-soft-2 border border-hairline text-2xs font-mono uppercase tracking-wider text-body">
+              <Sparkles className="w-3 h-3 text-gradient-brand-start" />
+              FAQ
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-ink">
+              Frequently asked questions
+            </h2>
+            <p className="text-base text-mute leading-relaxed">
+              Everything candidates ask us before starting PTE Academic prep on AuraPTE.
+            </p>
+          </ScrollReveal>
+
+          <div className="space-y-3">
+            {FAQS.map((faq, i) => (
+              <ScrollReveal key={faq.question} delay={i * 40}>
+                <details className="group bg-canvas border border-hairline rounded-xl p-5 shadow-vercel-card open:shadow-vercel-popover transition">
+                  <summary className="flex items-center justify-between gap-4 cursor-pointer list-none text-sm font-semibold text-ink">
+                    {faq.question}
+                    <span className="shrink-0 w-6 h-6 rounded-full border border-hairline flex items-center justify-center text-mute text-xs transition group-open:rotate-45">
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-sm text-mute leading-relaxed">{faq.answer}</p>
+                </details>
+              </ScrollReveal>
+            ))}
           </div>
-          <p className="text-2xs text-mute">
-            © {new Date().getFullYear()} AuraPTE · Built for PTE Academic candidates
-          </p>
         </div>
-      </footer>
+      </section>
+
+      <SiteFooter />
     </main>
   );
 }

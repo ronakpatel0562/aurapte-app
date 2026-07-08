@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 interface ScrollRevealProps {
   children: React.ReactNode;
   className?: string;
+  id?: string;
   /** Stagger delay in ms, applied only once the element is visible. */
   delay?: number;
 }
@@ -15,7 +16,7 @@ interface ScrollRevealProps {
  * needed. Fires once (observer disconnects after reveal) so re-scrolling
  * past a section doesn't replay it.
  */
-export default function ScrollReveal({ children, className = "", delay = 0 }: ScrollRevealProps) {
+export default function ScrollReveal({ children, className = "", id, delay = 0 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -44,6 +45,7 @@ export default function ScrollReveal({ children, className = "", delay = 0 }: Sc
   return (
     <div
       ref={ref}
+      id={id}
       className={`scroll-reveal ${visible ? "scroll-reveal-visible" : ""} ${className}`}
       style={{ transitionDelay: visible ? `${delay}ms` : "0ms" }}
     >
