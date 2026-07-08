@@ -139,7 +139,7 @@ export default async function LandingPage() {
               <p className="text-base sm:text-lg text-mute leading-relaxed max-w-xl">
                 AuraPTE is a complete PTE Core preparation platform — built first for PR
                 aspirants chasing CLB 10 and maximum CRS points, and just as effective for
-                students working toward their university's PTE score. Real exam simulations,
+                students working toward their university&apos;s PTE score. Real exam simulations,
                 module-by-module practice, automated scoring, and progress tracking that
                 actually tells you where you stand.
               </p>
