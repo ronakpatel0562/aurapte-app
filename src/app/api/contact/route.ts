@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 
 /**
- * Contact-form submission endpoint. Sends a notification to SUPPORT_EMAIL
- * with the sender's address set as reply-to, so replying from Gmail goes
- * straight back to the user — no separate inbox to check.
+ * Contact-form submission endpoint. Forwards to FormSubmit (no API key —
+ * SUPPORT_EMAIL must click the one-time activation link FormSubmit sends
+ * the first time it receives a submission for that address) which emails
+ * SUPPORT_EMAIL with the sender's address set as reply-to, so replying from
+ * Gmail goes straight back to the user — no separate inbox to check.
  */
 export async function POST(req: NextRequest) {
   let body: { name?: string; email?: string; topic?: string; message?: string };
@@ -28,26 +29,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.error("RESEND_API_KEY is not configured — contact form email not sent.");
-    return NextResponse.json(
-      { error: "Support email isn't configured yet. Please email us directly instead." },
-      { status: 503 },
-    );
-  }
-
   try {
-    const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from: "AuraPTE Support <onboarding@resend.dev>",
-      to: SUPPORT_EMAIL,
-      replyTo: email,
-      subject: `[AuraPTE Contact] ${topic} — ${name}`,
-      text: `From: ${name} <${email}>\nTopic: ${topic}\n\n${message}`,
+    // FormSubmit's ajax endpoint rejects requests with no Referer (treating
+    // them as opened from a local HTML file). Node's server-side fetch never
+    // sends one, so it must be set explicitly here.
+    const referer = req.headers.get("referer") ?? req.nextUrl.origin;
+    const res = await fetch(`https://formsubmit.co/ajax/${SUPPORT_EMAIL}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json", Referer: referer },
+      body: JSON.stringify({
+        _subject: `[AuraPTE Contact] ${topic} — ${name}`,
+        _replyto: email,
+        _template: "table",
+        name,
+        email,
+        topic,
+        message,
+      }),
     });
-    if (error) {
-      console.error("Resend send error:", error);
+    const data = await res.json();
+    if (!res.ok || data.success !== "true") {
+      console.error("FormSubmit send error:", data);
       return NextResponse.json({ error: "Couldn't send your message. Please try again." }, { status: 502 });
     }
     return NextResponse.json({ ok: true });

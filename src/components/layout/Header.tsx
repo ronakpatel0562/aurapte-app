@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { LogOut, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
+import Link from "next/link";
+import { LogOut, ChevronDown, Maximize2, Minimize2, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/auth/actions";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -13,7 +14,11 @@ interface UserProfile {
   plan: PlanId;
 }
 
-export default function Header() {
+interface HeaderProps {
+  isAdmin?: boolean;
+}
+
+export default function Header({ isAdmin = false }: HeaderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
@@ -150,6 +155,17 @@ export default function Header() {
                         {profile.email}
                       </div>
                     </div>
+
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-ink hover:bg-canvas-soft-2 transition border-b border-hairline"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        Switch to admin panel
+                      </Link>
+                    )}
 
                     <button
                       onClick={async () => {
