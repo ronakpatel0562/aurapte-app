@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import fs from "fs";
 import path from "path";
@@ -57,6 +58,18 @@ export default function RootLayout({
         </head>
         <body className="bg-[#0a0a0a] min-h-screen flex flex-col font-geist antialiased">
           <SupabaseSetupRequired schemaSql={schemaSql} />
+          <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-DTD9TMMXLF"
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-DTD9TMMXLF');
+            `}
+          </Script>
         </body>
       </html>
     );
@@ -71,6 +84,18 @@ export default function RootLayout({
         <meta name="theme-color" content="#fafafa" />
       </head>
       <body className="bg-canvas-soft text-ink min-h-screen flex flex-col font-geist antialiased">
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-DTD9TMMXLF"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-DTD9TMMXLF');
+          `}
+        </Script>
         <ThemeProvider>
           <DisableContextMenu />
           <NavigationLoader />

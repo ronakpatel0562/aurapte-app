@@ -22,7 +22,7 @@ export default function RecordingMeter({
   const pct = totalSeconds > 0 ? Math.min(100, (elapsedSeconds / totalSeconds) * 100) : 0;
 
   return (
-    <div className="flex items-center justify-center gap-4 py-16 select-none">
+    <div className="flex flex-wrap items-center justify-center gap-4 py-16 select-none">
       <div className="flex items-center gap-3">
         <span
           className={`w-3.5 h-3.5 rounded-full shrink-0 ${
@@ -43,7 +43,7 @@ export default function RecordingMeter({
         </div>
       </div>
 
-      <div className="w-56 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+      <div className="w-full max-w-56 h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-200 ease-linear ${
             completed ? "bg-green-500" : "bg-[#2980b9]"

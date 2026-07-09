@@ -91,7 +91,7 @@ export default function TermsAndConditionsPage() {
               granted immediately on verification, payments already verified and activated are
               generally non-refundable, except where required by applicable law or at our
               discretion in cases of duplicate or erroneous payment. Contact{" "}
-              <a href="mailto:support@aurapte.com" className="text-link hover:underline">support@aurapte.com</a>{" "}
+              <a href="mailto:support.aurapte@gmail.com" className="text-link hover:underline">support.aurapte@gmail.com</a>{" "}
               for billing issues.
             </p>
           </Section>

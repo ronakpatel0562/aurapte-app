@@ -372,7 +372,7 @@ export default function SummarizeSpoken({
         <div className="flex justify-center items-center py-10 bg-white select-none">
           <div
             onClick={handleAudioBoxClick}
-            className={`w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 relative ${
+            className={`w-full max-w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 relative ${
               audioStatus === "Click to Play" ? "cursor-pointer hover:bg-[#5284A3]" : ""
             }`}
           >

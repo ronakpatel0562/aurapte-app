@@ -449,7 +449,7 @@ export default function RespondingToSituation({
           {phase === "audio" ? (
             <div
               onClick={handleAudioBoxClick}
-              className={`w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 ${
+              className={`w-full max-w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 ${
                 audioStatus === "Click to Play"
                   ? "cursor-pointer hover:bg-[#5284A3]"
                   : ""

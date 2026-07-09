@@ -63,7 +63,7 @@ function TipAudioPlayer({ src }: { src: string }) {
 
   return (
     <div className="flex justify-center items-center py-4 select-none">
-      <div className="w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 relative">
+      <div className="w-full max-w-[360px] h-[130px] bg-[#5E94B5] rounded shadow flex flex-col justify-between p-4 relative">
         <audio
           ref={audioRef}
           src={src}

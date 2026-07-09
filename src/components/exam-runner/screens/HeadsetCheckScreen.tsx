@@ -92,14 +92,14 @@ export default function HeadsetCheckScreen({
         </li>
       </ol>
 
-      <div className="flex items-center gap-3 bg-gray-100 border border-gray-300 rounded px-4 py-2.5 w-fit mb-6">
+      <div className="flex flex-wrap items-center gap-3 bg-gray-100 border border-gray-300 rounded px-4 py-2.5 w-full sm:w-fit mb-6">
         <button onClick={toggle} className="text-gray-700 hover:text-gray-900" aria-label={playing ? "Pause" : "Play"}>
           {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
         <span className="text-xs font-mono tabular-nums text-gray-600">
           {formatTime(currentTime)} / {formatTime(CHIME_DURATION)}
         </span>
-        <div className="w-40 h-1 bg-gray-300 rounded-full overflow-hidden">
+        <div className="w-full max-w-40 h-1 bg-gray-300 rounded-full overflow-hidden">
           <div className="h-full bg-gray-500" style={{ width: `${(currentTime / CHIME_DURATION) * 100}%` }} />
         </div>
         <Volume2 className="w-4 h-4 text-gray-600" />

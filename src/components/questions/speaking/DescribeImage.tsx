@@ -306,8 +306,8 @@ export default function DescribeImage({
 
         {/* Image + countdown row */}
         <div className="px-8 py-8 bg-white">
-          <div className="flex items-center gap-8">
-            <div className="flex-1 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+            <div className="w-full flex-1 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
               {content.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

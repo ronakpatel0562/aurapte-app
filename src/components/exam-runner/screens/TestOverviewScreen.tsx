@@ -55,21 +55,23 @@ export default function TestOverviewScreen({ onLockChange }: { onLockChange?: (l
     <div className="max-w-2xl w-full">
       <h2 className="text-base font-bold text-gray-800 mb-4">The test is approximately 2 hours long.</h2>
 
-      <table className="border border-gray-400 text-sm text-gray-800 mb-4">
-        <thead>
-          <tr>
-            <Th>Part</Th>
-            <Th>Content</Th>
-            <Th>Time allowed</Th>
-          </tr>
-        </thead>
-        <tbody>
-          <Row part="Intro" content="Introduction" time="1 minute" />
-          <Row part="Part 1" content="Speaking and writing" time="46-67 minute" />
-          <Row part="Part 2" content="Reading" time="27-38 minute" />
-          <Row part="Part 3" content="Listening" time="30-37 minute" />
-        </tbody>
-      </table>
+      <div className="overflow-x-auto mb-4">
+        <table className="border border-gray-400 text-sm text-gray-800">
+          <thead>
+            <tr>
+              <Th>Part</Th>
+              <Th>Content</Th>
+              <Th>Time allowed</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <Row part="Intro" content="Introduction" time="1 minute" />
+            <Row part="Part 1" content="Speaking and writing" time="46-67 minute" />
+            <Row part="Part 2" content="Reading" time="27-38 minute" />
+            <Row part="Part 3" content="Listening" time="30-37 minute" />
+          </tbody>
+        </table>
+      </div>
 
       <p className="text-xs text-gray-500 italic">
         {remaining > 0 ? `Next will be available in ${remaining} second${remaining === 1 ? "" : "s"}.` : "Click Next to proceed."}

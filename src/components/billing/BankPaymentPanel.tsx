@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Landmark, Copy, Check, Mail, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import type { PlanId } from "@/lib/plans";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
-import { SUPPORT_WHATSAPP_DISPLAY, whatsappLink } from "@/lib/contact";
+import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink } from "@/lib/contact";
 
 /**
  * BankPaymentPanel — replaces the payment-gateway checkout button. Payment
@@ -12,17 +12,16 @@ import { SUPPORT_WHATSAPP_DISPLAY, whatsappLink } from "@/lib/contact";
  * transfer/UPI, then submits proof in-app (reference + optional screenshot)
  * via /api/billing/claims so an admin can approve it at /admin/payments
  * without the user ever having to open a mail app.
- * Placeholder account details below — fill in the real ones before launch.
  */
 const BANK_DETAILS = {
-  accountName: "[ACCOUNT HOLDER NAME]",
-  accountNumber: "[ACCOUNT NUMBER]",
-  ifsc: "[IFSC CODE]",
-  bankName: "[BANK NAME]",
-  upiId: "[UPI ID]",
+  accountNumber: "5345413232",
+  accountName: "BADRESHIYA AKSHAYKUMAR GHANSHYAMBHAI",
+  ifsc: "KKBK0000822",
+  bankName: "KOTAK 811 FULL KYC",
+  upiId: "8320821028@kotak",
 };
 
-const CONTACT_EMAIL = "payments@aurapte.com";
+const CONTACT_EMAIL = SUPPORT_EMAIL;
 
 interface Props {
   planId: PlanId;
@@ -78,8 +77,8 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
   }
 
   const rows: [string, string][] = [
-    ["Account name", BANK_DETAILS.accountName],
     ["Account number", BANK_DETAILS.accountNumber],
+    ["Account name", BANK_DETAILS.accountName],
     ["IFSC", BANK_DETAILS.ifsc],
     ["Bank", BANK_DETAILS.bankName],
     ["UPI ID", BANK_DETAILS.upiId],
