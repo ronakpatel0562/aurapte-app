@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PLANS, type PlanId } from "@/lib/plans";
 
-const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
+// Vercel's default Serverless Function request body limit is 4.5MB; stay
+// comfortably under it (multipart form encoding adds overhead on top of the
+// raw file size) so uploads never fail with a platform-level, non-JSON error.
+const MAX_SCREENSHOT_BYTES = 4 * 1024 * 1024;
 const ALLOWED_SCREENSHOT_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 // Lets a user submit "I've paid" (reference + optional screenshot) without

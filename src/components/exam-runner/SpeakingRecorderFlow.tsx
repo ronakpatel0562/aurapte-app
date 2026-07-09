@@ -37,6 +37,7 @@ export default function SpeakingRecorderFlow({
   const [stepIndex, setStepIndex] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(() => stepDuration(steps[0]));
   const [finished, setFinished] = useState(steps.length === 0);
+  const [micWarning, setMicWarning] = useState<string | null>(null);
 
   const step = steps[stepIndex];
 
@@ -101,16 +102,23 @@ export default function SpeakingRecorderFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft, stepIndex]);
 
-  // Speech recognition runs for the duration of a "record" step.
+  // Speech recognition runs for the duration of a "record" step. The
+  // browser's own SpeechRecognition permission prompt is unreliable across
+  // browsers (some silently no-op instead of prompting), so we request mic
+  // access explicitly first and surface a warning if it's denied.
   useEffect(() => {
     if (!step || step.kind !== "record") return;
 
+    let cancelled = false;
     transcriptRef.current = "";
-    const SR =
-      typeof window !== "undefined"
-        ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-        : null;
-    if (SR) {
+    setMicWarning(null);
+
+    const startRecognition = () => {
+      const SR =
+        typeof window !== "undefined"
+          ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+          : null;
+      if (!SR) return;
       const recognition = new SR();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -137,9 +145,24 @@ export default function SpeakingRecorderFlow({
         }
       };
       recognition.start();
-    }
+    };
 
-    return () => stopRecognition();
+    navigator.mediaDevices
+      ?.getUserMedia({ audio: true })
+      .then((stream) => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (!cancelled) startRecognition();
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      stopRecognition();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
 
@@ -160,11 +183,16 @@ export default function SpeakingRecorderFlow({
   const isLastStep = stepIndex === steps.length - 1;
   const completed = finished && isLastStep;
   return (
-    <RecordingMeter
-      elapsedSeconds={completed ? step.seconds : elapsed}
-      totalSeconds={step.seconds}
-      completed={completed}
-    />
+    <div>
+      <RecordingMeter
+        elapsedSeconds={completed ? step.seconds : elapsed}
+        totalSeconds={step.seconds}
+        completed={completed}
+      />
+      {micWarning && (
+        <p className="text-xs text-error-deep text-center -mt-8 mb-4">{micWarning}</p>
+      )}
+    </div>
   );
 }
 

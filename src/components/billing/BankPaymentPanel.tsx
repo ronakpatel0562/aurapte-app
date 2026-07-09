@@ -31,6 +31,10 @@ interface Props {
 
 type SubmitState = "idle" | "submitting" | "submitted" | "error";
 
+// Keep in sync with MAX_SCREENSHOT_BYTES in src/app/api/billing/claims/route.ts
+// (must stay under Vercel's 4.5MB Serverless Function body limit).
+const MAX_SCREENSHOT_BYTES = 4 * 1024 * 1024;
+
 export default function BankPaymentPanel({ planId, planName, label }: Props) {
   const [open, setOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -53,6 +57,10 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
       setSubmitError("Enter the payment reference / UTR number");
       return;
     }
+    if (screenshot && screenshot.size > MAX_SCREENSHOT_BYTES) {
+      setSubmitError("Screenshot must be under 4MB — try a smaller image or crop it");
+      return;
+    }
     setSubmitState("submitting");
     setSubmitError(null);
 
@@ -63,9 +71,15 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
 
     try {
       const res = await fetch("/api/billing/claims", { method: "POST", body: form });
-      const data = await res.json();
+      let data: { error?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        // Non-JSON response (e.g. a platform-level error page) — fall through
+        // to the generic message below instead of masking it as a network error.
+      }
       if (!res.ok) {
-        setSubmitError(data.error ?? "Something went wrong, please try again");
+        setSubmitError(data.error ?? `Upload failed (${res.status}), please try again`);
         setSubmitState("error");
         return;
       }
@@ -155,7 +169,7 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-mute">Screenshot (optional)</label>
+            <label className="text-xs font-medium text-mute">Screenshot (optional, under 4MB)</label>
             <label className="flex items-center gap-2 h-9 px-3 text-sm text-mute bg-canvas border border-dashed border-hairline rounded-md cursor-pointer hover:text-ink transition">
               <Upload className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{screenshot ? screenshot.name : "Attach a screenshot"}</span>
