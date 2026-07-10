@@ -142,6 +142,17 @@ export default async function BillingPage({
                     </span>
                   </div>
                 )}
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-lg font-semibold text-ink">
+                    ${plan.priceCad.toLocaleString("en-CA")} CAD
+                  </span>
+                  <span className="text-xs text-mute">/ {plan.billingPeriod}</span>
+                  {discount > 0 && (
+                    <span className="text-xs text-mute line-through">
+                      ${plan.originalPriceCad.toLocaleString("en-CA")}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <ul className="mt-5 space-y-2.5 flex-1">

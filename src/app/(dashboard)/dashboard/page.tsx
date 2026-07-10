@@ -247,7 +247,10 @@ export default async function DashboardPage() {
                 </div>
                 <p className="text-xs sm:text-sm text-mute leading-relaxed max-w-xl">
                   {PLANS.premium.tagline} {PLANS.premium.priceInr > 0 && (
-                    <>Starts at ₹{PLANS.premium.priceInr}/{PLANS.premium.billingPeriod}.</>
+                    <>
+                      Starts at ₹{PLANS.premium.priceInr}/{PLANS.premium.billingPeriod} (≈ $
+                      {PLANS.premium.priceCad} CAD).
+                    </>
                   )}
                 </p>
               </div>

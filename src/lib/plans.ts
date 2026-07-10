@@ -16,6 +16,10 @@
  * Anywhere in the codebase that needs the friendly name, price, or feature
  * list should import from here. Don't hardcode "Plan 1" / "Plan 2" anywhere
  * else — that's the kind of drift that makes billing screens lie.
+ *
+ * priceCad/originalPriceCad are display-only (shown alongside the INR price
+ * for international visitors) — all actual payment is still collected in INR
+ * via BankPaymentPanel, so update both currencies together when repricing.
  */
 
 export type PlanId = "free" | "premium";
@@ -30,6 +34,10 @@ export interface PlanDefinition {
   priceInr: number;
   /** Pre-discount "strikethrough" price in INR shown alongside priceInr. */
   originalPriceInr: number;
+  /** Price in CAD, shown alongside priceInr for international visitors. 0 = free tier. */
+  priceCad: number;
+  /** Pre-discount "strikethrough" price in CAD shown alongside priceCad. */
+  originalPriceCad: number;
   /** Billing period label, e.g. "month", "one-time". */
   billingPeriod: string;
   /** Whether this tier shows the upgrade CTA. */
@@ -51,6 +59,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     tagline: "A focused set of practice and mock tests to get you started.",
     priceInr: 33499,
     originalPriceInr: 39999,
+    priceCad: 540,
+    originalPriceCad: 650,
     billingPeriod: "month",
     isPaid: true,
     features: [
@@ -71,6 +81,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     tagline: "Unlimited tests with full scoring and progress tracking.",
     priceInr: 46999,
     originalPriceInr: 74999,
+    priceCad: 760,
+    originalPriceCad: 1210,
     billingPeriod: "month",
     isPaid: true,
     features: [
@@ -130,4 +142,10 @@ export function hasAccessToTest(
 export function formatPrice(plan: PlanDefinition): string {
   if (plan.priceInr === 0) return "Free";
   return `₹${plan.priceInr.toLocaleString("en-IN")} / ${plan.billingPeriod}`;
+}
+
+/** Formatted CAD price string for display ("$540 CAD / month" or "Free"). */
+export function formatPriceCad(plan: PlanDefinition): string {
+  if (plan.priceCad === 0) return "Free";
+  return `$${plan.priceCad.toLocaleString("en-CA")} CAD / ${plan.billingPeriod}`;
 }
