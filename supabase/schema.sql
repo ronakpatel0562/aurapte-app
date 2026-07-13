@@ -173,8 +173,34 @@ CREATE POLICY "Users can update their own sessions"
   ON public.user_sessions FOR UPDATE 
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own sessions" 
-  ON public.user_sessions FOR DELETE 
+CREATE POLICY "Users can delete their own sessions"
+  ON public.user_sessions FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- 5. Session History Table (append-only device/login log — see
+-- supabase/migrations/20260713_session_history.sql for the full rationale)
+CREATE TABLE IF NOT EXISTS public.session_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  session_id UUID NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS session_history_user_id_idx ON public.session_history(user_id);
+CREATE INDEX IF NOT EXISTS session_history_session_id_idx ON public.session_history(session_id);
+CREATE INDEX IF NOT EXISTS session_history_last_seen_idx ON public.session_history(last_seen_at);
+
+ALTER TABLE public.session_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert their own session history"
+  ON public.session_history FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own session history"
+  ON public.session_history FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- ============================================================================

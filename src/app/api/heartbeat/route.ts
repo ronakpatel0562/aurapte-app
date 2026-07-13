@@ -68,10 +68,18 @@ export async function POST(request: Request) {
     // update last_heartbeat when it's older than 60 seconds.
     const last = new Date(sessionData.last_heartbeat).getTime();
     if (Date.now() - last > 60_000) {
-      // Fire-and-forget: don't make the client wait on this write.
+      // Fire-and-forget: don't make the client wait on these writes.
+      const now = new Date().toISOString();
       void supabase
         .from("user_sessions")
-        .update({ last_heartbeat: new Date().toISOString() })
+        .update({ last_heartbeat: now })
+        .eq("user_id", user.id)
+        .eq("session_id", cleanSessionId);
+      // Keeps session_history's last_seen_at current so /admin/sessions can
+      // tell which devices are still actively in use vs. long stale.
+      void supabase
+        .from("session_history")
+        .update({ last_seen_at: now })
         .eq("user_id", user.id)
         .eq("session_id", cleanSessionId);
     }

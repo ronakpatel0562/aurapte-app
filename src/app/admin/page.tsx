@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, ShieldCheck, Users, Receipt, Link2 } from "lucide-react";
+import { ChevronRight, ShieldCheck, Users, Receipt, Link2, MonitorSmartphone } from "lucide-react";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
@@ -54,6 +54,13 @@ export default async function AdminHubPage() {
       icon: Link2,
       title: "Question links",
       description: "Map Mongo IDs to Supabase question UUIDs.",
+      badge: null,
+    },
+    {
+      href: "/admin/sessions",
+      icon: MonitorSmartphone,
+      title: "Device & session log",
+      description: "See every device an account has logged in from; flags likely credential sharing.",
       badge: null,
     },
   ];

@@ -50,6 +50,17 @@ export async function GET(request: NextRequest) {
         { onConflict: "user_id" }
       );
 
+      const forwardedFor = request.headers.get("x-forwarded-for");
+      const ip =
+        (forwardedFor ? forwardedFor.split(",")[0].trim() : request.headers.get("x-real-ip")) ||
+        null;
+      await supabase.from("session_history").insert({
+        user_id: user.id,
+        session_id: sessionId,
+        ip_address: ip,
+        user_agent: request.headers.get("user-agent"),
+      });
+
       // Sign the session ID and set the signed httpOnly cookie
       const secret = process.env.SESSION_SECRET || "fallback-secret-key-12345";
       const signedSessionId = await signSessionId(sessionId, secret);

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signSessionId } from "@/lib/session";
+import { getClientInfo } from "@/lib/request-info";
 
 // Called from LoginForm *after* the browser has already authenticated via
 // supabase.auth.signInWithPassword() client-side. Doing the sign-in on the
@@ -50,6 +51,17 @@ export async function establishSession() {
     console.error("Session creation error:", sessionError);
     return { error: "Failed to establish secure session." };
   }
+
+  // Append-only device log (separate from the single-slot user_sessions
+  // row above) so /admin/sessions can see every device this account has
+  // ever logged in from, not just the current one.
+  const { ip, userAgent } = getClientInfo();
+  await supabase.from("session_history").insert({
+    user_id: user.id,
+    session_id: sessionId,
+    ip_address: ip,
+    user_agent: userAgent,
+  });
 
   // 4. Set signed session_id in a signed httpOnly cookie
   const secret = process.env.SESSION_SECRET || "fallback-secret-key-12345";
@@ -120,6 +132,14 @@ export async function signup(prevState: any, formData: FormData) {
     if (sessionError) {
       return { error: "Registration succeeded but session initialization failed. Please login." };
     }
+
+    const { ip, userAgent } = getClientInfo();
+    await supabase.from("session_history").insert({
+      user_id: user.id,
+      session_id: sessionId,
+      ip_address: ip,
+      user_agent: userAgent,
+    });
 
     const secret = process.env.SESSION_SECRET || "fallback-secret-key-12345";
     const signedSessionId = await signSessionId(sessionId, secret);
