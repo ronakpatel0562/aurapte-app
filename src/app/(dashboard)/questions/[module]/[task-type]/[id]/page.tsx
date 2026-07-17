@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
 import QuestionAttemptClient from "./QuestionAttemptClient";
 import { mapUrlToDbTaskType, transformQuestionContent } from "@/lib/taskTypeMapper";
-import { interleaveByDifficulty } from "@/lib/questionOrder";
 
 interface PageProps {
   params: {
@@ -47,6 +46,7 @@ export default async function QuestionAttemptPage({ params }: PageProps) {
         .eq("id", idParam)
         .eq("module", moduleParam)
         .eq("task_type", dbTaskType)
+        .eq("is_active", true)
         .eq("pool", "shared")
         .maybeSingle(),
       supabase
@@ -64,12 +64,10 @@ export default async function QuestionAttemptPage({ params }: PageProps) {
     notFound();
   }
 
-  // Same difficulty-interleave the list page uses for display order, so
-  // "Next Question" here matches the list's visual sequence instead of
-  // drifting to whatever question happens to share the next title number
-  // (title numbers encode difficulty rank, not list position).
-  const mixedQuestions = interleaveByDifficulty(questions || []);
-  const questionIds = mixedQuestions.map((q) => q.id);
+  // `questions` is fetched with the exact same created_at-ascending order
+  // the list page uses for its sr no / display order, so "Next Question"
+  // here matches the position the user picked the question from in the list.
+  const questionIds = (questions || []).map((q) => q.id);
   const currentIndex = questionIds.indexOf(idParam);
 
   // Sequential navigation. When the user finishes the last question we

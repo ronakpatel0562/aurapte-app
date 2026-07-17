@@ -67,18 +67,8 @@ export default function QuestionListClient({
 
   const filteredQuestions = useMemo(() => {
     const filtered = questionsWithSrNo.filter((q) => {
-      // 1. Search Query Match
-      const previewText =
-        q.content?.passage ||
-        q.content?.passage_with_blanks ||
-        q.content?.sentence ||
-        q.content?.question ||
-        q.content?.audio_transcript ||
-        "";
-
-      const searchMatch =
-        q.title.toLowerCase().includes(search.toLowerCase()) ||
-        previewText.toLowerCase().includes(search.toLowerCase());
+      // 1. Search Query Match — title only, matching what's shown in the list view.
+      const searchMatch = q.title.toLowerCase().includes(search.toLowerCase());
 
       // 2. Difficulty Filter Match
       const difficultyMatch =
