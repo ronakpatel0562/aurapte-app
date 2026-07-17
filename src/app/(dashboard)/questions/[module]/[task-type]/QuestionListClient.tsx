@@ -67,8 +67,11 @@ export default function QuestionListClient({
 
   const filteredQuestions = useMemo(() => {
     const filtered = questionsWithSrNo.filter((q) => {
-      // 1. Search Query Match — title only, matching what's shown in the list view.
-      const searchMatch = q.title.toLowerCase().includes(search.toLowerCase());
+      // 1. Search Query Match — by serial no only (the numeric badge shown
+      // on each card), not title text.
+      const trimmedSearch = search.trim();
+      const searchMatch =
+        trimmedSearch === "" ? true : q.srNo === Number(trimmedSearch);
 
       // 2. Difficulty Filter Match
       const difficultyMatch =
@@ -188,7 +191,7 @@ export default function QuestionListClient({
             <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-mute" />
             <input
               type="text"
-              placeholder="Search questions..."
+              placeholder="Search by serial no..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full h-9 pl-9 pr-3 bg-canvas border border-hairline rounded-md text-xs text-ink focus:outline-none focus:border-hairline-strong transition"
