@@ -51,6 +51,12 @@ export default function SpeakingRecorderFlow({
 
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef("");
+  // Committed final segments, kept across recognition restarts (mobile
+  // browsers end/restart the recognition session frequently). onresult
+  // only walks event.results from event.resultIndex forward, so this must
+  // persist independently or a restart would re-sum every prior final
+  // result and duplicate the transcript.
+  const finalTranscriptRef = useRef("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopRecognition = () => {
@@ -111,6 +117,7 @@ export default function SpeakingRecorderFlow({
 
     let cancelled = false;
     transcriptRef.current = "";
+    finalTranscriptRef.current = "";
     setMicWarning(null);
 
     const startRecognition = () => {
@@ -126,13 +133,12 @@ export default function SpeakingRecorderFlow({
       recognitionRef.current = recognition;
 
       recognition.onresult = (event: any) => {
-        let final = "";
         let interim = "";
-        for (let i = 0; i < event.results.length; i++) {
-          if (event.results[i].isFinal) final += event.results[i][0].transcript + " ";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) finalTranscriptRef.current += event.results[i][0].transcript + " ";
           else interim += event.results[i][0].transcript;
         }
-        const full = (final + interim).trim();
+        const full = (finalTranscriptRef.current + interim).trim();
         transcriptRef.current = full;
         onAnswerChange(full);
       };

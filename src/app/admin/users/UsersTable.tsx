@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useTransition } from "react";
 import { Search, CheckCircle2, XCircle, Trash2, Loader2 } from "lucide-react";
-import { activatePlan, extendPlan, revokeAccess, deleteUserAccount } from "./actions";
+import { activatePlan, extendPlan, revokeAccess, deleteUserAccount, grantTrial } from "./actions";
 import { PLANS, type PlanId } from "@/lib/plans";
 
 export interface AdminUserRow {
@@ -24,6 +24,7 @@ function formatDate(iso: string | null): string {
 }
 
 const DURATIONS = [1, 3, 6, 12];
+const TRIAL_DAYS = [7, 15, 30];
 
 export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[] }) {
   const [rows, setRows] = useState(initialRows);
@@ -34,6 +35,7 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
   const [error, setError] = useState<string | null>(null);
   const [planChoice, setPlanChoice] = useState<Record<string, PlanId>>({});
   const [monthsChoice, setMonthsChoice] = useState<Record<string, number>>({});
+  const [trialDaysChoice, setTrialDaysChoice] = useState<Record<string, number>>({});
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -87,6 +89,20 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
             : new Date();
         base.setMonth(base.getMonth() + months);
         patchRow(row.id, { planExpiry: base.toISOString() });
+      }
+      return res;
+    });
+  }
+
+  function handleGrantTrial(row: AdminUserRow) {
+    const plan = planChoice[row.id] ?? "premium";
+    const days = trialDaysChoice[row.id] ?? 7;
+    run(row.id, async () => {
+      const res = await grantTrial(row.id, plan, days);
+      if (!res.error) {
+        const expiry = new Date();
+        expiry.setDate(expiry.getDate() + days);
+        patchRow(row.id, { plan, planExpiry: expiry.toISOString() });
       }
       return res;
     });
@@ -211,6 +227,26 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
                           className="text-xs font-medium px-2.5 py-1 rounded-md bg-ink text-canvas hover:opacity-90 transition disabled:opacity-50"
                         >
                           Activate
+                        </button>
+                        <select
+                          value={trialDaysChoice[row.id] ?? 7}
+                          onChange={(e) =>
+                            setTrialDaysChoice((p) => ({ ...p, [row.id]: Number(e.target.value) }))
+                          }
+                          className="text-xs bg-canvas border border-hairline rounded-md px-1.5 py-1"
+                          title="Referral trial length"
+                        >
+                          {TRIAL_DAYS.map((d) => (
+                            <option key={d} value={d}>{d}d trial</option>
+                          ))}
+                        </select>
+                        <button
+                          disabled={busy}
+                          onClick={() => handleGrantTrial(row)}
+                          title="Grant a free trial (e.g. for referrals)"
+                          className="text-xs font-medium px-2.5 py-1 rounded-md border border-primary/40 text-primary hover:bg-primary/10 transition disabled:opacity-50"
+                        >
+                          Grant Trial
                         </button>
                         <button
                           disabled={busy || !active}

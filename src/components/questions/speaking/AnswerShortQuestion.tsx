@@ -47,6 +47,7 @@ export default function AnswerShortQuestion({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
+  const finalTranscriptRef = useRef("");
 
   useEffect(() => {
     const saved = localStorage.getItem("portal_audio_volume");
@@ -122,6 +123,7 @@ export default function AnswerShortQuestion({
     if (intervalRef.current) clearInterval(intervalRef.current);
     setRecordCount(RECORD_SECONDS);
     latestTranscriptRef.current = "";
+    finalTranscriptRef.current = "";
     setTranscript("");
 
     intervalRef.current = setInterval(() => {
@@ -149,16 +151,15 @@ export default function AnswerShortQuestion({
       recognitionRef.current = recognition;
 
       recognition.onresult = (event: any) => {
-        let final = "";
         let interim = "";
-        for (let i = 0; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript + " ";
+            finalTranscriptRef.current += event.results[i][0].transcript + " ";
           } else {
             interim += event.results[i][0].transcript;
           }
         }
-        const full = (final + interim).trim();
+        const full = (finalTranscriptRef.current + interim).trim();
         latestTranscriptRef.current = full;
         setTranscript(full);
       };
@@ -214,6 +215,7 @@ export default function AnswerShortQuestion({
     setTranscript("");
     setSubmitted(false);
     latestTranscriptRef.current = "";
+    finalTranscriptRef.current = "";
   };
 
   const handleAudioEnded = () => {

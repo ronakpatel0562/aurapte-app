@@ -59,6 +59,7 @@ export default function ReadAloud({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
+  const finalTranscriptRef = useRef("");
   const recordingStartRef = useRef(0);
 
   const clearTimer = () => {
@@ -104,6 +105,7 @@ export default function ReadAloud({
     setRecordCount(RECORD_SECONDS);
     recordingStartRef.current = Date.now();
     latestTranscriptRef.current = "";
+    finalTranscriptRef.current = "";
     setTranscript("");
 
     // Start countdown
@@ -133,16 +135,15 @@ export default function ReadAloud({
       recognitionRef.current = recognition;
 
       recognition.onresult = (event: any) => {
-        let final = "";
         let interim = "";
-        for (let i = 0; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
-            final += event.results[i][0].transcript + " ";
+            finalTranscriptRef.current += event.results[i][0].transcript + " ";
           } else {
             interim += event.results[i][0].transcript;
           }
         }
-        const full = (final + interim).trim();
+        const full = (finalTranscriptRef.current + interim).trim();
         latestTranscriptRef.current = full;
         setTranscript(full);
       };
@@ -184,6 +185,7 @@ export default function ReadAloud({
     setTranscript("");
     setResult(null);
     latestTranscriptRef.current = "";
+    finalTranscriptRef.current = "";
     recordingStartRef.current = 0;
     setInitKey((k) => k + 1);
   };

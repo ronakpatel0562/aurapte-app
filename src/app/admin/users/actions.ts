@@ -66,6 +66,37 @@ export async function activatePlan(
   return {};
 }
 
+export async function grantTrial(
+  userId: string,
+  plan: PlanId,
+  days: number,
+): Promise<{ error?: string }> {
+  try {
+    await requireAdmin();
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+  if (!userId || (plan !== "free" && plan !== "premium")) {
+    return { error: "Invalid plan or user" };
+  }
+  if (!Number.isFinite(days) || days <= 0 || days > 60) {
+    return { error: "Invalid trial length" };
+  }
+
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + days);
+
+  const admin = adminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update({ plan, plan_expiry: expiry.toISOString() })
+    .eq("id", userId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/users");
+  return {};
+}
+
 export async function extendPlan(
   userId: string,
   months: number,
