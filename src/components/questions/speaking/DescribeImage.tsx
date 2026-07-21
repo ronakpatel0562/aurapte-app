@@ -58,6 +58,7 @@ export default function DescribeImage({
   const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
   const finalTranscriptRef = useRef("");
+  const finalIndexRef = useRef(0);
   const recordingStartRef = useRef(0);
 
   const clearTimer = () => {
@@ -104,6 +105,7 @@ export default function DescribeImage({
     recordingStartRef.current = Date.now();
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
+    finalIndexRef.current = 0;
     setTranscript("");
 
     intervalRef.current = setInterval(() => {
@@ -132,11 +134,14 @@ export default function DescribeImage({
 
       recognition.onresult = (event: any) => {
         let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = 0; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript + " ";
+            if (i >= finalIndexRef.current) {
+              finalTranscriptRef.current += event.results[i][0].transcript + " ";
+              finalIndexRef.current = i + 1;
+            }
           } else {
-            interim += event.results[i][0].transcript;
+            interim = event.results[i][0].transcript;
           }
         }
         const full = (finalTranscriptRef.current + interim).trim();
@@ -181,6 +186,7 @@ export default function DescribeImage({
     setResult(null);
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
+    finalIndexRef.current = 0;
     recordingStartRef.current = 0;
     setInitKey((k) => k + 1);
   };

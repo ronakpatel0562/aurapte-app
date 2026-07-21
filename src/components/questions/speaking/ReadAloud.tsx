@@ -60,6 +60,11 @@ export default function ReadAloud({
   const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
   const finalTranscriptRef = useRef("");
+  // Count of event.results entries already committed into finalTranscriptRef.
+  // Android's SpeechRecognition frequently reports an unreliable/stale
+  // event.resultIndex, so results are deduped by index count instead of
+  // trusting resultIndex to skip already-processed entries.
+  const finalIndexRef = useRef(0);
   const recordingStartRef = useRef(0);
 
   const clearTimer = () => {
@@ -106,6 +111,7 @@ export default function ReadAloud({
     recordingStartRef.current = Date.now();
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
+    finalIndexRef.current = 0;
     setTranscript("");
 
     // Start countdown
@@ -136,11 +142,14 @@ export default function ReadAloud({
 
       recognition.onresult = (event: any) => {
         let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = 0; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript + " ";
+            if (i >= finalIndexRef.current) {
+              finalTranscriptRef.current += event.results[i][0].transcript + " ";
+              finalIndexRef.current = i + 1;
+            }
           } else {
-            interim += event.results[i][0].transcript;
+            interim = event.results[i][0].transcript;
           }
         }
         const full = (finalTranscriptRef.current + interim).trim();
@@ -186,6 +195,7 @@ export default function ReadAloud({
     setResult(null);
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
+    finalIndexRef.current = 0;
     recordingStartRef.current = 0;
     setInitKey((k) => k + 1);
   };

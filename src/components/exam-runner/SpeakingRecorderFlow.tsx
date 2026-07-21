@@ -52,11 +52,11 @@ export default function SpeakingRecorderFlow({
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef("");
   // Committed final segments, kept across recognition restarts (mobile
-  // browsers end/restart the recognition session frequently). onresult
-  // only walks event.results from event.resultIndex forward, so this must
-  // persist independently or a restart would re-sum every prior final
-  // result and duplicate the transcript.
+  // browsers end/restart the recognition session frequently, and Android's
+  // event.resultIndex is unreliable, so onresult dedupes by result-index
+  // count via finalIndexRef instead of trusting resultIndex).
   const finalTranscriptRef = useRef("");
+  const finalIndexRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopRecognition = () => {
@@ -118,6 +118,7 @@ export default function SpeakingRecorderFlow({
     let cancelled = false;
     transcriptRef.current = "";
     finalTranscriptRef.current = "";
+    finalIndexRef.current = 0;
     setMicWarning(null);
 
     const startRecognition = () => {
@@ -134,9 +135,15 @@ export default function SpeakingRecorderFlow({
 
       recognition.onresult = (event: any) => {
         let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) finalTranscriptRef.current += event.results[i][0].transcript + " ";
-          else interim += event.results[i][0].transcript;
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            if (i >= finalIndexRef.current) {
+              finalTranscriptRef.current += event.results[i][0].transcript + " ";
+              finalIndexRef.current = i + 1;
+            }
+          } else {
+            interim = event.results[i][0].transcript;
+          }
         }
         const full = (finalTranscriptRef.current + interim).trim();
         transcriptRef.current = full;
