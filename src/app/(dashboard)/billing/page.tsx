@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Check, ChevronRight, Sparkles, Award, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
-import { PLANS, planName, isPremiumPlan, discountPercent, type PlanId } from "@/lib/plans";
+import { PLANS, planName, isPlanActive, formatExpiryDate, discountPercent, type PlanId } from "@/lib/plans";
 import BankPaymentPanel from "@/components/billing/BankPaymentPanel";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink, mailtoLink } from "@/lib/contact";
@@ -24,15 +24,13 @@ export default async function BillingPage({
     .eq("id", user.id)
     .maybeSingle();
   const currentPlan = ((profile?.plan as PlanId) || "free") as PlanId;
-  const isPremium = isPremiumPlan(currentPlan);
   // profiles.plan defaults to "free" for every signup regardless of payment
   // — it only reflects the *label* of the plan an admin last activated, not
   // whether that plan is currently paid for. Whether a plan is "current" (and
   // therefore not purchasable again) must also require a non-expired
   // plan_expiry, otherwise a brand-new unpaid user sees Starter marked
   // "Current" with the purchase button hidden and has no way to ever pay.
-  const hasActivePlan =
-    !!profile?.plan_expiry && new Date(profile.plan_expiry).getTime() > Date.now();
+  const hasActivePlan = isPlanActive(profile?.plan_expiry);
 
   // Sort: free first, then premium.
   const orderedPlans = [PLANS.free, PLANS.premium];
@@ -59,15 +57,11 @@ export default async function BillingPage({
             <>
               You&apos;re currently on{" "}
               <span className="font-semibold text-ink">{planName(currentPlan)}</span>.
-              {isPremium && profile?.plan_expiry && (
+              {profile?.plan_expiry && (
                 <>
-                  {" "}Renews on{" "}
+                  {" "}Valid until{" "}
                   <span className="font-mono text-body">
-                    {new Date(profile.plan_expiry).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {formatExpiryDate(profile.plan_expiry)}
                   </span>
                   .
                 </>

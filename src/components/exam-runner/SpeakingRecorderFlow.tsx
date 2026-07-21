@@ -152,6 +152,15 @@ export default function SpeakingRecorderFlow({
       recognition.onerror = () => {};
       recognition.onend = () => {
         if (recognitionRef.current === recognition) {
+          // Mobile browsers (esp. Android Chrome) ignore `continuous` and
+          // end the session after each pause. Each restart hands back a
+          // FRESH event.results list indexed from 0, so the per-session
+          // committed count must reset too — otherwise the carried-over
+          // finalIndexRef makes the `i >= finalIndexRef` guard in onresult
+          // reject every new final result and the live transcript freezes
+          // after the first restart. Already-committed text is safe in
+          // finalTranscriptRef, so this loses nothing.
+          finalIndexRef.current = 0;
           try {
             recognition.start();
           } catch {}

@@ -138,6 +138,37 @@ export function hasAccessToTest(
   return testNumber <= cap;
 }
 
+/**
+ * True when a plan_expiry timestamp exists and is still in the future.
+ * profiles.plan alone only reflects the *label* an admin last set, never
+ * whether it's currently paid for — so "active" always requires a
+ * non-expired plan_expiry (see the billing page for the same guard).
+ */
+export function isPlanActive(expiry: string | null | undefined): boolean {
+  return !!expiry && new Date(expiry).getTime() > Date.now();
+}
+
+/**
+ * Whole days from now until `expiry`, rounded up. Negative once expired,
+ * null when there's no expiry set. Used to decide when to nudge the user
+ * about an approaching renewal.
+ */
+export function daysUntilExpiry(expiry: string | null | undefined): number | null {
+  if (!expiry) return null;
+  const ms = new Date(expiry).getTime() - Date.now();
+  return Math.ceil(ms / (24 * 60 * 60 * 1000));
+}
+
+/** Human date for an expiry timestamp, e.g. "21 Jul 2026". Empty for null. */
+export function formatExpiryDate(expiry: string | null | undefined): string {
+  if (!expiry) return "";
+  return new Date(expiry).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 /** Formatted price string for display ("₹999/mo" or "Free"). */
 export function formatPrice(plan: PlanDefinition): string {
   if (plan.priceInr === 0) return "Free";

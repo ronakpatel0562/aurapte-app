@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
-import { planName, isPremiumPlan } from "@/lib/plans";
+import { planName, isPremiumPlan, isPlanActive, daysUntilExpiry, formatExpiryDate } from "@/lib/plans";
 import ThemeToggle from "@/components/providers/ThemeToggle";
 
 interface TaskTypeItem {
@@ -100,6 +100,7 @@ export default function MobileNavDrawer({
   const pathname = usePathname();
   const router = useRouter();
   const [plan, setPlan] = useState<string>("free");
+  const [planExpiry, setPlanExpiry] = useState<string | null>(null);
 
 
   // Lock background scroll while open. Restore on close.
@@ -123,10 +124,13 @@ export default function MobileNavDrawer({
         if (user) {
           const { data } = await supabase
             .from("profiles")
-            .select("plan")
+            .select("plan, plan_expiry")
             .eq("id", user.id)
             .maybeSingle();
-          if (data) setPlan(data.plan || "free");
+          if (data) {
+            setPlan(data.plan || "free");
+            setPlanExpiry(data.plan_expiry ?? null);
+          }
         }
       } catch {}
     };
@@ -136,6 +140,9 @@ export default function MobileNavDrawer({
 
 
   const isPremium = isPremiumPlan(plan);
+  const planActive = isPlanActive(planExpiry);
+  const daysLeft = daysUntilExpiry(planExpiry);
+  const expiringSoon = planActive && daysLeft !== null && daysLeft <= 7;
 
   const handleLogout = async () => {
     onClose();
@@ -276,15 +283,28 @@ export default function MobileNavDrawer({
             <Link
               href="/billing"
               onClick={onClose}
-              className="flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-body hover:bg-canvas-soft hover:text-ink transition"
+              className="flex flex-col px-3 py-2 rounded-md text-sm font-medium text-body hover:bg-canvas-soft hover:text-ink transition"
             >
-              <span className="flex items-center gap-3">
-                <Award className="w-4 h-4" />
-                Plans &amp; Billing
+              <span className="flex items-center justify-between">
+                <span className="flex items-center gap-3">
+                  <Award className="w-4 h-4" />
+                  Plans &amp; Billing
+                </span>
+                <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
+                  {planName(plan)}
+                </span>
               </span>
-              <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
-                {planName(plan)}
-              </span>
+              {planActive && (
+                <span
+                  className={`mt-1 pl-7 text-[10px] font-medium ${
+                    expiringSoon ? "text-warning-deep" : "text-mute"
+                  }`}
+                >
+                  {daysLeft !== null && daysLeft <= 0
+                    ? "Expired"
+                    : `Expires ${formatExpiryDate(planExpiry)}`}
+                </span>
+              )}
             </Link>
             <Link
               href="/contact-us"

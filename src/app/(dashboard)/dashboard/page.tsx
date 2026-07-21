@@ -14,10 +14,11 @@ import {
   ArrowRight,
   Sparkles,
   Lock,
+  CalendarClock,
 } from "lucide-react";
 import StatCard from "@/components/dashboard/StatCard";
 import RecentActivity, { type ActivityEntry } from "@/components/dashboard/RecentActivity";
-import { PLANS, planName, isPremiumPlan, type PlanId } from "@/lib/plans";
+import { PLANS, planName, isPremiumPlan, isPlanActive, daysUntilExpiry, formatExpiryDate, type PlanId } from "@/lib/plans";
 import { allMockTests, allPracticeTests, getMockTest, getPracticeTest } from "@/lib/testDefinitions";
 import { summarizeTestProgress, isTestComplete } from "@/lib/testProgress";
 
@@ -32,13 +33,20 @@ export default async function DashboardPage() {
   // Resolve plan up-front so the hero card can show the right CTA.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, plan")
+    .select("full_name, plan, plan_expiry")
     .eq("id", userId)
     .maybeSingle();
 
   const plan = ((profile?.plan as PlanId) || "free") as PlanId;
   const isPremium = isPremiumPlan(plan);
   const userName = profile?.full_name || user.user_metadata?.full_name || "Student";
+
+  // Plan expiry — a plan only counts as "active" when its plan_expiry is set
+  // and in the future (profiles.plan alone is just a label). daysLeft drives
+  // the "expiring soon" warning styling below.
+  const planActive = isPlanActive(profile?.plan_expiry);
+  const daysLeft = daysUntilExpiry(profile?.plan_expiry);
+  const expiringSoon = planActive && daysLeft !== null && daysLeft <= 7;
 
   // Fetched as two plain queries + an in-memory join rather than a single
   // PostgREST embedded `questions (...)` select: the embed resolves via
@@ -222,6 +230,51 @@ export default async function DashboardPage() {
           Here&apos;s an overview of your PTE Core preparation progress.
         </p>
       </div>
+
+      {/* Plan status — shown to anyone with an active (paid, non-expired)
+          plan so the renewal date is always in view. Turns amber in the
+          final week to nudge a renewal before access lapses. */}
+      {planActive && (
+        <div
+          className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border p-5 shadow-vercel-card ${
+            expiringSoon
+              ? "bg-warning-soft border-warning/30"
+              : "bg-canvas border-hairline"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                expiringSoon
+                  ? "bg-warning/15 text-warning-deep"
+                  : "bg-canvas-soft-2 border border-hairline text-mute"
+              }`}
+            >
+              <CalendarClock className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-ink">
+                {planName(plan)} · {expiringSoon ? "Expires soon" : "Active"}
+              </p>
+              <p className={`text-xs mt-0.5 ${expiringSoon ? "text-warning-deep" : "text-mute"}`}>
+                Your subscription {daysLeft !== null && daysLeft <= 0 ? "ended" : "is valid until"}{" "}
+                <span className="font-medium text-ink">{formatExpiryDate(profile?.plan_expiry)}</span>
+                {daysLeft !== null && daysLeft > 0 && (
+                  <> — {daysLeft} day{daysLeft === 1 ? "" : "s"} left</>
+                )}
+                .
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/billing"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-hairline bg-canvas hover:bg-canvas-soft-2 text-xs font-semibold text-ink transition shrink-0"
+          >
+            {expiringSoon ? "Renew now" : "Manage plan"}
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       {/* Plan upgrade nudge (only for free users) — sits ABOVE stats so
           it's the first thing they see after the greeting. */}

@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
-import { planName, isPremiumPlan } from "@/lib/plans";
+import { planName, isPremiumPlan, isPlanActive, daysUntilExpiry, formatExpiryDate } from "@/lib/plans";
 import ThemeToggle from "@/components/providers/ThemeToggle";
 
 interface TaskTypeItem {
@@ -84,6 +84,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [questionBankOpen, setQuestionBankOpen] = useState(true);
   const [plan, setPlan] = useState<string>("free");
+  const [planExpiry, setPlanExpiry] = useState<string | null>(null);
 
   const loadPlan = async () => {
     try {
@@ -95,11 +96,14 @@ export default function Sidebar() {
       if (user) {
         const { data: dbProfile } = await supabase
           .from("profiles")
-          .select("plan")
+          .select("plan, plan_expiry")
           .eq("id", user.id)
           .maybeSingle();
 
-        if (dbProfile) setPlan(dbProfile.plan || "free");
+        if (dbProfile) {
+          setPlan(dbProfile.plan || "free");
+          setPlanExpiry(dbProfile.plan_expiry ?? null);
+        }
       }
     } catch (err) {
       console.error("Failed to load user plan in sidebar:", err);
@@ -114,8 +118,9 @@ export default function Sidebar() {
   }, []);
 
   const isPremium = isPremiumPlan(plan);
-
-
+  const planActive = isPlanActive(planExpiry);
+  const daysLeft = daysUntilExpiry(planExpiry);
+  const expiringSoon = planActive && daysLeft !== null && daysLeft <= 7;
 
   const handleLogout = async () => {
     await logout();
@@ -275,19 +280,32 @@ export default function Sidebar() {
 
           <Link
             href="/billing"
-            className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition ${
+            className={`flex flex-col px-3 py-2 rounded-md text-sm font-medium transition ${
               pathname === "/billing"
                 ? "bg-canvas-soft-2 text-ink font-semibold"
                 : "text-body hover:bg-canvas-soft hover:text-ink"
             }`}
           >
-            <span className="flex items-center gap-3">
-              <Award className="w-4 h-4" />
-              Plans &amp; Billing
+            <span className="flex items-center justify-between">
+              <span className="flex items-center gap-3">
+                <Award className="w-4 h-4" />
+                Plans &amp; Billing
+              </span>
+              <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
+                {planName(plan)}
+              </span>
             </span>
-            <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
-              {planName(plan)}
-            </span>
+            {planActive && (
+              <span
+                className={`mt-1 pl-7 text-[10px] font-medium ${
+                  expiringSoon ? "text-warning-deep" : "text-mute"
+                }`}
+              >
+                {daysLeft !== null && daysLeft <= 0
+                  ? "Expired"
+                  : `Expires ${formatExpiryDate(planExpiry)}`}
+              </span>
+            )}
           </Link>
 
           <Link
