@@ -272,6 +272,17 @@ export default function AnswerShortQuestion({
     return `${m}:${sec}`;
   };
 
+  const handleStartRecording = () => {
+    if (phase !== "audio" && phase !== "prep") return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPrepSeconds(null);
+    setPhase("recording");
+  };
+
   const handleSubmit = () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -486,13 +497,14 @@ export default function AnswerShortQuestion({
             RESTART
           </button>
 
-          {(phase === "audio" || phase === "prep") && (
-            <span className="text-[13px] text-gray-600 font-medium">
-              {phase === "audio" ? "Listen carefully…" : "Get ready to speak…"}
-            </span>
-          )}
-
-          {(phase === "recording" || phase === "done") && (
+          {(phase === "audio" || phase === "prep") ? (
+            <button
+              onClick={handleStartRecording}
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+            >
+              Start Recording
+            </button>
+          ) : (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}

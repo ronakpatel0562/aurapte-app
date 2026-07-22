@@ -245,7 +245,7 @@ export default function SummarizeText({
         <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-end items-center select-none rounded-b-lg">
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || wordCount === 0}
+            disabled={isSubmitting}
             className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Submitting..." : "SUBMIT & CHECK"}

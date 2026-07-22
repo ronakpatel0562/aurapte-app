@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { scoreFluency, scoreAccuracy } from "@/lib/scoring/speaking";
-import LockedScoreBadge from "../shared/LockedScoreBadge";
 
 interface RepeatSentenceProps {
   question: {
@@ -43,7 +42,6 @@ export default function RepeatSentence({
   question,
   onSubmitAttempt,
   isSubmitting,
-  isPremium = false,
 }: RepeatSentenceProps) {
   const { content } = question;
 
@@ -272,6 +270,16 @@ export default function RepeatSentence({
     return `${m}:${sec}`;
   };
 
+  const handleStartRecording = () => {
+    if (phase !== "audio") return;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPrepSeconds(null);
+    setPhase("recording");
+  };
+
   const handleSubmit = () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -306,11 +314,7 @@ export default function RepeatSentence({
             <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
               Submitted ✓
             </span>
-            {isPremium ? (
-              <PercentBadge label="Accuracy" value={result.accuracy} />
-            ) : (
-              <LockedScoreBadge />
-            )}
+            <PercentBadge label="Accuracy" value={result.accuracy} />
           </div>
         </div>
 
@@ -478,13 +482,14 @@ export default function RepeatSentence({
             RESTART
           </button>
 
-          {phase === "audio" && (
-            <span className="text-[13px] text-gray-600 font-medium">
-              Listen carefully…
-            </span>
-          )}
-
-          {(phase === "recording" || phase === "done") && (
+          {phase === "audio" ? (
+            <button
+              onClick={handleStartRecording}
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+            >
+              Start Recording
+            </button>
+          ) : (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}

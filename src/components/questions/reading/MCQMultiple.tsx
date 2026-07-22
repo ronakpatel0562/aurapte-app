@@ -230,7 +230,7 @@ export default function MCQMultiple({
           {!submitted ? (
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || selected.length === 0}
+              disabled={isSubmitting}
               className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Submitting..." : "SUBMIT & CHECK"}

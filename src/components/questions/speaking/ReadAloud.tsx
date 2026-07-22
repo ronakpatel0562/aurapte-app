@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { scoreFluency, scorePronunciation } from "@/lib/scoring/speaking";
-import LockedScoreBadge from "../shared/LockedScoreBadge";
 
 interface ReadAloudProps {
   question: {
@@ -42,7 +41,6 @@ export default function ReadAloud({
   question,
   onSubmitAttempt,
   isSubmitting,
-  isPremium = false,
 }: ReadAloudProps) {
   const { content } = question;
 
@@ -209,6 +207,12 @@ export default function ReadAloud({
     setInitKey((k) => k + 1);
   };
 
+  const handleStartRecording = () => {
+    if (phase !== "prep") return;
+    clearTimer();
+    setPhase("recording");
+  };
+
   const handleSubmit = () => {
     stopRecognition();
     clearTimer();
@@ -247,14 +251,8 @@ export default function ReadAloud({
             <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
               Submitted ✓
             </span>
-            {isPremium ? (
-              <>
-                <PercentBadge label="Fluency" value={result.fluency} />
-                <PercentBadge label="Pronunciation" value={result.pronunciation} />
-              </>
-            ) : (
-              <LockedScoreBadge />
-            )}
+            <PercentBadge label="Fluency" value={result.fluency} />
+            <PercentBadge label="Pronunciation" value={result.pronunciation} />
           </div>
         </div>
 
@@ -372,13 +370,14 @@ export default function ReadAloud({
             RESTART
           </button>
 
-          {phase === "prep" && (
-            <span className="text-[13px] text-gray-600 font-medium">
-              Prepare to read aloud…
-            </span>
-          )}
-
-          {(phase === "recording" || phase === "done") && (
+          {phase === "prep" ? (
+            <button
+              onClick={handleStartRecording}
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+            >
+              Start Recording
+            </button>
+          ) : (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}

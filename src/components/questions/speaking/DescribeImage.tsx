@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { scoreFluency } from "@/lib/scoring/speaking";
-import LockedScoreBadge from "../shared/LockedScoreBadge";
 
 interface DescribeImageProps {
   question: {
@@ -43,7 +42,6 @@ export default function DescribeImage({
   question,
   onSubmitAttempt,
   isSubmitting,
-  isPremium = false,
 }: DescribeImageProps) {
   const { content } = question;
 
@@ -200,6 +198,12 @@ export default function DescribeImage({
     setInitKey((k) => k + 1);
   };
 
+  const handleStartRecording = () => {
+    if (phase !== "prep") return;
+    clearTimer();
+    setPhase("recording");
+  };
+
   const handleSubmit = () => {
     stopRecognition();
     clearTimer();
@@ -234,11 +238,7 @@ export default function DescribeImage({
             <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
               Submitted ✓
             </span>
-            {isPremium ? (
-              <PercentBadge label="Fluency" value={result.fluency} />
-            ) : (
-              <LockedScoreBadge />
-            )}
+            <PercentBadge label="Fluency" value={result.fluency} />
           </div>
         </div>
 
@@ -383,13 +383,14 @@ export default function DescribeImage({
             RESTART
           </button>
 
-          {phase === "prep" && (
-            <span className="text-[13px] text-gray-600 font-medium">
-              Study the image carefully…
-            </span>
-          )}
-
-          {(phase === "recording" || phase === "done") && (
+          {phase === "prep" ? (
+            <button
+              onClick={handleStartRecording}
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+            >
+              Start Recording
+            </button>
+          ) : (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}

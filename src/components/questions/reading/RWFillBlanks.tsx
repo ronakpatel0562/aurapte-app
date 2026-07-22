@@ -47,12 +47,6 @@ export default function RWFillBlanks({
   const handleSubmit = () => {
     if (submitted) return;
 
-    // Check if any dropdown selection is empty/pending
-    const isPending = Object.keys(correctAnswers).some((key) => !userAnswers[key]);
-    if (isPending) {
-      setValidationError("Please select an answer for all the blanks before submitting.");
-      return;
-    }
     setValidationError(null);
 
     const scoreResult = scoreRWFillInBlanks(userAnswers, correctAnswers);

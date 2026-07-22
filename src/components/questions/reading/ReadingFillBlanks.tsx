@@ -186,12 +186,6 @@ export default function ReadingFillBlanks({
   const handleSubmit = () => {
     if (submitted) return;
 
-    // Validate that all blanks have been filled
-    const isPending = Object.keys(correctAnswers).some((key) => !userAnswers[key]);
-    if (isPending) {
-      setValidationError("Please fill all the blanks before submitting.");
-      return;
-    }
     setValidationError(null);
 
     const scoreResult = scoreReadingFillInBlanks(userAnswers, correctAnswers);

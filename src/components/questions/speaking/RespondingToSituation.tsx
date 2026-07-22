@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { scoreFluency } from "@/lib/scoring/speaking";
-import LockedScoreBadge from "../shared/LockedScoreBadge";
 
 interface RespondingToSituationProps {
   question: {
@@ -46,7 +45,6 @@ export default function RespondingToSituation({
   question,
   onSubmitAttempt,
   isSubmitting,
-  isPremium = false,
 }: RespondingToSituationProps) {
   const { content } = question;
 
@@ -299,6 +297,17 @@ export default function RespondingToSituation({
     return `${m}:${sec}`;
   };
 
+  const handleStartRecording = () => {
+    if (phase !== "audio" && phase !== "thinking") return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPrepSeconds(null);
+    setPhase("recording");
+  };
+
   const handleSubmit = () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -334,11 +343,7 @@ export default function RespondingToSituation({
             <span className="text-[10px] font-mono font-semibold text-success uppercase bg-success/5 border border-success/15 px-2.5 py-1 rounded">
               Submitted ✓
             </span>
-            {isPremium ? (
-              <PercentBadge label="Fluency" value={result.fluency} />
-            ) : (
-              <LockedScoreBadge />
-            )}
+            <PercentBadge label="Fluency" value={result.fluency} />
           </div>
         </div>
 
@@ -544,15 +549,14 @@ export default function RespondingToSituation({
             RESTART
           </button>
 
-          {(phase === "audio" || phase === "thinking") && (
-            <span className="text-[13px] text-gray-600 font-medium">
-              {phase === "audio"
-                ? "Listen to the situation…"
-                : "Preparing your answer…"}
-            </span>
-          )}
-
-          {(phase === "recording" || phase === "done") && (
+          {(phase === "audio" || phase === "thinking") ? (
+            <button
+              onClick={handleStartRecording}
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+            >
+              Start Recording
+            </button>
+          ) : (
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}

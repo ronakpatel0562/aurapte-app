@@ -373,13 +373,18 @@ export default function QuestionAttemptClient({
 
       {/* Title Header */}
       <div className="pb-4 border-b border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none">
-        <div>
-          <h1 className="text-display-md tracking-tight font-semibold text-ink">
-            {displayTitle}
-          </h1>
-          <p className="text-body-sm text-mute mt-1 capitalize">
-            {question.module} Module • Difficulty: {question.difficulty}
-          </p>
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 mt-1 rounded-md bg-canvas-soft-2 border border-hairline flex items-center justify-center font-mono text-xs font-bold text-body shrink-0">
+            {questionNumber}
+          </div>
+          <div>
+            <h1 className="text-display-md tracking-tight font-semibold text-ink">
+              {displayTitle}
+            </h1>
+            <p className="text-body-sm text-mute mt-1 capitalize">
+              {question.module} Module • Difficulty: {question.difficulty}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -396,44 +401,43 @@ export default function QuestionAttemptClient({
       {/* Interactive Render */}
       <div>{renderQuestionUI()}</div>
 
-      {/* Sequential Navigation.
-                With the server-side rotation logic (page.tsx), nextQuestionId is
-                null only when there's a single question in the DB for this task
-                type. In that case we offer a "Back to Module" link rather than
-                a confusing "All Questions Done!" dead-end. */}
-            {hasSubmitted && (
-              <div className="mt-8 pt-6 border-t border-hairline flex justify-between items-center select-none">
-                <div>
-                  {prevQuestionId && (
-                    <Link
-                      href={`/questions/${question.module}/${mapDbToUrlTaskType(question.task_type)}/${prevQuestionId}`}
-                      className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
-                    >
-                      <ChevronLeft className="w-4 h-4 text-mute" />
-                      <span>Previous Question</span>
-                    </Link>
-                  )}
-                </div>
-                <div>
-                  {nextQuestionId ? (
-                    <Link
-                      href={`/questions/${question.module}/${mapDbToUrlTaskType(question.task_type)}/${nextQuestionId}`}
-                      className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-90 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
-                    >
-                      <span>Next Question</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  ) : (
-                    <Link
-                      href={getModuleUrl()}
-                      className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
-                    >
-                      <span>Back to List</span>
-                    </Link>
-                  )}
-                </div>
+      {/* Sequential Navigation. Always visible (not gated on hasSubmitted) so
+                users can skip around the question bank freely without having to
+                submit an answer first. With the server-side rotation logic
+                (page.tsx), nextQuestionId is null only when there's a single
+                question in the DB for this task type. In that case we offer a
+                "Back to Module" link rather than a confusing dead-end. */}
+            <div className="mt-8 pt-6 border-t border-hairline flex justify-between items-center select-none">
+              <div>
+                {prevQuestionId && (
+                  <Link
+                    href={`/questions/${question.module}/${mapDbToUrlTaskType(question.task_type)}/${prevQuestionId}`}
+                    className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-mute" />
+                    <span>Previous Question</span>
+                  </Link>
+                )}
               </div>
-            )}
+              <div>
+                {nextQuestionId ? (
+                  <Link
+                    href={`/questions/${question.module}/${mapDbToUrlTaskType(question.task_type)}/${nextQuestionId}`}
+                    className="h-10 px-6 bg-primary text-on-primary hover:bg-opacity-90 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  >
+                    <span>Next Question</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                ) : (
+                  <Link
+                    href={getModuleUrl()}
+                    className="h-10 px-6 border border-hairline hover:bg-canvas-soft-2 font-medium text-sm rounded-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] text-ink font-semibold"
+                  >
+                    <span>Back to List</span>
+                  </Link>
+                )}
+              </div>
+            </div>
     </div>
   );
 }
