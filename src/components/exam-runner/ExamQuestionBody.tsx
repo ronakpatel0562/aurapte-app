@@ -53,6 +53,7 @@ export default function ExamQuestionBody({
   onAnswerChange,
   elapsedSeconds = 0,
   onLockChange,
+  onAudioAnswer,
 }: {
   question: RunnerQuestion;
   answer: string;
@@ -61,6 +62,9 @@ export default function ExamQuestionBody({
   /** See [[SpeakingRecorderFlow.onLockChange]] — only speaking task types
    * drive this; every other type reports itself unlocked on mount. */
   onLockChange?: (locked: boolean) => void;
+  /** Forwarded to SpeakingRecorderFlow's onAudioRecorded — reports the
+   * recorded answer's blob URL so the evaluation screen can play it back. */
+  onAudioAnswer?: (url: string) => void;
 }) {
   const { content, task_type } = question;
 
@@ -81,7 +85,12 @@ export default function ExamQuestionBody({
             Look at the text below. In 35 seconds, you must read this text aloud as naturally and clearly as
             possible. You have 40 seconds to read aloud. Read the text aloud and record your response.
           </p>
-          <SpeakingRecorderFlow steps={steps} onAnswerChange={onAnswerChange} onLockChange={onLockChange} />
+          <SpeakingRecorderFlow
+            steps={steps}
+            onAnswerChange={onAnswerChange}
+            onLockChange={onLockChange}
+            onAudioRecorded={onAudioAnswer}
+          />
           <div className="border border-gray-300 rounded bg-white p-5 text-[15px] leading-relaxed text-gray-800">
             {content.passage ?? "No passage provided."}
           </div>
@@ -100,7 +109,12 @@ export default function ExamQuestionBody({
             You will hear a sentence. Please repeat the sentence exactly as you hear it. You will hear the
             sentence only once.
           </p>
-          <SpeakingRecorderFlow steps={steps} onAnswerChange={onAnswerChange} onLockChange={onLockChange} />
+          <SpeakingRecorderFlow
+            steps={steps}
+            onAnswerChange={onAnswerChange}
+            onLockChange={onLockChange}
+            onAudioRecorded={onAudioAnswer}
+          />
         </div>
       );
     }
@@ -116,7 +130,12 @@ export default function ExamQuestionBody({
             Look at the graph below. In 25 seconds, please speak into the microphone and describe in detail
             what the graph is showing. You will have 40 seconds to give your response.
           </p>
-          <SpeakingRecorderFlow steps={steps} onAnswerChange={onAnswerChange} onLockChange={onLockChange} />
+          <SpeakingRecorderFlow
+            steps={steps}
+            onAnswerChange={onAnswerChange}
+            onLockChange={onLockChange}
+            onAudioRecorded={onAudioAnswer}
+          />
           <div className="border border-gray-300 rounded overflow-hidden bg-white">
             {content.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -151,7 +170,12 @@ export default function ExamQuestionBody({
             <p className="text-sm leading-relaxed">{content.scenario ?? "No scenario provided."}</p>
             {content.question && <p className="text-sm leading-relaxed mt-2">{content.question}</p>}
           </div>
-          <SpeakingRecorderFlow steps={steps} onAnswerChange={onAnswerChange} onLockChange={onLockChange} />
+          <SpeakingRecorderFlow
+            steps={steps}
+            onAnswerChange={onAnswerChange}
+            onLockChange={onLockChange}
+            onAudioRecorded={onAudioAnswer}
+          />
         </div>
       );
     }
@@ -168,7 +192,12 @@ export default function ExamQuestionBody({
             You will hear a question. Please give a simple and short answer. Often just one or a few words are
             enough.
           </p>
-          <SpeakingRecorderFlow steps={steps} onAnswerChange={onAnswerChange} onLockChange={onLockChange} />
+          <SpeakingRecorderFlow
+            steps={steps}
+            onAnswerChange={onAnswerChange}
+            onLockChange={onLockChange}
+            onAudioRecorded={onAudioAnswer}
+          />
         </div>
       );
     }

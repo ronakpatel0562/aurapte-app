@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { scoreFluency } from "@/lib/scoring/speaking";
+import { playRecordingBeep } from "@/lib/audio/beep";
+import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
 
 interface RespondingToSituationProps {
   question: {
@@ -67,8 +69,8 @@ export default function RespondingToSituation({
   const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
   const finalTranscriptRef = useRef("");
-  const finalIndexRef = useRef(0);
   const recordingStartRef = useRef(0);
+  const recordedAudio = useRecordedAudio();
 
   useEffect(() => {
     const saved = localStorage.getItem("portal_audio_volume");
@@ -141,6 +143,13 @@ export default function RespondingToSituation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  // Beep the instant recording starts, whether triggered by the think-time
+  // countdown hitting zero or by manually clicking "Start Recording".
+  useEffect(() => {
+    if (phase === "recording") playRecordingBeep();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   // Recording countdown + STT
   useEffect(() => {
     if (phase !== "recording") return;
@@ -150,7 +159,6 @@ export default function RespondingToSituation({
     recordingStartRef.current = Date.now();
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
-    finalIndexRef.current = 0;
     setTranscript("");
 
     intervalRef.current = setInterval(() => {
@@ -165,12 +173,24 @@ export default function RespondingToSituation({
       });
     }, 1000);
 
-    const SR =
-      typeof window !== "undefined"
-        ? (window as any).SpeechRecognition ||
-          (window as any).webkitSpeechRecognition
-        : null;
-    if (SR) {
+    let cancelled = false;
+
+    // Speech recognition only starts once the recorder's own getUserMedia
+    // request has settled — requesting a second live mic stream *while*
+    // SpeechRecognition is already mid-session tends to make Chrome
+    // renegotiate the shared audio pipeline, aborting/restarting recognition
+    // and wiping whatever hadn't been finalised yet. Sequencing the two
+    // avoids that.
+    recordedAudio.start().then(() => {
+      if (cancelled) return;
+
+      const SR =
+        typeof window !== "undefined"
+          ? (window as any).SpeechRecognition ||
+            (window as any).webkitSpeechRecognition
+          : null;
+      if (!SR) return;
+
       const recognition = new SR();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -179,14 +199,11 @@ export default function RespondingToSituation({
 
       recognition.onresult = (event: any) => {
         let interim = "";
-        for (let i = 0; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
-            if (i >= finalIndexRef.current) {
-              finalTranscriptRef.current += event.results[i][0].transcript + " ";
-              finalIndexRef.current = i + 1;
-            }
+            finalTranscriptRef.current += event.results[i][0].transcript + " ";
           } else {
-            interim = event.results[i][0].transcript;
+            interim += event.results[i][0].transcript;
           }
         }
         const full = (finalTranscriptRef.current + interim).trim();
@@ -198,15 +215,6 @@ export default function RespondingToSituation({
 
       recognition.onend = () => {
         if (recognitionRef.current === recognition) {
-          // Mobile browsers (esp. Android Chrome) ignore `continuous` and
-          // end the session after each pause. Each restart hands back a
-          // FRESH event.results list indexed from 0, so the per-session
-          // committed count must reset too — otherwise the carried-over
-          // finalIndexRef makes the `i >= finalIndexRef` guard in onresult
-          // reject every new final result and the live transcript freezes
-          // after the first restart. Already-committed text is safe in
-          // finalTranscriptRef, so this loses nothing.
-          finalIndexRef.current = 0;
           try {
             recognition.start();
           } catch {}
@@ -214,11 +222,13 @@ export default function RespondingToSituation({
       };
 
       recognition.start();
-    }
+    });
 
     return () => {
+      cancelled = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
       stopRecognition();
+      recordedAudio.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -239,6 +249,7 @@ export default function RespondingToSituation({
   const handleReset = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     stopRecognition();
+    recordedAudio.reset();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -255,7 +266,6 @@ export default function RespondingToSituation({
     setResult(null);
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
-    finalIndexRef.current = 0;
     recordingStartRef.current = 0;
   };
 
@@ -348,6 +358,15 @@ export default function RespondingToSituation({
         </div>
 
         <div className="space-y-4">
+          {recordedAudio.audioUrl && (
+            <div>
+              <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
+                Your Recorded Answer
+              </p>
+              <audio controls src={recordedAudio.audioUrl} className="w-full h-10" />
+            </div>
+          )}
+
           <div>
             <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
               Your Response

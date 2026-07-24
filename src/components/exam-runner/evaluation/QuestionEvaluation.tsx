@@ -20,9 +20,12 @@ import SpeakingEvaluation from "./SpeakingEvaluation";
 export default function QuestionEvaluation({
   question,
   answer,
+  audioUrl,
 }: {
   question: RunnerQuestion;
   answer: string;
+  /** Recorded-answer blob URL — speaking task types only. */
+  audioUrl?: string;
 }) {
   const { task_type, content } = question;
 
@@ -120,7 +123,7 @@ export default function QuestionEvaluation({
     case "describe_image":
     case "responding_to_situation":
     case "answer_short_question":
-      return <SpeakingEvaluation taskType={task_type} content={content} answer={answer} />;
+      return <SpeakingEvaluation taskType={task_type} content={content} answer={answer} audioUrl={audioUrl} />;
 
     default:
       return (

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { scoreFluency, scorePronunciation } from "@/lib/scoring/speaking";
+import { playRecordingBeep } from "@/lib/audio/beep";
+import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
 
 interface ReadAloudProps {
   question: {
@@ -58,12 +60,8 @@ export default function ReadAloud({
   const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
   const finalTranscriptRef = useRef("");
-  // Count of event.results entries already committed into finalTranscriptRef.
-  // Android's SpeechRecognition frequently reports an unreliable/stale
-  // event.resultIndex, so results are deduped by index count instead of
-  // trusting resultIndex to skip already-processed entries.
-  const finalIndexRef = useRef(0);
   const recordingStartRef = useRef(0);
+  const recordedAudio = useRecordedAudio();
 
   const clearTimer = () => {
     if (intervalRef.current) {
@@ -100,6 +98,13 @@ export default function ReadAloud({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, initKey]);
 
+  // Beep the instant recording starts, whether triggered by the prep
+  // countdown hitting zero or by manually clicking "Start Recording".
+  useEffect(() => {
+    if (phase === "recording") playRecordingBeep();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   // Recording countdown + STT
   useEffect(() => {
     if (phase !== "recording") return;
@@ -109,7 +114,6 @@ export default function ReadAloud({
     recordingStartRef.current = Date.now();
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
-    finalIndexRef.current = 0;
     setTranscript("");
 
     // Start countdown
@@ -125,13 +129,24 @@ export default function ReadAloud({
       });
     }, 1000);
 
-    // Start speech recognition
-    const SR =
-      typeof window !== "undefined"
-        ? (window as any).SpeechRecognition ||
-          (window as any).webkitSpeechRecognition
-        : null;
-    if (SR) {
+    let cancelled = false;
+
+    // Speech recognition only starts once the recorder's own getUserMedia
+    // request has settled — requesting a second live mic stream *while*
+    // SpeechRecognition is already mid-session tends to make Chrome
+    // renegotiate the shared audio pipeline, aborting/restarting recognition
+    // and wiping whatever hadn't been finalised yet (the garbled live
+    // transcript this was causing). Sequencing the two avoids that.
+    recordedAudio.start().then(() => {
+      if (cancelled) return;
+
+      const SR =
+        typeof window !== "undefined"
+          ? (window as any).SpeechRecognition ||
+            (window as any).webkitSpeechRecognition
+          : null;
+      if (!SR) return;
+
       const recognition = new SR();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -140,14 +155,11 @@ export default function ReadAloud({
 
       recognition.onresult = (event: any) => {
         let interim = "";
-        for (let i = 0; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
-            if (i >= finalIndexRef.current) {
-              finalTranscriptRef.current += event.results[i][0].transcript + " ";
-              finalIndexRef.current = i + 1;
-            }
+            finalTranscriptRef.current += event.results[i][0].transcript + " ";
           } else {
-            interim = event.results[i][0].transcript;
+            interim += event.results[i][0].transcript;
           }
         }
         const full = (finalTranscriptRef.current + interim).trim();
@@ -159,15 +171,6 @@ export default function ReadAloud({
 
       recognition.onend = () => {
         if (recognitionRef.current === recognition) {
-          // Mobile browsers (esp. Android Chrome) ignore `continuous` and
-          // end the session after each pause. Each restart hands back a
-          // FRESH event.results list indexed from 0, so the per-session
-          // committed count must reset too — otherwise the carried-over
-          // finalIndexRef makes the `i >= finalIndexRef` guard in onresult
-          // reject every new final result and the live transcript freezes
-          // after the first restart. Already-committed text is safe in
-          // finalTranscriptRef, so this loses nothing.
-          finalIndexRef.current = 0;
           try {
             recognition.start();
           } catch {}
@@ -175,11 +178,13 @@ export default function ReadAloud({
       };
 
       recognition.start();
-    }
+    });
 
     return () => {
+      cancelled = true;
       clearTimer();
       stopRecognition();
+      recordedAudio.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -195,6 +200,7 @@ export default function ReadAloud({
   const handleReset = () => {
     clearTimer();
     stopRecognition();
+    recordedAudio.reset();
     setPhase("prep");
     setPrepCount(PREP_SECONDS);
     setRecordCount(RECORD_SECONDS);
@@ -202,7 +208,6 @@ export default function ReadAloud({
     setResult(null);
     latestTranscriptRef.current = "";
     finalTranscriptRef.current = "";
-    finalIndexRef.current = 0;
     recordingStartRef.current = 0;
     setInitKey((k) => k + 1);
   };
@@ -257,6 +262,15 @@ export default function ReadAloud({
         </div>
 
         <div className="space-y-4">
+          {recordedAudio.audioUrl && (
+            <div>
+              <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
+                Your Recorded Answer
+              </p>
+              <audio controls src={recordedAudio.audioUrl} className="w-full h-10" />
+            </div>
+          )}
+
           <div>
             <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
               Your Transcript

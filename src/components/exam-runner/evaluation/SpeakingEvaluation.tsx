@@ -16,6 +16,7 @@ export default function SpeakingEvaluation({
   taskType,
   content,
   answer,
+  audioUrl,
 }: {
   taskType: string;
   content: {
@@ -27,6 +28,9 @@ export default function SpeakingEvaluation({
     correct_answer?: string;
   };
   answer: string;
+  /** Recorded-answer blob URL, so the student can hear what they actually
+   * said instead of only reading the auto-transcript below. */
+  audioUrl?: string;
 }) {
   const transcript = (answer || "").trim();
 
@@ -83,6 +87,14 @@ export default function SpeakingEvaluation({
       )}
       {content.audio_url && (taskType === "repeat_sentence" || taskType === "answer_short_question") && (
         <EvalAudio audioUrl={content.audio_url} />
+      )}
+
+      {/* Recorded answer playback */}
+      {audioUrl && (
+        <div>
+          <EvalLabel>Your recorded answer</EvalLabel>
+          <audio controls src={audioUrl} className="w-full h-10" />
+        </div>
       )}
 
       {/* Captured transcript */}

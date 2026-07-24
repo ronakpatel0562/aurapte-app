@@ -28,12 +28,15 @@ export default function ExamEvaluation({
   module,
   questions,
   answers,
+  audioAnswers,
   backHref,
 }: {
   testTitle: string;
   module: "speaking" | "writing" | "reading" | "listening";
   questions: RunnerQuestion[];
   answers: Record<string, string>;
+  /** Recorded-answer blob URLs, keyed by question id — speaking only. */
+  audioAnswers?: Record<string, string>;
   backHref: string;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -160,7 +163,11 @@ export default function ExamEvaluation({
             <ScoreBadge score={selectedResult.score} maxScore={selectedResult.maxScore} />
           </div>
           <div className="p-6">
-            <QuestionEvaluation question={selectedQuestion} answer={answers[selectedQuestion.id] ?? ""} />
+            <QuestionEvaluation
+              question={selectedQuestion}
+              answer={answers[selectedQuestion.id] ?? ""}
+              audioUrl={audioAnswers?.[selectedQuestion.id]}
+            />
           </div>
         </div>
       )}

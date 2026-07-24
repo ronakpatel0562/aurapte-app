@@ -27,11 +27,14 @@ export default function MockExamEvaluation({
   testTitle,
   modules,
   answers,
+  audioAnswers,
   backHref,
 }: {
   testTitle: string;
   modules: MockModuleQuestions[];
   answers: Record<string, string>;
+  /** Recorded-answer blob URLs, keyed by question id — speaking only. */
+  audioAnswers?: Record<string, string>;
   backHref: string;
 }) {
   const resultsByModule = useMemo(
@@ -143,7 +146,11 @@ export default function MockExamEvaluation({
                   <ScoreBadge score={selectedResult.score} maxScore={selectedResult.maxScore} />
                 </div>
                 <div className="p-6">
-                  <QuestionEvaluation question={selectedQuestion} answer={answers[selectedQuestion.id] ?? ""} />
+                  <QuestionEvaluation
+                    question={selectedQuestion}
+                    answer={answers[selectedQuestion.id] ?? ""}
+                    audioUrl={audioAnswers?.[selectedQuestion.id]}
+                  />
                 </div>
               </div>
             )}

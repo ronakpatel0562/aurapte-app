@@ -86,6 +86,11 @@ export default function MockExamRunner({
 
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Blob URLs of what the student actually recorded, keyed by question id —
+  // kept separately from `answers` (the transcript) since the evaluation
+  // screen wants both. Valid only for this in-memory session, which is fine
+  // since MockExamEvaluation renders from this same mounted state, no reload.
+  const [audioAnswers, setAudioAnswers] = useState<Record<string, string>>({});
   const [confirmNext, setConfirmNext] = useState(false);
   const [confirmSaveExit, setConfirmSaveExit] = useState(false);
   const [elapsedInGroup, setElapsedInGroup] = useState(0);
@@ -277,6 +282,7 @@ export default function MockExamRunner({
         testTitle={testTitle}
         modules={activeModules}
         answers={answers}
+        audioAnswers={audioAnswers}
         backHref={backHref}
       />
     );
@@ -324,6 +330,7 @@ export default function MockExamRunner({
                 onAnswerChange={(v) => setAnswers((a) => ({ ...a, [currentQuestion.id]: v }))}
                 elapsedSeconds={elapsedInGroup}
                 onLockChange={setNextLocked}
+                onAudioAnswer={(url) => setAudioAnswers((a) => ({ ...a, [currentQuestion.id]: url }))}
               />
             )}
             {finished === "submitting" && <div className="text-sm text-gray-600">Submitting…</div>}
