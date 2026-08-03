@@ -65,7 +65,7 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
   }
 
   function handleActivate(row: AdminUserRow) {
-    const plan = planChoice[row.id] ?? "premium";
+    const plan = planChoice[row.id] ?? "master";
     const months = monthsChoice[row.id] ?? 1;
     run(row.id, async () => {
       const res = await activatePlan(row.id, plan, months);
@@ -79,23 +79,24 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
   }
 
   function handleExtend(row: AdminUserRow) {
+    const plan = planChoice[row.id] ?? row.plan;
     const months = monthsChoice[row.id] ?? 1;
     run(row.id, async () => {
-      const res = await extendPlan(row.id, months);
+      const res = await activatePlan(row.id, plan, months);
       if (!res.error) {
         const base =
           row.planExpiry && new Date(row.planExpiry).getTime() > Date.now()
             ? new Date(row.planExpiry)
             : new Date();
         base.setMonth(base.getMonth() + months);
-        patchRow(row.id, { planExpiry: base.toISOString() });
+        patchRow(row.id, { plan, planExpiry: base.toISOString() });
       }
       return res;
     });
   }
 
   function handleGrantTrial(row: AdminUserRow) {
-    const plan = planChoice[row.id] ?? "premium";
+    const plan = planChoice[row.id] ?? "master";
     const days = trialDaysChoice[row.id] ?? 7;
     run(row.id, async () => {
       const res = await grantTrial(row.id, plan, days);

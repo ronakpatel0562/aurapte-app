@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { getSupabaseCredentials } from "@/lib/supabase/config";
 import UsersTable, { type AdminUserRow } from "./UsersTable";
+import type { PlanId } from "@/lib/plans";
 
 /**
  * /admin/users
@@ -86,7 +87,7 @@ export default async function AdminUsersPage() {
         email: u.email,
         fullName: profile?.full_name ?? null,
         createdAt: u.created_at,
-        plan: (profile?.plan as "free" | "premium" | null) ?? "free",
+        plan: (profile?.plan as PlanId | null) ?? "free",
         planExpiry: profile?.plan_expiry ?? null,
       };
     })
