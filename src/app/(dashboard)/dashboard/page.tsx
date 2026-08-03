@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { mapDbToUrlTaskType, getTaskTypeFriendlyName, questionHref } from "@/lib/taskTypeMapper";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
   const supabase = createClient();
 
   const user = await getCurrentUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const userId = user.id;
 
