@@ -98,14 +98,20 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
     ...(BANK_DETAILS.upiId ? [["UPI ID", BANK_DETAILS.upiId] as [string, string]] : []),
   ];
 
+  const isMaster = planId === "master";
+
   if (!open) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full h-12 rounded-lg bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white font-semibold hover:opacity-95 active:scale-[0.99] transition flex items-center justify-center gap-2"
+        className={`w-full min-h-[48px] py-3 px-4 rounded-xl text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.99] cursor-pointer ${
+          isMaster
+            ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/25 shadow-md"
+            : "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end hover:opacity-95"
+        }`}
       >
-        <Landmark className="w-4 h-4" />
-        {label ?? `Get payment details for ${planName}`}
+        <Landmark className="w-4 h-4 shrink-0" />
+        <span className="leading-tight text-center">{label ?? `Get payment details for ${planName}`}</span>
       </button>
     );
   }
