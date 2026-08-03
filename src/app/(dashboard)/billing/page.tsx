@@ -32,11 +32,11 @@ export default async function BillingPage({
   // "Current" with the purchase button hidden and has no way to ever pay.
   const hasActivePlan = isPlanActive(profile?.plan_expiry);
 
-  // Sort: free first, then premium.
-  const orderedPlans = [PLANS.free, PLANS.premium];
+  // Sort: Starter, Pro, Mentorship 85+
+  const orderedPlans = [PLANS.free, PLANS.premium, PLANS.master];
 
   return (
-    <div className="space-y-6 sm:space-y-8 py-2 sm:py-4 select-none">
+    <div className="space-y-6 sm:space-y-8 py-2 sm:py-4 select-none max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs font-mono text-mute uppercase">
         <Link href="/dashboard" className="hover:text-ink transition">Dashboard</Link>
@@ -73,24 +73,31 @@ export default async function BillingPage({
         </p>
       </div>
 
-      {/* Plan cards — both paid, Aura Starter on the left, Aura Pro (featured)
-          on the right. On phones they stack; on tablets+ side by side. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      {/* Plan cards — Starter (100 CAD), Pro (150 CAD), Mentorship 85+ (500 CAD) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
         {orderedPlans.map((plan) => {
           const isCurrent = plan.id === currentPlan && hasActivePlan;
-          const isFeatured = plan.id === "premium";
+          const isMaster = plan.id === "master";
+          const isPro = plan.id === "premium";
           const discount = discountPercent(plan);
-          const savings = plan.originalPriceInr - plan.priceInr;
+          const savingsInr = plan.originalPriceInr - plan.priceInr;
+          const savingsCad = plan.originalPriceCad - plan.priceCad;
           return (
             <div
               key={plan.id}
               className={`card-hover relative bg-canvas border rounded-2xl p-6 sm:p-7 pt-9 sm:pt-10 shadow-vercel-card flex flex-col ${
-                isFeatured
+                isMaster
+                  ? "border-amber-500/60 ring-2 ring-amber-500/30 bg-gradient-to-b from-amber-500/5 via-canvas to-canvas"
+                  : isPro
                   ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20"
                   : "border-hairline"
               }`}
             >
-              {isFeatured ? (
+              {isMaster ? (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-lg whitespace-nowrap">
+                  ⭐ RECOMMENDED FOR 85+ SCORE · Save {discount}%
+                </div>
+              ) : isPro ? (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
                   Most Popular · Save {discount}%
                 </div>
@@ -129,10 +136,10 @@ export default async function BillingPage({
                     </span>
                     <span
                       className={`text-xs font-semibold ${
-                        isFeatured ? "text-success" : "text-mute"
+                        isMaster ? "text-amber-500 font-bold" : isPro ? "text-success" : "text-mute"
                       }`}
                     >
-                      Save ₹{savings.toLocaleString("en-IN")} ({discount}% off)
+                      Save ₹{savingsInr.toLocaleString("en-IN")} ({discount}% off)
                     </span>
                   </div>
                 )}
@@ -159,12 +166,18 @@ export default async function BillingPage({
                     <li key={f} className="flex items-start gap-2.5 text-sm text-body">
                       <span
                         className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                          isFeatured ? "bg-gradient-brand-start/10 text-gradient-brand-start" : "bg-success/10 text-success"
+                          isMaster
+                            ? "bg-amber-500/10 text-amber-500 font-bold"
+                            : isPro
+                            ? "bg-gradient-brand-start/10 text-gradient-brand-start"
+                            : "bg-success/10 text-success"
                         }`}
                       >
                         <Check className="w-3 h-3" />
                       </span>
-                      <span className="leading-relaxed">{f}</span>
+                      <span className={`leading-relaxed ${f.includes("No ") ? "text-mute line-through text-xs" : ""}`}>
+                        {f}
+                      </span>
                     </li>
                   ),
                 )}

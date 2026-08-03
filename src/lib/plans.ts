@@ -22,7 +22,7 @@
  * via BankPaymentPanel, so update both currencies together when repricing.
  */
 
-export type PlanId = "free" | "premium";
+export type PlanId = "free" | "premium" | "master";
 
 export interface PlanDefinition {
   id: PlanId;
@@ -56,11 +56,11 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   free: {
     id: "free",
     name: "Aura Starter",
-    tagline: "A focused set of practice and mock tests to get you started.",
-    priceInr: 34500,
-    originalPriceInr: 39000,
-    priceCad: 500,
-    originalPriceCad: 600,
+    tagline: "A focused set of practice and mock tests for self-study.",
+    priceInr: 7000,
+    originalPriceInr: 8750,
+    priceCad: 100,
+    originalPriceCad: 125,
     billingPeriod: "month",
     isPaid: true,
     features: [
@@ -68,6 +68,7 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
       "10 Practice Tests & 5 Mock Tests",
       "Prediction Files & Specialised Tips",
       "Real exam timer & interface",
+      "Self-study only (No Teacher Guidance)",
     ],
     limits: {
       practiceTests: 10,
@@ -78,11 +79,11 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   premium: {
     id: "premium",
     name: "Aura Pro",
-    tagline: "Unlimited tests with full scoring and progress tracking.",
-    priceInr: 47500,
-    originalPriceInr: 75000,
-    priceCad: 700,
-    originalPriceCad: 1120,
+    tagline: "Unlimited tests with full automated scoring and progress tracking.",
+    priceInr: 10500,
+    originalPriceInr: 16800,
+    priceCad: 150,
+    originalPriceCad: 240,
     billingPeriod: "month",
     isPaid: true,
     features: [
@@ -91,9 +92,35 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
       "15 Full Mock Tests",
       "Random Practice Test Generation",
       "See your score on every question",
-      "Full Score History",
+      "Full Score History & Stats",
       "Filter by difficulty & completion status",
-      "Dashboard Stats & Dark Mode",
+      "No Live Teacher or 1:1 Doubt Solving",
+    ],
+    limits: {
+      practiceTests: null,
+      mockTests: null,
+      questionsPerModule: null,
+    },
+  },
+  master: {
+    id: "master",
+    name: "Aura Mentorship 85+",
+    tagline: "Direct 1-on-1 teacher interaction, live sessions, doubt solving & 85+ score target strategy.",
+    priceInr: 35000,
+    originalPriceInr: 56000,
+    priceCad: 500,
+    originalPriceCad: 800,
+    billingPeriod: "month",
+    isPaid: true,
+    features: [
+      "Everything in Pro, plus:",
+      "1-on-1 Live Interactive Sessions with Expert Teacher",
+      "Dedicated Senior Teacher for Daily Doubt Solving",
+      "In-depth Progress Analysis & Weak Area Diagnosis",
+      "Customised Roadmap & Strategy for Guaranteed 85+ Score in PTE Core",
+      "Priority 1-on-1 Speaking & Writing Evaluation Feedback",
+      "Direct 1:1 WhatsApp & Call Access to your Teacher",
+      "Unlimited Practice & Unlimited Full Mock Tests",
     ],
     limits: {
       practiceTests: null,
@@ -103,11 +130,11 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   },
 };
 
-/** Discount percent off originalPriceInr, rounded to the nearest whole number. */
+/** Discount percent off originalPriceCad, rounded to the nearest whole number. */
 export function discountPercent(plan: PlanDefinition): number {
-  if (!plan.originalPriceInr || plan.originalPriceInr <= plan.priceInr) return 0;
+  if (!plan.originalPriceCad || plan.originalPriceCad <= plan.priceCad) return 0;
   return Math.round(
-    ((plan.originalPriceInr - plan.priceInr) / plan.originalPriceInr) * 100,
+    ((plan.originalPriceCad - plan.priceCad) / plan.originalPriceCad) * 100,
   );
 }
 
@@ -122,7 +149,7 @@ export function planName(id: string | null | undefined): string {
 
 /** True when the user's plan unlocks a feature that the free tier caps. */
 export function isPremiumPlan(id: string | null | undefined): boolean {
-  return id === "premium";
+  return id === "premium" || id === "master";
 }
 
 /** True if the user has access to a 1-indexed test number in a given track. */

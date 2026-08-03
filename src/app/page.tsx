@@ -621,19 +621,28 @@ export default async function LandingPage() {
             </p>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto md:items-stretch">
-            {[PLANS.free, PLANS.premium].map((plan, i) => {
-              const isFeatured = plan.id === "premium";
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto lg:items-stretch">
+            {[PLANS.free, PLANS.premium, PLANS.master].map((plan, i) => {
+              const isMaster = plan.id === "master";
+              const isPro = plan.id === "premium";
               const discount = discountPercent(plan);
               const savings = plan.originalPriceInr - plan.priceInr;
               return (
                 <ScrollReveal key={plan.id} delay={i * 100} className="h-full">
                   <div
                     className={`card-hover relative h-full bg-canvas border rounded-2xl p-6 sm:p-7 pt-9 sm:pt-10 shadow-vercel-card flex flex-col ${
-                      isFeatured ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20" : "border-hairline"
+                      isMaster
+                        ? "border-amber-500/60 ring-2 ring-amber-500/30 bg-gradient-to-b from-amber-500/5 via-canvas to-canvas"
+                        : isPro
+                        ? "border-gradient-brand-start/40 ring-1 ring-gradient-brand-start/20"
+                        : "border-hairline"
                     }`}
                   >
-                    {isFeatured ? (
+                    {isMaster ? (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-lg whitespace-nowrap">
+                        ⭐ RECOMMENDED FOR 85+ SCORE · Save {discount}%
+                      </div>
+                    ) : isPro ? (
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
                         Most Popular · Save {discount}%
                       </div>
@@ -658,7 +667,7 @@ export default async function LandingPage() {
                           <span className="text-sm text-mute line-through">
                             ₹{plan.originalPriceInr.toLocaleString("en-IN")}
                           </span>
-                          <span className={`text-xs font-semibold ${isFeatured ? "text-success" : "text-mute"}`}>
+                          <span className={`text-xs font-semibold ${isMaster ? "text-amber-500 font-bold" : isPro ? "text-success" : "text-mute"}`}>
                             Save ₹{savings.toLocaleString("en-IN")} ({discount}% off)
                           </span>
                         </div>
@@ -675,7 +684,7 @@ export default async function LandingPage() {
                         )}
                       </div>
                     </div>
-                    <ul className="mt-5 space-y-2.5">
+                    <ul className="mt-5 space-y-2.5 flex-1">
                       {plan.features.map((f) =>
                         f.endsWith(":") ? (
                           <li key={f} className="pt-1 text-sm font-semibold text-ink">
@@ -683,10 +692,20 @@ export default async function LandingPage() {
                           </li>
                         ) : (
                           <li key={f} className="flex items-start gap-2.5 text-sm text-body">
-                            <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-success/10 text-success">
+                            <span
+                              className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                isMaster
+                                  ? "bg-amber-500/10 text-amber-500 font-bold"
+                                  : isPro
+                                  ? "bg-gradient-brand-start/10 text-gradient-brand-start"
+                                  : "bg-success/10 text-success"
+                              }`}
+                            >
                               <Check className="w-3 h-3" />
                             </span>
-                            <span className="leading-relaxed">{f}</span>
+                            <span className={`leading-relaxed ${f.includes("No ") ? "text-mute line-through text-xs" : ""}`}>
+                              {f}
+                            </span>
                           </li>
                         ),
                       )}
@@ -695,7 +714,9 @@ export default async function LandingPage() {
                       <Link
                         href="/signup"
                         className={`w-full h-11 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 ${
-                          isFeatured
+                          isMaster
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-95 active:scale-[0.99] shadow-md"
+                            : isPro
                             ? "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white hover:opacity-95 active:scale-[0.99]"
                             : "border border-hairline bg-canvas hover:bg-canvas-soft-2 text-ink"
                         }`}
