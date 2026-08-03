@@ -111,7 +111,7 @@ export default async function BillingPage({
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Sparkles className={`w-4 h-4 ${isFeatured ? "text-gradient-brand-start" : "text-mute"}`} />
+                  <Sparkles className={`w-4 h-4 ${isMaster ? "text-amber-500" : isPro ? "text-gradient-brand-start" : "text-mute"}`} />
                   <h2 className="text-xl font-semibold text-ink">{plan.name}</h2>
                   {isCurrent && (
                     <span className="text-2xs font-mono font-semibold uppercase px-2 py-0.5 rounded bg-success/10 text-success border border-success/20">
