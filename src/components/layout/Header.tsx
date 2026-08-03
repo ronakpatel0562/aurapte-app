@@ -78,8 +78,8 @@ export default function Header({ isAdmin = false }: HeaderProps) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const planDef = PLANS[profile?.plan ?? "free"];
-  const isPremium = profile?.plan === "premium";
+  const isMaster = profile?.plan === "master";
+  const isPro = profile?.plan === "premium";
 
   return (
     <header className="h-16 border-b border-hairline bg-canvas flex items-center justify-between px-4 sm:px-6 lg:px-8 z-30 sticky top-0 backdrop-blur-md bg-canvas/85">
@@ -108,13 +108,14 @@ export default function Header({ isAdmin = false }: HeaderProps) {
 
         {profile ? (
           <>
-            {/* Plan badge — pill showing the friendly name. Premium gets a
-                subtle gradient accent; free stays neutral. */}
+            {/* Plan badge — Mentorship 85+ gets vibrant amber gradient, Pro gets brand gradient */}
             <div
-              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-mono font-semibold uppercase tracking-wider border ${
-                isPremium
+              className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-mono font-bold uppercase tracking-wider ${
+                isMaster
+                  ? "text-white bg-gradient-to-r from-amber-500 to-orange-500 shadow-md shadow-amber-500/20 border-transparent"
+                  : isPro
                   ? "text-on-primary bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end border-transparent shadow-sm"
-                  : "text-body bg-canvas-soft-2 border-hairline"
+                  : "text-body bg-canvas-soft-2 border border-hairline"
               }`}
               title={planDef.tagline}
             >
