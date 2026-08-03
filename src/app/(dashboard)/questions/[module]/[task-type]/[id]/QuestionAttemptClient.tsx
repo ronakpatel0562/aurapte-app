@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapDbToUrlTaskType, getTaskTypeFriendlyName } from "@/lib/taskTypeMapper";
+import { isPremiumPlan } from "@/lib/plans";
 
 // Import Reading components
 import RWFillBlanks from "@/components/questions/reading/RWFillBlanks";
@@ -334,7 +335,7 @@ export default function QuestionAttemptClient({
     return getTaskTypeFriendlyName(type);
   };
 
-  const isPremium = plan === "premium";
+  const isPremium = isPremiumPlan(plan);
 
   const isWFD = question.task_type === "write_from_dictation" || question.task_type === "write-from-dictation";
   const isASQ = question.task_type === "answer_short_question" || question.task_type === "answer-short-question";
