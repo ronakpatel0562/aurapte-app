@@ -3,13 +3,13 @@
 import React, { useMemo, useState, useTransition } from "react";
 import { CheckCircle2, XCircle, Clock, ImageIcon, Loader2 } from "lucide-react";
 import { approveClaim, rejectClaim, getScreenshotUrl } from "./actions";
-import { PLANS } from "@/lib/plans";
+import { PLANS, type PlanId } from "@/lib/plans";
 
 export interface AdminClaimRow {
   id: string;
   userId: string;
   email: string | null;
-  planId: "free" | "premium";
+  planId: PlanId;
   months: number;
   reference: string;
   screenshotPath: string | null;

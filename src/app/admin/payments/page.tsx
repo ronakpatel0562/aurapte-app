@@ -59,7 +59,7 @@ export default async function AdminPaymentsPage() {
     id: c.id,
     userId: c.user_id,
     email: emailById.get(c.user_id) ?? null,
-    planId: c.plan_id as "free" | "premium",
+    planId: c.plan_id as PlanId,
     months: c.months,
     reference: c.reference,
     screenshotPath: c.screenshot_path,

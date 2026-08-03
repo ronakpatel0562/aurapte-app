@@ -45,7 +45,7 @@ export async function activatePlan(
   } catch (e) {
     return { error: (e as Error).message };
   }
-  if (!userId || (plan !== "free" && plan !== "premium")) {
+  if (!userId || (plan !== "free" && plan !== "premium" && plan !== "master")) {
     return { error: "Invalid plan or user" };
   }
   if (!Number.isFinite(months) || months <= 0 || months > 36) {
@@ -76,7 +76,7 @@ export async function grantTrial(
   } catch (e) {
     return { error: (e as Error).message };
   }
-  if (!userId || (plan !== "free" && plan !== "premium")) {
+  if (!userId || (plan !== "free" && plan !== "premium" && plan !== "master")) {
     return { error: "Invalid plan or user" };
   }
   if (!Number.isFinite(days) || days <= 0 || days > 60) {

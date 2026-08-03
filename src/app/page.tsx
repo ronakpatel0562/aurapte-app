@@ -621,7 +621,7 @@ export default async function LandingPage() {
             </p>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto lg:items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 pt-5 max-w-6xl mx-auto lg:items-stretch">
             {[PLANS.free, PLANS.premium, PLANS.master].map((plan, i) => {
               const isMaster = plan.id === "master";
               const isPro = plan.id === "premium";
@@ -639,16 +639,16 @@ export default async function LandingPage() {
                     }`}
                   >
                     {isMaster ? (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-lg whitespace-nowrap">
-                        ⭐ RECOMMENDED FOR 85+ SCORE · Save {discount}%
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] font-mono font-semibold uppercase tracking-wider shadow-md whitespace-nowrap z-10 max-w-[92%] truncate">
+                        ⭐ 85+ MENTORSHIP · Save {discount}%
                       </div>
                     ) : isPro ? (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white text-[11px] font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap z-10 max-w-[92%] truncate">
                         Most Popular · Save {discount}%
                       </div>
                     ) : (
                       discount > 0 && (
-                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-canvas-soft-2 text-mute border border-hairline text-2xs font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap">
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-canvas-soft-2 text-mute border border-hairline text-[11px] font-mono font-semibold uppercase tracking-wider shadow-vercel-card whitespace-nowrap z-10">
                           {discount}% OFF
                         </div>
                       )

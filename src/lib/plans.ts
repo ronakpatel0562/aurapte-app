@@ -107,9 +107,9 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     name: "Aura Mentorship 85+",
     tagline: "Direct 1-on-1 teacher interaction, live sessions, doubt solving & 85+ score target strategy.",
     priceInr: 35000,
-    originalPriceInr: 56000,
+    originalPriceInr: 70000,
     priceCad: 500,
-    originalPriceCad: 800,
+    originalPriceCad: 1000,
     billingPeriod: "month",
     isPaid: true,
     features: [

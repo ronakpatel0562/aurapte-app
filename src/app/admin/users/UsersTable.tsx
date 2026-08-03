@@ -10,7 +10,7 @@ export interface AdminUserRow {
   email: string | null;
   fullName: string | null;
   createdAt: string;
-  plan: "free" | "premium";
+  plan: PlanId;
   planExpiry: string | null;
 }
 
@@ -201,12 +201,13 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <select
-                          value={planChoice[row.id] ?? "premium"}
+                          value={planChoice[row.id] ?? "master"}
                           onChange={(e) =>
                             setPlanChoice((p) => ({ ...p, [row.id]: e.target.value as PlanId }))
                           }
-                          className="text-xs bg-canvas border border-hairline rounded-md px-1.5 py-1"
+                          className="text-xs bg-canvas border border-hairline rounded-md px-1.5 py-1 font-medium"
                         >
+                          <option value="master">Mentorship 85+</option>
                           <option value="premium">Pro</option>
                           <option value="free">Starter</option>
                         </select>
