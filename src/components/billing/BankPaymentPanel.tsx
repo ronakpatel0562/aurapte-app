@@ -14,11 +14,11 @@ import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink } from "@/lib/con
  * without the user ever having to open a mail app.
  */
 const BANK_DETAILS = {
-  accountNumber: "5345413232",
-  accountName: "BADRESHIYA AKSHAYKUMAR GHANSHYAMBHAI",
-  ifsc: "KKBK0000822",
-  bankName: "KOTAK 811 FULL KYC",
-  upiId: "8320821028@kotak",
+  accountNumber: "150788999999",
+  accountName: "Ronak Hiteshbhai Jesadiya",
+  ifsc: "INDB0001827",
+  bankName: "INDUSIND BANK",
+  upiId: "myibl7999@indie",
 };
 
 const CONTACT_EMAIL = SUPPORT_EMAIL;
@@ -95,7 +95,7 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
     ["Account name", BANK_DETAILS.accountName],
     ["IFSC", BANK_DETAILS.ifsc],
     ["Bank", BANK_DETAILS.bankName],
-    ["UPI ID", BANK_DETAILS.upiId],
+    ...(BANK_DETAILS.upiId ? [["UPI ID", BANK_DETAILS.upiId] as [string, string]] : []),
   ];
 
   if (!open) {
