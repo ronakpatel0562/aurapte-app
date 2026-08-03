@@ -130,15 +130,18 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-hairline bg-canvas-soft-2 p-4 space-y-2.5">
+      <div className="rounded-xl border border-hairline bg-canvas-soft-2 p-3.5 sm:p-4 divide-y divide-hairline/60">
         {rows.map(([field, value]) => (
-          <div key={field} className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-mute">{field}</span>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-ink">{value}</span>
+          <div key={field} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0 text-xs sm:text-sm">
+            <span className="text-mute font-medium shrink-0 whitespace-nowrap">{field}</span>
+            <div className="flex items-center justify-end gap-2 min-w-0 flex-1">
+              <span className="font-mono font-semibold text-ink select-all text-right truncate sm:whitespace-normal">
+                {value}
+              </span>
               <button
                 onClick={() => copy(field, value)}
-                className="text-mute hover:text-ink transition"
+                className="p-1.5 rounded-md text-mute hover:text-ink hover:bg-canvas transition shrink-0"
+                title={`Copy ${field}`}
                 aria-label={`Copy ${field}`}
               >
                 {copiedField === field ? (
