@@ -81,6 +81,7 @@ export default function Header({ isAdmin = false }: HeaderProps) {
   const planDef = PLANS[profile?.plan ?? "free"] ?? PLANS.free;
   const isMaster = profile?.plan === "master";
   const isPro = profile?.plan === "premium";
+  const isPremium = isMaster || isPro;
 
   return (
     <header className="h-16 border-b border-hairline bg-canvas flex items-center justify-between px-4 sm:px-6 lg:px-8 z-30 sticky top-0 backdrop-blur-md bg-canvas/85">
@@ -133,7 +134,9 @@ export default function Header({ isAdmin = false }: HeaderProps) {
               >
                 <div
                   className={`w-8 h-8 rounded-full font-semibold text-xs flex items-center justify-center shadow-vercel-card transition ${
-                    isPremium
+                    isMaster
+                      ? "bg-gradient-to-tr from-amber-500 to-orange-500 text-white"
+                      : isPro
                       ? "bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-end text-white"
                       : "bg-primary text-on-primary"
                   }`}
