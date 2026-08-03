@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { getSupabaseCredentials } from "@/lib/supabase/config";
 import PaymentClaimsTable, { type AdminClaimRow } from "./PaymentClaimsTable";
+import type { PlanId } from "@/lib/plans";
 
 /**
  * /admin/payments — review queue for the in-app "I've made the payment"
