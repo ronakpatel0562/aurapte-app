@@ -23,7 +23,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0" />
 
         {/* Top Section: Logo */}
-        <div className="relative z-10">
+        <div className="relative z-10 pt-4">
           <Link href="/" className="flex items-center gap-2.5 group">
             <img
               src="/logo.png"

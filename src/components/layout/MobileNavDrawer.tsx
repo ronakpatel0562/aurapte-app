@@ -167,7 +167,7 @@ export default function MobileNavDrawer({
         }`}
         aria-hidden={!open}
       >
-        <div className="h-16 border-b border-hairline flex items-center justify-between px-5">
+        <div className="h-16 border-b border-hairline flex items-center justify-between px-5 pt-2">
           <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
             <img src="/logo.png" alt="AuraPTE" className="w-8 h-8 rounded-lg shadow-md object-cover" />
             <span className="text-lg font-bold tracking-tight text-ink">
