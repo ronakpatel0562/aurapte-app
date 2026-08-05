@@ -23,7 +23,6 @@ export async function verifySpeechInAudio(blob: Blob | null): Promise<SpeechAnal
     return { hasSpeech: false, durationSeconds: 0, rmsVolume: 0, speechDurationSeconds: 0 };
   }
 
-  // Size fallback for mobile compressed audio (e.g. AAC/MP4/WebM)
   const durationEst = Math.max(1, Math.round(blob.size / 16000));
   const mobileSizeHasAudio = blob.size > 200;
 
@@ -44,7 +43,6 @@ export async function verifySpeechInAudio(blob: Blob | null): Promise<SpeechAnal
 
     const audioCtx = new AudioContextClass();
     
-    // WebKit decodeAudioData promise wrapper for older iOS Safari
     const audioBuffer = await new Promise<AudioBuffer>((resolve, reject) => {
       const promise = audioCtx.decodeAudioData(arrayBuffer, resolve, reject);
       if (promise && typeof promise.then === "function") {
@@ -96,7 +94,6 @@ export async function verifySpeechInAudio(blob: Blob | null): Promise<SpeechAnal
       speechDurationSeconds,
     };
   } catch (err) {
-    // If browser audio decoder failed on compressed mobile format, fallback to blob presence
     return {
       hasSpeech: mobileSizeHasAudio,
       durationSeconds: durationEst,
@@ -130,69 +127,38 @@ export async function transcribeAudioViaApi(blob: Blob): Promise<string | null> 
 }
 
 /**
- * Transcribes recorded audio accurately using live STT or backend Speech-to-Text API.
- * If backend STT API is unavailable, performs voice acoustic analysis (volume, duration, pace)
- * to evaluate the student's spoken response so their score is never 0 on mobile.
+ * Transcribes recorded audio using live STT or backend Speech-to-Text API.
+ * Never uses question prompt text.
  */
 export async function detectAccurateTranscript(options: {
   audioBlob?: Blob | null;
   liveTranscript?: string;
-  taskType: string;
+  taskType?: string;
   referenceText?: string;
   modelAnswer?: string;
   fallbackDuration?: number;
 }): Promise<{ transcript: string; isRecovered: boolean; speechDetected: boolean }> {
-  const { audioBlob, liveTranscript = "", taskType, referenceText = "", modelAnswer = "", fallbackDuration = 0 } = options;
+  const { audioBlob, liveTranscript = "" } = options;
 
   const trimmedLive = liveTranscript.trim();
 
-  // 1. If live STT (or previous pass) captured speech words, return it
+  // 1. If live STT captured speech (on desktop), use live STT
   if (trimmedLive.split(/\s+/).filter(Boolean).length >= 1) {
     return { transcript: trimmedLive, isRecovered: false, speechDetected: true };
   }
 
-  // 2. Inspect audio recording and perform backend Speech-to-Text API transcription
-  let speechAnalysis: SpeechAnalysisResult = {
-    hasSpeech: false,
-    durationSeconds: fallbackDuration,
-    rmsVolume: 0,
-    speechDurationSeconds: 0,
-  };
-
+  // 2. Transcribe recorded audio file using backend STT API
   if (audioBlob) {
-    speechAnalysis = await verifySpeechInAudio(audioBlob);
-
-    // Call backend Speech-to-Text API to transcribe actual user audio
     const apiTranscript = await transcribeAudioViaApi(audioBlob);
     if (apiTranscript && apiTranscript.length > 0) {
       return { transcript: apiTranscript, isRecovered: true, speechDetected: true };
     }
   }
 
-  const hasRecordedVoice = speechAnalysis.hasSpeech || (audioBlob !== undefined && audioBlob !== null && audioBlob.size > 200);
-
-  if (!hasRecordedVoice) {
-    return { transcript: "", isRecovered: false, speechDetected: false };
-  }
-
-  // 3. VOICE RECORDED: The student spoke into their mobile mic, but backend STT API was offline or rate-limited.
-  // Perform acoustic voice evaluation so fluency and pronunciation are accurately scored rather than 0!
-  const refToUse = referenceText || modelAnswer;
-  let evaluatedTranscript = "";
-
-  if (refToUse && refToUse.trim().length > 0) {
-    const words = refToUse.trim().split(/\s+/).filter(Boolean);
-    const spokenSeconds = Math.max(speechAnalysis.speechDurationSeconds, speechAnalysis.durationSeconds, fallbackDuration, 2);
-    // Standard PTE pace is ~1.8 words per second
-    const estimatedWordCount = Math.min(words.length, Math.max(2, Math.round(spokenSeconds * 1.8)));
-    evaluatedTranscript = words.slice(0, estimatedWordCount).join(" ");
-  } else {
-    evaluatedTranscript = "Audio response recorded successfully.";
-  }
-
+  // 3. No speech-to-text transcript returned from backend API
   return {
-    transcript: evaluatedTranscript,
-    isRecovered: true,
-    speechDetected: true,
+    transcript: "",
+    isRecovered: false,
+    speechDetected: false,
   };
 }
