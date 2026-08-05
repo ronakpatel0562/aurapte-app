@@ -5,7 +5,7 @@ import { Volume2 } from "lucide-react";
 import { scoreFluency } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
-import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
+import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
 
 interface RespondingToSituationProps {
   question: {
@@ -55,7 +55,12 @@ export default function RespondingToSituation({
   const [thinkCount, setThinkCount] = useState(THINK_SECONDS);
   const [recordCount, setRecordCount] = useState(RECORD_SECONDS);
   const [transcript, setTranscript] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const [result, setResult] = useState<{ fluency: number } | null>(null);
+
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
 
   // Audio state
   const [prepSeconds, setPrepSeconds] = useState<number | null>(3);
@@ -183,7 +188,7 @@ export default function RespondingToSituation({
     // and wiping whatever hadn't been finalised yet. Sequencing the two
     // avoids that.
     recordedAudio.start().then(() => {
-      if (cancelled) return;
+      if (cancelled || isMobileDevice()) return;
 
       const SR =
         typeof window !== "undefined"
@@ -557,8 +562,8 @@ export default function RespondingToSituation({
             </div>
           )}
 
-          {/* Live transcript during recording */}
-          {phase === "recording" && (
+          {/* Live transcript during recording (Desktop only) */}
+          {phase === "recording" && !isMobile && (
             <div className="w-full max-w-lg px-4">
               <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
                 Live Transcript

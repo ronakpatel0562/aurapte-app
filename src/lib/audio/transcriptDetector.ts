@@ -1,5 +1,12 @@
 "use client";
 
+export function isMobileDevice(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(
+    navigator.userAgent
+  ) || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+}
+
 export interface SpeechAnalysisResult {
   hasSpeech: boolean;
   durationSeconds: number;
@@ -138,8 +145,8 @@ export async function detectAccurateTranscript(options: {
 
   const trimmedLive = liveTranscript.trim();
 
-  // If live STT captured speech (1 or more non-empty words), use live STT
-  if (trimmedLive.split(/\s+/).filter(Boolean).length >= 1) {
+  // If on desktop and live STT captured speech (1 or more non-empty words), use live STT
+  if (!isMobileDevice() && trimmedLive.split(/\s+/).filter(Boolean).length >= 1) {
     return { transcript: trimmedLive, isRecovered: false, speechDetected: true };
   }
 
@@ -167,7 +174,7 @@ export async function detectAccurateTranscript(options: {
     return { transcript: "", isRecovered: false, speechDetected: false };
   }
 
-  // MOBILE RECOVERY: Voice audio was captured, but mobile browser STT was silent.
+  // MOBILE RECOVERY: Voice audio was captured, but mobile browser STT was disabled/silent.
   // Reconstruct an accurate transcript based on the reference prompt & task type.
   let recoveredTranscript = "";
   const refToUse = referenceText || modelAnswer;

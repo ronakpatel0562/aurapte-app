@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { scoreFluency, scorePronunciation } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
-import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
+import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
 
 interface ReadAloudProps {
   question: {
@@ -52,10 +52,15 @@ export default function ReadAloud({
   const [recordCount, setRecordCount] = useState(RECORD_SECONDS);
   const [initKey, setInitKey] = useState(0);
   const [transcript, setTranscript] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const [result, setResult] = useState<{
     fluency: number;
     pronunciation: number;
   } | null>(null);
+
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
@@ -140,6 +145,7 @@ export default function ReadAloud({
     // transcript this was causing). Sequencing the two avoids that.
     recordedAudio.start().then(() => {
       if (cancelled) return;
+      if (isMobileDevice()) return;
 
       const SR =
         typeof window !== "undefined"
@@ -373,8 +379,8 @@ export default function ReadAloud({
           </div>
         </div>
 
-        {/* Live transcript during recording */}
-        {phase === "recording" && (
+        {/* Live transcript during recording (Desktop only) */}
+        {phase === "recording" && !isMobile && (
           <div className="px-8 pb-6">
             <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
               Live Transcript

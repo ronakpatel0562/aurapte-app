@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
-import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
+import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
 
 interface AnswerShortQuestionProps {
   question: {
@@ -36,7 +36,12 @@ export default function AnswerShortQuestion({
   const [recordCount, setRecordCount] = useState(RECORD_SECONDS);
   const [prepRecordCount, setPrepRecordCount] = useState(PREP_RECORD_SECONDS);
   const [transcript, setTranscript] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
 
   // Audio state
   const [prepSeconds, setPrepSeconds] = useState<number | null>(3);
@@ -158,7 +163,7 @@ export default function AnswerShortQuestion({
     // and wiping whatever hadn't been finalised yet. Sequencing the two
     // avoids that.
     recordedAudio.start().then(() => {
-      if (cancelled) return;
+      if (cancelled || isMobileDevice()) return;
 
       const SR =
         typeof window !== "undefined"
@@ -504,8 +509,8 @@ export default function AnswerShortQuestion({
             </div>
           )}
 
-          {/* Live transcript during recording */}
-          {phase === "recording" && (
+          {/* Live transcript during recording (Desktop only) */}
+          {phase === "recording" && !isMobile && (
             <div className="w-full max-w-lg px-4">
               <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
                 Live Transcript

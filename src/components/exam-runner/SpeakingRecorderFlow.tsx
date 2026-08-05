@@ -6,7 +6,7 @@ import RecordingMeter from "./RecordingMeter";
 import AudioPromptBox from "./AudioPromptBox";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
-import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
+import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
 
 export type SpeakingStep =
   | { kind: "audio"; audioUrl?: string }
@@ -214,7 +214,9 @@ export default function SpeakingRecorderFlow({
     recordedAudio.start().then((ok) => {
       if (cancelled) return;
       if (ok) {
-        startRecognition();
+        if (!isMobileDevice()) {
+          startRecognition();
+        }
       } else {
         setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
       }
