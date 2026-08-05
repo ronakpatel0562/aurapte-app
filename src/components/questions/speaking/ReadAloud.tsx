@@ -222,6 +222,7 @@ export default function ReadAloud({
   const handleSubmit = async () => {
     stopRecognition();
     clearTimer();
+    const blob = await recordedAudio.stop();
 
     const elapsedSeconds =
       recordingStartRef.current > 0
@@ -230,7 +231,7 @@ export default function ReadAloud({
 
     const rawTranscript = latestTranscriptRef.current || transcript;
     const { transcript: finalTranscript } = await detectAccurateTranscript({
-      audioBlob: recordedAudio.audioBlob,
+      audioBlob: blob || recordedAudio.audioBlob,
       liveTranscript: rawTranscript,
       taskType: "read_aloud",
       referenceText: content.passage || "",

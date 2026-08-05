@@ -76,11 +76,25 @@ export default function SpeakingRecorderFlow({
     }
   };
 
-  const advance = () => {
+  const advance = async () => {
     stopRecognition();
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
+    }
+    const blob = await recordedAudio.stop();
+    if (blob) {
+      const res = await detectAccurateTranscript({
+        audioBlob: blob,
+        liveTranscript: transcriptRef.current,
+        taskType: taskType || "read_aloud",
+        referenceText: referenceText || "",
+        fallbackDuration: step?.kind === "record" ? step.seconds : 30,
+      });
+      if (res.transcript) {
+        transcriptRef.current = res.transcript;
+        onAnswerChange(res.transcript);
+      }
     }
     setStepIndex((i) => {
       const next = i + 1;

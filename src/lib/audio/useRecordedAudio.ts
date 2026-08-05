@@ -17,6 +17,8 @@ export function useRecordedAudio() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const mimeTypeRef = useRef<string>("");
+  const currentBlobRef = useRef<Blob | null>(null);
 
   const start = useCallback((): Promise<boolean> => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices) return Promise.resolve(false);
@@ -27,6 +29,7 @@ export function useRecordedAudio() {
       .then((stream) => {
         streamRef.current = stream;
         chunksRef.current = [];
+        currentBlobRef.current = null;
         let recorder: MediaRecorder;
         
         let chosenMimeType = "";
@@ -41,6 +44,7 @@ export function useRecordedAudio() {
           ];
           chosenMimeType = candidates.find((t) => MediaRecorder.isTypeSupported(t)) || "";
         }
+        mimeTypeRef.current = chosenMimeType;
 
         try {
           recorder = chosenMimeType
@@ -60,8 +64,9 @@ export function useRecordedAudio() {
         };
 
         recorder.onstop = () => {
-          const finalMime = recorder.mimeType || chosenMimeType || "audio/wav";
+          const finalMime = recorder.mimeType || mimeTypeRef.current || "audio/wav";
           const blob = new Blob(chunksRef.current, { type: finalMime });
+          currentBlobRef.current = blob;
           setAudioBlob(blob);
           setAudioUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
@@ -70,26 +75,53 @@ export function useRecordedAudio() {
           stream.getTracks().forEach((t) => t.stop());
         };
 
-        recorder.start(100); // 100ms timeslice to ensure frequent dataavailable on mobile
+        recorder.start(100); // 100ms timeslice for mobile streaming
         recorderRef.current = recorder;
         return true;
       })
       .catch(() => false);
   }, []);
 
-  const stop = useCallback(() => {
-    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+  const stop = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      const recorder = recorderRef.current;
+      if (!recorder || recorder.state === "inactive") {
+        recorderRef.current = null;
+        if (chunksRef.current.length > 0 && !currentBlobRef.current) {
+          const finalMime = mimeTypeRef.current || "audio/wav";
+          const b = new Blob(chunksRef.current, { type: finalMime });
+          currentBlobRef.current = b;
+          setAudioBlob(b);
+        }
+        resolve(currentBlobRef.current);
+        return;
+      }
+
+      const prevOnStop = recorder.onstop;
+      recorder.onstop = (e) => {
+        if (prevOnStop) prevOnStop.call(recorder, e);
+        const finalMime = recorder.mimeType || mimeTypeRef.current || "audio/wav";
+        const blob = new Blob(chunksRef.current, { type: finalMime });
+        currentBlobRef.current = blob;
+        setAudioBlob(blob);
+        resolve(blob);
+      };
+
       try {
-        recorderRef.current.stop();
-      } catch {}
-    }
-    recorderRef.current = null;
+        recorder.stop();
+      } catch {
+        recorderRef.current = null;
+        resolve(currentBlobRef.current);
+      }
+    });
   }, []);
 
   const reset = useCallback(() => {
     stop();
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    currentBlobRef.current = null;
+    chunksRef.current = [];
     setAudioBlob(null);
     setAudioUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);

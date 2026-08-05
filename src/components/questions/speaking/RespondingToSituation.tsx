@@ -322,6 +322,7 @@ export default function RespondingToSituation({
   const handleSubmit = async () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
+    const blob = await recordedAudio.stop();
 
     const elapsedSeconds =
       recordingStartRef.current > 0
@@ -330,7 +331,7 @@ export default function RespondingToSituation({
 
     const rawTranscript = latestTranscriptRef.current || transcript;
     const { transcript: finalTranscript } = await detectAccurateTranscript({
-      audioBlob: recordedAudio.audioBlob,
+      audioBlob: blob || recordedAudio.audioBlob,
       liveTranscript: rawTranscript,
       taskType: "responding_to_situation",
       referenceText: content.model_answer || content.scenario || "",

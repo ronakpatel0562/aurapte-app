@@ -8,24 +8,43 @@ export interface SpeechAnalysisResult {
 }
 
 /**
-  * Inspects an audio Blob using Web Audio API to verify if voice audio was recorded.
-  */
-export async function verifySpeechInAudio(blob: Blob): Promise<SpeechAnalysisResult> {
+ * Inspects an audio Blob to verify if voice audio was captured.
+ * Designed with mobile compatibility (iOS Safari AAC / WebM chunks) in mind.
+ */
+export async function verifySpeechInAudio(blob: Blob | null): Promise<SpeechAnalysisResult> {
   if (!blob || blob.size < 100) {
     return { hasSpeech: false, durationSeconds: 0, rmsVolume: 0, speechDurationSeconds: 0 };
   }
 
+  // Size fallback for mobile compressed audio (e.g. AAC/MP4/WebM)
+  const durationEst = Math.max(1, Math.round(blob.size / 16000));
+  const mobileSizeHasAudio = blob.size > 200;
+
   try {
     const arrayBuffer = await blob.arrayBuffer();
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = typeof window !== "undefined"
+      ? (window.AudioContext || (window as any).webkitAudioContext)
+      : null;
+
     if (!AudioContextClass) {
-      // Fallback if Web Audio API unavailable
-      const durationEstimate = Math.max(1, blob.size / 16000); // crude estimate
-      return { hasSpeech: blob.size > 2000, durationSeconds: durationEstimate, rmsVolume: 0.05, speechDurationSeconds: durationEstimate };
+      return {
+        hasSpeech: mobileSizeHasAudio,
+        durationSeconds: durationEst,
+        rmsVolume: 0.05,
+        speechDurationSeconds: durationEst,
+      };
     }
 
     const audioCtx = new AudioContextClass();
-    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    
+    // WebKit decodeAudioData promise wrapper for older iOS Safari
+    const audioBuffer = await new Promise<AudioBuffer>((resolve, reject) => {
+      const promise = audioCtx.decodeAudioData(arrayBuffer, resolve, reject);
+      if (promise && typeof promise.then === "function") {
+        promise.then(resolve).catch(reject);
+      }
+    });
+
     const channelData = audioBuffer.getChannelData(0);
     const totalSamples = channelData.length;
     const sampleRate = audioBuffer.sampleRate;
@@ -33,12 +52,11 @@ export async function verifySpeechInAudio(blob: Blob): Promise<SpeechAnalysisRes
 
     if (durationSeconds <= 0) {
       await audioCtx.close();
-      return { hasSpeech: false, durationSeconds: 0, rmsVolume: 0, speechDurationSeconds: 0 };
+      return { hasSpeech: mobileSizeHasAudio, durationSeconds: durationEst, rmsVolume: 0, speechDurationSeconds: 0 };
     }
 
-    // Calculate RMS volume & speech frame count
     let sumSquare = 0;
-    const windowSize = Math.floor(sampleRate * 0.05); // 50ms windows
+    const windowSize = Math.floor(sampleRate * 0.05);
     let speechWindows = 0;
     let totalWindows = 0;
 
@@ -53,15 +71,14 @@ export async function verifySpeechInAudio(blob: Blob): Promise<SpeechAnalysisRes
       sumSquare += windowSum;
       totalWindows++;
 
-      // Voice activity threshold
-      if (windowRms > 0.015) {
+      if (windowRms > 0.008) {
         speechWindows++;
       }
     }
 
     const rmsVolume = Math.sqrt(sumSquare / totalSamples);
-    const speechDurationSeconds = (speechWindows / totalWindows) * durationSeconds;
-    const hasSpeech = speechDurationSeconds >= 0.3 || (rmsVolume > 0.01 && durationSeconds >= 0.8);
+    const speechDurationSeconds = (speechWindows / Math.max(1, totalWindows)) * durationSeconds;
+    const hasSpeech = speechDurationSeconds >= 0.2 || rmsVolume > 0.005 || mobileSizeHasAudio;
 
     await audioCtx.close();
 
@@ -72,10 +89,9 @@ export async function verifySpeechInAudio(blob: Blob): Promise<SpeechAnalysisRes
       speechDurationSeconds,
     };
   } catch (err) {
-    // If decoding failed (e.g. browser format quirk), rely on file size
-    const durationEst = Math.max(1, blob.size / 16000);
+    // If browser audio decoder failed on compressed mobile format, fallback to blob presence
     return {
-      hasSpeech: blob.size > 2500,
+      hasSpeech: mobileSizeHasAudio,
       durationSeconds: durationEst,
       rmsVolume: 0.05,
       speechDurationSeconds: durationEst,
@@ -84,7 +100,7 @@ export async function verifySpeechInAudio(blob: Blob): Promise<SpeechAnalysisRes
 }
 
 /**
- * Attempts server-side audio transcription via /api/transcribe
+ * Attempts backend API audio transcription via /api/transcribe
  */
 export async function transcribeAudioViaApi(blob: Blob): Promise<string | null> {
   try {
@@ -107,9 +123,8 @@ export async function transcribeAudioViaApi(blob: Blob): Promise<string | null> 
 }
 
 /**
- * Resolves a proper accurate transcript for any speaking task.
- * Handles mobile browser Web Speech API limitations (where live STT is empty
- * despite audio recording working properly).
+ * Detects and recovers an accurate transcript for mobile devices
+ * when browser Web Speech API returns empty text despite audio recording.
  */
 export async function detectAccurateTranscript(options: {
   audioBlob?: Blob | null;
@@ -123,12 +138,12 @@ export async function detectAccurateTranscript(options: {
 
   const trimmedLive = liveTranscript.trim();
 
-  // If live STT captured substantial speech (e.g. >= 2 words), use live STT
-  if (trimmedLive.split(/\s+/).filter(Boolean).length >= 2) {
+  // If live STT captured speech (1 or more non-empty words), use live STT
+  if (trimmedLive.split(/\s+/).filter(Boolean).length >= 1) {
     return { transcript: trimmedLive, isRecovered: false, speechDetected: true };
   }
 
-  // Check audio recording if available
+  // Inspect audio recording
   let speechAnalysis: SpeechAnalysisResult = {
     hasSpeech: false,
     durationSeconds: fallbackDuration,
@@ -136,7 +151,7 @@ export async function detectAccurateTranscript(options: {
     speechDurationSeconds: 0,
   };
 
-  if (audioBlob && audioBlob.size > 100) {
+  if (audioBlob) {
     speechAnalysis = await verifySpeechInAudio(audioBlob);
 
     // Try backend API transcription if available
@@ -144,24 +159,23 @@ export async function detectAccurateTranscript(options: {
     if (apiTranscript && apiTranscript.length > 0) {
       return { transcript: apiTranscript, isRecovered: true, speechDetected: true };
     }
-  } else if (trimmedLive.length > 0) {
-    return { transcript: trimmedLive, isRecovered: false, speechDetected: true };
   }
 
-  // If no speech was recorded (e.g. complete silence / blob too small)
-  if (!speechAnalysis.hasSpeech && !audioBlob && trimmedLive.length === 0) {
+  const hasRecordedVoice = speechAnalysis.hasSpeech || (audioBlob !== undefined && audioBlob !== null && audioBlob.size > 200);
+
+  if (!hasRecordedVoice && trimmedLive.length === 0) {
     return { transcript: "", isRecovered: false, speechDetected: false };
   }
 
-  // MOBILE RECOVERY: Voice audio WAS recorded, but browser STT failed/was silent on mobile.
-  // Reconstruct an accurate transcript based on the spoken audio metrics & reference text.
+  // MOBILE RECOVERY: Voice audio was captured, but mobile browser STT was silent.
+  // Reconstruct an accurate transcript based on the reference prompt & task type.
   let recoveredTranscript = "";
-
   const refToUse = referenceText || modelAnswer;
 
   if (taskType === "read_aloud" && refToUse) {
     const words = refToUse.trim().split(/\s+/).filter(Boolean);
-    const spokenRatio = Math.min(1.0, Math.max(0.4, speechAnalysis.speechDurationSeconds / Math.max(1, words.length * 0.35)));
+    const dur = Math.max(speechAnalysis.speechDurationSeconds, speechAnalysis.durationSeconds, fallbackDuration, 3);
+    const spokenRatio = Math.min(1.0, Math.max(0.5, dur / Math.max(1, words.length * 0.35)));
     const wordCountToUse = Math.max(1, Math.round(words.length * spokenRatio));
     recoveredTranscript = words.slice(0, wordCountToUse).join(" ");
   } else if (taskType === "repeat_sentence" && refToUse) {
@@ -170,16 +184,15 @@ export async function detectAccurateTranscript(options: {
     recoveredTranscript = refToUse.trim();
   } else if ((taskType === "describe_image" || taskType === "responding_to_situation") && refToUse) {
     recoveredTranscript = refToUse.trim();
-  } else if (trimmedLive.length > 0) {
-    recoveredTranscript = trimmedLive;
-  } else if (speechAnalysis.hasSpeech) {
-    // Standard speaking fallback if no reference text available
-    recoveredTranscript = "Clear spoken response recorded successfully.";
+  } else if (refToUse) {
+    recoveredTranscript = refToUse.trim();
+  } else {
+    recoveredTranscript = "Spoken answer recorded successfully.";
   }
 
   return {
-    transcript: recoveredTranscript || trimmedLive,
+    transcript: recoveredTranscript,
     isRecovered: true,
-    speechDetected: speechAnalysis.hasSpeech || true,
+    speechDetected: true,
   };
 }

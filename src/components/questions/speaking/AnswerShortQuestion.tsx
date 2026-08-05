@@ -297,10 +297,11 @@ export default function AnswerShortQuestion({
   const handleSubmit = async () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
+    const blob = await recordedAudio.stop();
 
     const rawTranscript = latestTranscriptRef.current || transcript;
     const { transcript: finalTranscript } = await detectAccurateTranscript({
-      audioBlob: recordedAudio.audioBlob,
+      audioBlob: blob || recordedAudio.audioBlob,
       liveTranscript: rawTranscript,
       taskType: "answer_short_question",
       referenceText: content.correct_answer || "",
