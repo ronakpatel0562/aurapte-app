@@ -137,12 +137,8 @@ export default function DescribeImage({
 
     if (isMobileDevice()) {
       speech.startRecognition();
-      const st = setTimeout(() => {
-        if (!cancelled) recordedAudio.start();
-      }, 250);
       return () => {
         cancelled = true;
-        clearTimeout(st);
         clearTimer();
         speech.stopRecognition();
         recordedAudio.stop();

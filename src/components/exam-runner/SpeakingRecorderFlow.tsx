@@ -167,19 +167,12 @@ export default function SpeakingRecorderFlow({
     setMicWarning(null);
 
     if (isMobileDevice()) {
+      // On mobile browsers (iOS Safari, Android Chrome), starting MediaRecorder (getUserMedia)
+      // simultaneously with Web Speech API terminates or silences SpeechRecognition due to mobile
+      // hardware single-stream restrictions. We let SpeechRecognition run exclusively on mobile.
       speech.startRecognition();
-      const timeout = setTimeout(() => {
-        if (!cancelled) {
-          recordedAudio.start().then((ok) => {
-            if (!ok && !cancelled) {
-              setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
-            }
-          });
-        }
-      }, 250);
       return () => {
         cancelled = true;
-        clearTimeout(timeout);
         speech.stopRecognition();
         recordedAudio.stop();
       };

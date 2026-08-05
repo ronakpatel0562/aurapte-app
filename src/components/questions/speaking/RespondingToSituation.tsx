@@ -184,12 +184,8 @@ export default function RespondingToSituation({
 
     if (isMobileDevice()) {
       speech.startRecognition();
-      const st = setTimeout(() => {
-        if (!cancelled) recordedAudio.start();
-      }, 250);
       return () => {
         cancelled = true;
-        clearTimeout(st);
         if (intervalRef.current) clearInterval(intervalRef.current);
         speech.stopRecognition();
         recordedAudio.stop();

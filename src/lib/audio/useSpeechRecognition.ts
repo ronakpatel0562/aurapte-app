@@ -77,10 +77,8 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       window.location.hostname !== "localhost" &&
       !window.location.hostname.startsWith("127.")
     ) {
-      const msg = "Speech recognition requires a secure HTTPS connection on mobile devices.";
+      const msg = "Speech recognition usually requires a secure HTTPS connection on mobile devices.";
       console.warn(msg);
-      setError(msg);
-      return;
     }
 
     const SR =
@@ -141,6 +139,11 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
 
         recognition.onend = () => {
           setIsListening(false);
+          // On mobile Safari/Chrome, when recognition stops during pauses between sentences,
+          // save any accumulated interim text into finalTranscriptRef so it is preserved across restarts.
+          if (latestTranscriptRef.current) {
+            finalTranscriptRef.current = latestTranscriptRef.current + " ";
+          }
           if (shouldListenRef.current && recognitionRef.current === recognition) {
             // Audio hardware initialization & release delays on mobile devices:
             // Immediate synchronous restarts on mobile Safari/Chrome trigger InvalidStateError

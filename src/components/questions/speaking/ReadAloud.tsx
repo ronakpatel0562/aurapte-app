@@ -139,14 +139,11 @@ export default function ReadAloud({
     let cancelled = false;
 
     if (isMobileDevice()) {
-      // Start STT instantly on mobile to preserve gesture context & stagger MediaRecorder
+      // On mobile browsers, MediaRecorder (getUserMedia) terminates Web Speech API streams.
+      // Give SpeechRecognition exclusive access to the microphone on mobile.
       speech.startRecognition();
-      const st = setTimeout(() => {
-        if (!cancelled) recordedAudio.start();
-      }, 250);
       return () => {
         cancelled = true;
-        clearTimeout(st);
         clearTimer();
         speech.stopRecognition();
         recordedAudio.stop();
