@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { scoreFluency } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
 
 interface DescribeImageProps {
   question: {
@@ -214,7 +215,7 @@ export default function DescribeImage({
     setPhase("recording");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     stopRecognition();
     clearTimer();
 
@@ -223,7 +224,18 @@ export default function DescribeImage({
         ? Math.max(1, (Date.now() - recordingStartRef.current) / 1000)
         : RECORD_SECONDS;
 
-    const finalTranscript = latestTranscriptRef.current || transcript;
+    const rawTranscript = latestTranscriptRef.current || transcript;
+    const { transcript: finalTranscript } = await detectAccurateTranscript({
+      audioBlob: recordedAudio.audioBlob,
+      liveTranscript: rawTranscript,
+      taskType: "describe_image",
+      referenceText: content.description || "",
+      fallbackDuration: elapsedSeconds,
+    });
+
+    latestTranscriptRef.current = finalTranscript;
+    setTranscript(finalTranscript);
+
     const fluency = scoreFluency(finalTranscript, elapsedSeconds);
 
     setResult({ fluency });

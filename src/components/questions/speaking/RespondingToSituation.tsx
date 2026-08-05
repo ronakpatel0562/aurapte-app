@@ -5,6 +5,7 @@ import { Volume2 } from "lucide-react";
 import { scoreFluency } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
 
 interface RespondingToSituationProps {
   question: {
@@ -318,7 +319,7 @@ export default function RespondingToSituation({
     setPhase("recording");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -327,7 +328,18 @@ export default function RespondingToSituation({
         ? Math.max(1, (Date.now() - recordingStartRef.current) / 1000)
         : RECORD_SECONDS;
 
-    const finalTranscript = latestTranscriptRef.current || transcript;
+    const rawTranscript = latestTranscriptRef.current || transcript;
+    const { transcript: finalTranscript } = await detectAccurateTranscript({
+      audioBlob: recordedAudio.audioBlob,
+      liveTranscript: rawTranscript,
+      taskType: "responding_to_situation",
+      referenceText: content.model_answer || content.scenario || "",
+      fallbackDuration: elapsedSeconds,
+    });
+
+    latestTranscriptRef.current = finalTranscript;
+    setTranscript(finalTranscript);
+
     const fluency = scoreFluency(finalTranscript, elapsedSeconds);
 
     setResult({ fluency });

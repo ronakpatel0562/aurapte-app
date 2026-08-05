@@ -6,6 +6,7 @@ import RecordingMeter from "./RecordingMeter";
 import AudioPromptBox from "./AudioPromptBox";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
 
 export type SpeakingStep =
   | { kind: "audio"; audioUrl?: string }
@@ -28,6 +29,8 @@ export default function SpeakingRecorderFlow({
   onAnswerChange,
   onLockChange,
   onAudioRecorded,
+  taskType,
+  referenceText,
 }: {
   steps: SpeakingStep[];
   onAnswerChange: (transcript: string) => void;
@@ -41,6 +44,8 @@ export default function SpeakingRecorderFlow({
    * transcript — see [[project_reuse_audio_component]] for why this reuses
    * the Question Bank's useRecordedAudio hook instead of a fresh MediaRecorder. */
   onAudioRecorded?: (url: string) => void;
+  taskType?: string;
+  referenceText?: string;
 }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(() => stepDuration(steps[0]));
@@ -119,11 +124,25 @@ export default function SpeakingRecorderFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
 
-  // Surface the captured recording to the exam shell as soon as it's ready.
+  // Surface the captured recording to the exam shell and recover mobile transcript if needed.
   useEffect(() => {
     if (recordedAudio.audioUrl) onAudioRecorded?.(recordedAudio.audioUrl);
+    if (recordedAudio.audioBlob) {
+      detectAccurateTranscript({
+        audioBlob: recordedAudio.audioBlob,
+        liveTranscript: transcriptRef.current,
+        taskType: taskType || "read_aloud",
+        referenceText: referenceText || "",
+        fallbackDuration: step?.kind === "record" ? step.seconds : 30,
+      }).then((res) => {
+        if (res.transcript && res.transcript !== transcriptRef.current) {
+          transcriptRef.current = res.transcript;
+          onAnswerChange(res.transcript);
+        }
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordedAudio.audioUrl]);
+  }, [recordedAudio.audioUrl, recordedAudio.audioBlob]);
 
   // Speech recognition runs for the duration of a "record" step. The
   // browser's own SpeechRecognition permission prompt is unreliable across

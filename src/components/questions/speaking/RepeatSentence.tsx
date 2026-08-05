@@ -5,6 +5,7 @@ import { Volume2 } from "lucide-react";
 import { scoreFluency, scoreAccuracy } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
 
 interface RepeatSentenceProps {
   question: {
@@ -290,7 +291,7 @@ export default function RepeatSentence({
     setPhase("recording");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -299,7 +300,18 @@ export default function RepeatSentence({
         ? Math.max(1, (Date.now() - recordingStartRef.current) / 1000)
         : RECORD_SECONDS;
 
-    const finalTranscript = latestTranscriptRef.current || transcript;
+    const rawTranscript = latestTranscriptRef.current || transcript;
+    const { transcript: finalTranscript } = await detectAccurateTranscript({
+      audioBlob: recordedAudio.audioBlob,
+      liveTranscript: rawTranscript,
+      taskType: "repeat_sentence",
+      referenceText: content.sentence || "",
+      fallbackDuration: elapsedSeconds,
+    });
+
+    latestTranscriptRef.current = finalTranscript;
+    setTranscript(finalTranscript);
+
     const accuracy = scoreAccuracy(finalTranscript, content.sentence || "");
 
     setResult({ accuracy });

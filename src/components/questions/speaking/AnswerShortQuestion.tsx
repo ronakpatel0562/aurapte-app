@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Volume2 } from "lucide-react";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
 
 interface AnswerShortQuestionProps {
   question: {
@@ -293,11 +294,21 @@ export default function AnswerShortQuestion({
     setPhase("recording");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
 
-    const finalTranscript = latestTranscriptRef.current || transcript;
+    const rawTranscript = latestTranscriptRef.current || transcript;
+    const { transcript: finalTranscript } = await detectAccurateTranscript({
+      audioBlob: recordedAudio.audioBlob,
+      liveTranscript: rawTranscript,
+      taskType: "answer_short_question",
+      referenceText: content.correct_answer || "",
+      fallbackDuration: RECORD_SECONDS,
+    });
+
+    latestTranscriptRef.current = finalTranscript;
+    setTranscript(finalTranscript);
 
     const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
     let score = 0;

@@ -13,23 +13,11 @@ import { useCallback, useRef, useState } from "react";
  */
 export function useRecordedAudio() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Returns a promise that resolves once the recorder is actually rolling
-  // (or immediately if mic access fails) — callers that also run
-  // SpeechRecognition on the same device should await this before starting
-  // it. Requesting a second live getUserMedia stream *while* SpeechRecognition
-  // is mid-session tends to force Chrome to renegotiate the shared audio
-  // pipeline (echo-cancellation/AGC), which can abort and restart the
-  // recognition session and drop whatever hadn't been finalised yet — hence
-  // disabling audio processing here and sequencing the two acquisitions
-  // instead of racing them.
-  // Resolves `true` once the recorder is actually rolling, `false` if mic
-  // access failed — callers that also run SpeechRecognition on the same
-  // device should await this before starting it, and can use the boolean to
-  // decide whether to surface a "microphone blocked" warning.
   const start = useCallback((): Promise<boolean> => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices) return Promise.resolve(false);
     return navigator.mediaDevices
@@ -40,24 +28,49 @@ export function useRecordedAudio() {
         streamRef.current = stream;
         chunksRef.current = [];
         let recorder: MediaRecorder;
-        try {
-          recorder = new MediaRecorder(stream);
-        } catch {
-          stream.getTracks().forEach((t) => t.stop());
-          return false;
+        
+        let chosenMimeType = "";
+        if (typeof MediaRecorder !== "undefined") {
+          const candidates = [
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/mp4",
+            "audio/aac",
+            "audio/ogg",
+            "audio/wav",
+          ];
+          chosenMimeType = candidates.find((t) => MediaRecorder.isTypeSupported(t)) || "";
         }
+
+        try {
+          recorder = chosenMimeType
+            ? new MediaRecorder(stream, { mimeType: chosenMimeType })
+            : new MediaRecorder(stream);
+        } catch {
+          try {
+            recorder = new MediaRecorder(stream);
+          } catch {
+            stream.getTracks().forEach((t) => t.stop());
+            return false;
+          }
+        }
+
         recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) chunksRef.current.push(e.data);
+          if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
         };
+
         recorder.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          const finalMime = recorder.mimeType || chosenMimeType || "audio/wav";
+          const blob = new Blob(chunksRef.current, { type: finalMime });
+          setAudioBlob(blob);
           setAudioUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return URL.createObjectURL(blob);
           });
           stream.getTracks().forEach((t) => t.stop());
         };
-        recorder.start();
+
+        recorder.start(100); // 100ms timeslice to ensure frequent dataavailable on mobile
         recorderRef.current = recorder;
         return true;
       })
@@ -66,7 +79,9 @@ export function useRecordedAudio() {
 
   const stop = useCallback(() => {
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
-      recorderRef.current.stop();
+      try {
+        recorderRef.current.stop();
+      } catch {}
     }
     recorderRef.current = null;
   }, []);
@@ -75,11 +90,12 @@ export function useRecordedAudio() {
     stop();
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setAudioBlob(null);
     setAudioUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
   }, [stop]);
 
-  return { audioUrl, start, stop, reset };
+  return { audioUrl, audioBlob, start, stop, reset };
 }

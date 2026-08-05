@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { scoreFluency, scorePronunciation } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript } from "@/lib/audio/transcriptDetector";
 
 interface ReadAloudProps {
   question: {
@@ -218,7 +219,7 @@ export default function ReadAloud({
     setPhase("recording");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     stopRecognition();
     clearTimer();
 
@@ -227,7 +228,18 @@ export default function ReadAloud({
         ? Math.max(1, (Date.now() - recordingStartRef.current) / 1000)
         : RECORD_SECONDS;
 
-    const finalTranscript = latestTranscriptRef.current || transcript;
+    const rawTranscript = latestTranscriptRef.current || transcript;
+    const { transcript: finalTranscript } = await detectAccurateTranscript({
+      audioBlob: recordedAudio.audioBlob,
+      liveTranscript: rawTranscript,
+      taskType: "read_aloud",
+      referenceText: content.passage || "",
+      fallbackDuration: elapsedSeconds,
+    });
+
+    latestTranscriptRef.current = finalTranscript;
+    setTranscript(finalTranscript);
+
     const fluency = scoreFluency(finalTranscript, elapsedSeconds);
     const pronunciation = scorePronunciation(
       finalTranscript,
