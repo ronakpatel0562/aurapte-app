@@ -11,10 +11,11 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.OPENAI_API_KEY || process.env.WHISPER_API_KEY || process.env.GROQ_API_KEY;
 
-    // 1. If an API key is configured (OpenAI or Groq), use official Whisper endpoint
+    // 1. Official OpenAI or Groq Whisper API (if configured)
     if (apiKey) {
       const whisperFormData = new FormData();
-      whisperFormData.append("file", audioFile, "audio.webm");
+      const filename = audioFile.type.includes("mp4") ? "audio.mp4" : "audio.webm";
+      whisperFormData.append("file", audioFile, filename);
       whisperFormData.append("model", "whisper-1");
       whisperFormData.append("language", "en");
 
@@ -38,26 +39,36 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Fallback: Free HuggingFace Inference API for speech-to-text
-    try {
-      const arrayBuffer = await audioFile.arrayBuffer();
-      const hfRes = await fetch("https://api-inference.huggingface.co/models/openai/whisper-small", {
-        method: "POST",
-        headers: {
-          "Content-Type": "audio/webm",
-        },
-        body: arrayBuffer,
-      });
+    // 2. Free Speech-to-Text Fallbacks (HuggingFace Serverless Inference Models)
+    const models = [
+      "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo",
+      "https://api-inference.huggingface.co/models/openai/whisper-small",
+      "https://api-inference.huggingface.co/models/facebook/wav2vec2-base-960h",
+    ];
 
-      if (hfRes.ok) {
-        const hfData = await hfRes.json();
-        if (hfData && typeof hfData.text === "string" && hfData.text.trim().length > 0) {
-          return NextResponse.json({ transcript: hfData.text.trim(), provider: "huggingface-free" });
+    const arrayBuffer = await audioFile.arrayBuffer();
+    const contentType = audioFile.type || "audio/webm";
+
+    for (const modelUrl of models) {
+      try {
+        const hfRes = await fetch(modelUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": contentType,
+          },
+          body: arrayBuffer,
+        });
+
+        if (hfRes.ok) {
+          const hfData = await hfRes.json();
+          if (hfData && typeof hfData.text === "string" && hfData.text.trim().length > 0) {
+            return NextResponse.json({ transcript: hfData.text.trim(), provider: "free-huggingface" });
+          }
         }
-      }
-    } catch {}
+      } catch {}
+    }
 
-    return NextResponse.json({ transcript: null, note: "Speech transcribed using audio metrics & prompt reference" });
+    return NextResponse.json({ transcript: null, note: "Free STT services busy or unavailable" });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Transcription failed" }, { status: 500 });
   }

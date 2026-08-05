@@ -130,8 +130,8 @@ export async function transcribeAudioViaApi(blob: Blob): Promise<string | null> 
 }
 
 /**
- * Detects and recovers an accurate transcript for mobile devices
- * when browser Web Speech API returns empty text despite audio recording.
+ * Transcribes recorded audio accurately using live STT or backend Speech-to-Text API.
+ * Never substitutes question prompt text for user voice.
  */
 export async function detectAccurateTranscript(options: {
   audioBlob?: Blob | null;
@@ -141,16 +141,16 @@ export async function detectAccurateTranscript(options: {
   modelAnswer?: string;
   fallbackDuration?: number;
 }): Promise<{ transcript: string; isRecovered: boolean; speechDetected: boolean }> {
-  const { audioBlob, liveTranscript = "", taskType, referenceText = "", modelAnswer = "", fallbackDuration = 0 } = options;
+  const { audioBlob, liveTranscript = "", fallbackDuration = 0 } = options;
 
   const trimmedLive = liveTranscript.trim();
 
-  // If on desktop and live STT captured speech (1 or more non-empty words), use live STT
-  if (!isMobileDevice() && trimmedLive.split(/\s+/).filter(Boolean).length >= 1) {
+  // If live STT captured speech (1 or more non-empty words), return live STT
+  if (trimmedLive.split(/\s+/).filter(Boolean).length >= 1) {
     return { transcript: trimmedLive, isRecovered: false, speechDetected: true };
   }
 
-  // Inspect audio recording
+  // Inspect audio recording and perform backend audio-to-text API transcription
   let speechAnalysis: SpeechAnalysisResult = {
     hasSpeech: false,
     durationSeconds: fallbackDuration,
@@ -161,7 +161,7 @@ export async function detectAccurateTranscript(options: {
   if (audioBlob) {
     speechAnalysis = await verifySpeechInAudio(audioBlob);
 
-    // Try backend API transcription if available
+    // Call backend Speech-to-Text API to transcribe actual user audio
     const apiTranscript = await transcribeAudioViaApi(audioBlob);
     if (apiTranscript && apiTranscript.length > 0) {
       return { transcript: apiTranscript, isRecovered: true, speechDetected: true };
@@ -170,36 +170,15 @@ export async function detectAccurateTranscript(options: {
 
   const hasRecordedVoice = speechAnalysis.hasSpeech || (audioBlob !== undefined && audioBlob !== null && audioBlob.size > 200);
 
-  if (!hasRecordedVoice && trimmedLive.length === 0) {
+  if (!hasRecordedVoice) {
     return { transcript: "", isRecovered: false, speechDetected: false };
   }
 
-  // MOBILE RECOVERY: Voice audio was captured, but mobile browser STT was disabled/silent.
-  // Reconstruct an accurate transcript based on the reference prompt & task type.
-  let recoveredTranscript = "";
-  const refToUse = referenceText || modelAnswer;
-
-  if (taskType === "read_aloud" && refToUse) {
-    const words = refToUse.trim().split(/\s+/).filter(Boolean);
-    const dur = Math.max(speechAnalysis.speechDurationSeconds, speechAnalysis.durationSeconds, fallbackDuration, 3);
-    const spokenRatio = Math.min(1.0, Math.max(0.5, dur / Math.max(1, words.length * 0.35)));
-    const wordCountToUse = Math.max(1, Math.round(words.length * spokenRatio));
-    recoveredTranscript = words.slice(0, wordCountToUse).join(" ");
-  } else if (taskType === "repeat_sentence" && refToUse) {
-    recoveredTranscript = refToUse.trim();
-  } else if (taskType === "answer_short_question" && refToUse) {
-    recoveredTranscript = refToUse.trim();
-  } else if ((taskType === "describe_image" || taskType === "responding_to_situation") && refToUse) {
-    recoveredTranscript = refToUse.trim();
-  } else if (refToUse) {
-    recoveredTranscript = refToUse.trim();
-  } else {
-    recoveredTranscript = "Spoken answer recorded successfully.";
-  }
-
+  // Audio recorded, but STT API returned no words.
+  // Do NOT return question prompt text. Return empty string so scoring reflects actual speech output.
   return {
-    transcript: recoveredTranscript,
-    isRecovered: true,
-    speechDetected: true,
+    transcript: "",
+    isRecovered: false,
+    speechDetected: false,
   };
 }
