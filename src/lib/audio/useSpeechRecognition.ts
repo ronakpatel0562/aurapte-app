@@ -107,15 +107,30 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
         recognitionRef.current = recognition;
 
         recognition.onresult = (event: any) => {
-          let interim = "";
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-              finalTranscriptRef.current += event.results[i][0].transcript + " ";
-            } else {
-              interim += event.results[i][0].transcript;
+          let currentSessionText = "";
+
+          // On mobile Android Chrome (Google Voice Typing) and some mobile Web Speech engines,
+          // when continuous is true, each item in event.results often returns the cumulative
+          // transcript of the entire session rather than individual phrase segments.
+          // Appending every item across event.results causes exponential word repetition.
+          if (isMobileDevice() && event.results.length > 0) {
+            // Take the latest result, which on mobile represents the complete utterance so far
+            const lastIdx = event.results.length - 1;
+            currentSessionText = (event.results[lastIdx][0]?.transcript || "").trim();
+          } else {
+            // On desktop browsers, concatenate sequential phrases while protecting against duplication
+            for (let i = 0; i < event.results.length; i++) {
+              const text = (event.results[i][0]?.transcript || "").trim();
+              if (!text) continue;
+              if (text.toLowerCase().startsWith(currentSessionText.toLowerCase()) && currentSessionText.length > 0) {
+                currentSessionText = text;
+              } else {
+                currentSessionText += (currentSessionText ? " " : "") + text;
+              }
             }
           }
-          const full = (finalTranscriptRef.current + interim).trim();
+
+          const full = (finalTranscriptRef.current + " " + currentSessionText).trim();
           latestTranscriptRef.current = full;
           setTranscript(full);
           onTranscriptChangeRef.current?.(full);
@@ -139,10 +154,10 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
 
         recognition.onend = () => {
           setIsListening(false);
-          // On mobile Safari/Chrome, when recognition stops during pauses between sentences,
-          // save any accumulated interim text into finalTranscriptRef so it is preserved across restarts.
+          // Save whatever total transcript was recognized before this session ended into finalTranscriptRef,
+          // so when the next session starts, new words append cleanly after previous words without duplication.
           if (latestTranscriptRef.current) {
-            finalTranscriptRef.current = latestTranscriptRef.current + " ";
+            finalTranscriptRef.current = latestTranscriptRef.current;
           }
           if (shouldListenRef.current && recognitionRef.current === recognition) {
             // Audio hardware initialization & release delays on mobile devices:
