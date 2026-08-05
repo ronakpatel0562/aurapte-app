@@ -142,7 +142,7 @@ export async function detectAccurateTranscript(options: {
 
   const trimmedLive = liveTranscript.trim();
 
-  // 1. If live STT captured speech (on desktop), use live STT
+  // 1. If live STT captured speech (on desktop or mobile), use live STT
   if (trimmedLive.split(/\s+/).filter(Boolean).length >= 1) {
     return { transcript: trimmedLive, isRecovered: false, speechDetected: true };
   }

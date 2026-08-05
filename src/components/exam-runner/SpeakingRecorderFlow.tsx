@@ -7,6 +7,7 @@ import AudioPromptBox from "./AudioPromptBox";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
 import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
+import { useSpeechRecognition } from "@/lib/audio/useSpeechRecognition";
 
 export type SpeakingStep =
   | { kind: "audio"; audioUrl?: string }
@@ -62,22 +63,18 @@ export default function SpeakingRecorderFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished, stepIndex]);
 
-  const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef("");
-  const finalTranscriptRef = useRef("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordedAudio = useRecordedAudio();
-
-  const stopRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-  };
+  const speech = useSpeechRecognition({
+    onTranscriptChange: (newTranscript) => {
+      transcriptRef.current = newTranscript;
+      onAnswerChange(newTranscript);
+    },
+  });
 
   const advance = async () => {
-    stopRecognition();
+    speech.stopRecognition();
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -158,79 +155,51 @@ export default function SpeakingRecorderFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordedAudio.audioUrl, recordedAudio.audioBlob]);
 
-  // Speech recognition runs for the duration of a "record" step. The
-  // browser's own SpeechRecognition permission prompt is unreliable across
-  // browsers (some silently no-op instead of prompting), so mic access is
-  // requested explicitly first (via useRecordedAudio, which also captures
-  // the audio itself for playback) and a warning surfaces if it's denied.
-  // Recognition only starts once that request settles — starting it
-  // *concurrently* with a second live getUserMedia stream tends to make
-  // Chrome renegotiate the shared audio pipeline, aborting/restarting
-  // recognition and dropping whatever hadn't been finalised yet.
+  // Speech recognition runs for the duration of a "record" step. On mobile,
+  // we initialize SpeechRecognition instantly to avoid gesture token loss and stagger
+  // MediaRecorder to prevent audio hardware conflicts and initialization delays.
   useEffect(() => {
     if (!step || step.kind !== "record") return;
 
     let cancelled = false;
     transcriptRef.current = "";
-    finalTranscriptRef.current = "";
+    speech.resetTranscript();
     setMicWarning(null);
 
-    const startRecognition = () => {
-      const SR =
-        typeof window !== "undefined"
-          ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-          : null;
-      if (!SR) return;
-      const recognition = new SR();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-      recognitionRef.current = recognition;
-
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript + " ";
-          } else {
-            interim += event.results[i][0].transcript;
-          }
+    if (isMobileDevice()) {
+      speech.startRecognition();
+      const timeout = setTimeout(() => {
+        if (!cancelled) {
+          recordedAudio.start().then((ok) => {
+            if (!ok && !cancelled) {
+              setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
+            }
+          });
         }
-        const full = (finalTranscriptRef.current + interim).trim();
-        transcriptRef.current = full;
-        onAnswerChange(full);
+      }, 250);
+      return () => {
+        cancelled = true;
+        clearTimeout(timeout);
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-      recognition.onerror = () => {};
-      recognition.onend = () => {
-        if (recognitionRef.current === recognition) {
-          try {
-            recognition.start();
-          } catch {}
+    } else {
+      recordedAudio.start().then((ok) => {
+        if (cancelled) return;
+        if (ok) {
+          speech.startRecognition();
+        } else {
+          setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
         }
+      });
+      return () => {
+        cancelled = true;
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-      recognition.start();
-    };
-
-    recordedAudio.start().then((ok) => {
-      if (cancelled) return;
-      if (ok) {
-        if (!isMobileDevice()) {
-          startRecognition();
-        }
-      } else {
-        setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
-      }
-    });
-
-    return () => {
-      cancelled = true;
-      stopRecognition();
-      recordedAudio.stop();
-    };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
-
-  useEffect(() => () => stopRecognition(), []);
 
   if (!step) return null;
 

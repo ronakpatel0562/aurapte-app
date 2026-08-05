@@ -5,6 +5,7 @@ import { scoreFluency, scorePronunciation } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
 import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
+import { useSpeechRecognition } from "@/lib/audio/useSpeechRecognition";
 
 interface ReadAloudProps {
   question: {
@@ -63,11 +64,15 @@ export default function ReadAloud({
   }, []);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
-  const finalTranscriptRef = useRef("");
   const recordingStartRef = useRef(0);
   const recordedAudio = useRecordedAudio();
+  const speech = useSpeechRecognition({
+    onTranscriptChange: (text) => {
+      latestTranscriptRef.current = text;
+      setTranscript(text);
+    },
+  });
 
   const clearTimer = () => {
     if (intervalRef.current) {
@@ -77,11 +82,7 @@ export default function ReadAloud({
   };
 
   const stopRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
+    speech.stopRecognition();
   };
 
   // Prep countdown
@@ -119,7 +120,7 @@ export default function ReadAloud({
     setRecordCount(RECORD_SECONDS);
     recordingStartRef.current = Date.now();
     latestTranscriptRef.current = "";
-    finalTranscriptRef.current = "";
+    speech.resetTranscript();
     setTranscript("");
 
     // Start countdown
@@ -137,62 +138,30 @@ export default function ReadAloud({
 
     let cancelled = false;
 
-    // Speech recognition only starts once the recorder's own getUserMedia
-    // request has settled — requesting a second live mic stream *while*
-    // SpeechRecognition is already mid-session tends to make Chrome
-    // renegotiate the shared audio pipeline, aborting/restarting recognition
-    // and wiping whatever hadn't been finalised yet (the garbled live
-    // transcript this was causing). Sequencing the two avoids that.
-    recordedAudio.start().then(() => {
-      if (cancelled) return;
-      if (isMobileDevice()) return;
-
-      const SR =
-        typeof window !== "undefined"
-          ? (window as any).SpeechRecognition ||
-            (window as any).webkitSpeechRecognition
-          : null;
-      if (!SR) return;
-
-      const recognition = new SR();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-      recognitionRef.current = recognition;
-
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript + " ";
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
-        const full = (finalTranscriptRef.current + interim).trim();
-        latestTranscriptRef.current = full;
-        setTranscript(full);
+    if (isMobileDevice()) {
+      // Start STT instantly on mobile to preserve gesture context & stagger MediaRecorder
+      speech.startRecognition();
+      const st = setTimeout(() => {
+        if (!cancelled) recordedAudio.start();
+      }, 250);
+      return () => {
+        cancelled = true;
+        clearTimeout(st);
+        clearTimer();
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-
-      recognition.onerror = () => {};
-
-      recognition.onend = () => {
-        if (recognitionRef.current === recognition) {
-          try {
-            recognition.start();
-          } catch {}
-        }
+    } else {
+      recordedAudio.start().then(() => {
+        if (!cancelled) speech.startRecognition();
+      });
+      return () => {
+        cancelled = true;
+        clearTimer();
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-
-      recognition.start();
-    });
-
-    return () => {
-      cancelled = true;
-      clearTimer();
-      stopRecognition();
-      recordedAudio.stop();
-    };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
@@ -206,7 +175,8 @@ export default function ReadAloud({
 
   const handleReset = () => {
     clearTimer();
-    stopRecognition();
+    speech.stopRecognition();
+    speech.resetTranscript();
     recordedAudio.reset();
     setPhase("prep");
     setPrepCount(PREP_SECONDS);
@@ -214,7 +184,6 @@ export default function ReadAloud({
     setTranscript("");
     setResult(null);
     latestTranscriptRef.current = "";
-    finalTranscriptRef.current = "";
     recordingStartRef.current = 0;
     setInitKey((k) => k + 1);
   };
@@ -222,6 +191,7 @@ export default function ReadAloud({
   const handleStartRecording = () => {
     if (phase !== "prep") return;
     clearTimer();
+    speech.startRecognition();
     setPhase("recording");
   };
 
@@ -379,8 +349,8 @@ export default function ReadAloud({
           </div>
         </div>
 
-        {/* Live transcript during recording (Desktop only) */}
-        {phase === "recording" && !isMobile && (
+        {/* Live transcript during recording */}
+        {phase === "recording" && (
           <div className="px-8 pb-6">
             <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
               Live Transcript
@@ -406,6 +376,7 @@ export default function ReadAloud({
           {phase === "prep" ? (
             <button
               onClick={handleStartRecording}
+              onTouchEnd={handleStartRecording}
               className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
             >
               Start Recording

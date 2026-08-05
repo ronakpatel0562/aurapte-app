@@ -21,11 +21,20 @@ export function useRecordedAudio() {
   const currentBlobRef = useRef<Blob | null>(null);
 
   const start = useCallback((): Promise<boolean> => {
-    if (typeof navigator === "undefined" || !navigator.mediaDevices) return Promise.resolve(false);
-    return navigator.mediaDevices
-      .getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-      })
+    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return Promise.resolve(false);
+    }
+    const getStream = () =>
+      navigator.mediaDevices
+        .getUserMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        })
+        .catch(() => {
+          // Fallback to simpler constraints if mobile hardware/browser rejects strict processing flags
+          return navigator.mediaDevices.getUserMedia({ audio: true });
+        });
+
+    return getStream()
       .then((stream) => {
         streamRef.current = stream;
         chunksRef.current = [];
