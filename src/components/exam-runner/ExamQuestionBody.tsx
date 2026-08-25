@@ -90,6 +90,8 @@ export default function ExamQuestionBody({
             onAnswerChange={onAnswerChange}
             onLockChange={onLockChange}
             onAudioRecorded={onAudioAnswer}
+            taskType="read_aloud"
+            referenceText={content.passage}
           />
           <div className="border border-gray-300 rounded bg-white p-5 text-[15px] leading-relaxed text-gray-800">
             {content.passage ?? "No passage provided."}
@@ -114,6 +116,8 @@ export default function ExamQuestionBody({
             onAnswerChange={onAnswerChange}
             onLockChange={onLockChange}
             onAudioRecorded={onAudioAnswer}
+            taskType="repeat_sentence"
+            referenceText={content.sentence || content.transcript}
           />
         </div>
       );
@@ -135,6 +139,8 @@ export default function ExamQuestionBody({
             onAnswerChange={onAnswerChange}
             onLockChange={onLockChange}
             onAudioRecorded={onAudioAnswer}
+            taskType="describe_image"
+            referenceText={content.description}
           />
           <div className="border border-gray-300 rounded overflow-hidden bg-white">
             {content.image_url ? (
@@ -175,6 +181,8 @@ export default function ExamQuestionBody({
             onAnswerChange={onAnswerChange}
             onLockChange={onLockChange}
             onAudioRecorded={onAudioAnswer}
+            taskType="responding_to_situation"
+            referenceText={content.model_answer || content.scenario}
           />
         </div>
       );
@@ -197,6 +205,8 @@ export default function ExamQuestionBody({
             onAnswerChange={onAnswerChange}
             onLockChange={onLockChange}
             onAudioRecorded={onAudioAnswer}
+            taskType="answer_short_question"
+            referenceText={content.correct_answer}
           />
         </div>
       );

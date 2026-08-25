@@ -79,7 +79,13 @@ export default function Header({ isAdmin = false }: HeaderProps) {
   };
 
   const planDef = PLANS[profile?.plan ?? "free"] ?? PLANS.free;
+<<<<<<< HEAD
   const isPremium = profile?.plan === "premium";
+=======
+  const isMaster = profile?.plan === "master";
+  const isPro = profile?.plan === "premium";
+  const isPremium = isMaster || isPro;
+>>>>>>> cad5cde21cec42c11386173542d6df45866ceabc
 
 
   return (
@@ -109,13 +115,14 @@ export default function Header({ isAdmin = false }: HeaderProps) {
 
         {profile ? (
           <>
-            {/* Plan badge — pill showing the friendly name. Premium gets a
-                subtle gradient accent; free stays neutral. */}
+            {/* Plan badge — Mentorship 85+ gets vibrant amber gradient, Pro gets brand gradient */}
             <div
-              className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-mono font-semibold uppercase tracking-wider border ${
-                isPremium
+              className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-mono font-bold uppercase tracking-wider ${
+                isMaster
+                  ? "text-white bg-gradient-to-r from-amber-500 to-orange-500 shadow-md shadow-amber-500/20 border-transparent"
+                  : isPro
                   ? "text-on-primary bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end border-transparent shadow-sm"
-                  : "text-body bg-canvas-soft-2 border-hairline"
+                  : "text-body bg-canvas-soft-2 border border-hairline"
               }`}
               title={planDef.tagline}
             >
@@ -132,7 +139,9 @@ export default function Header({ isAdmin = false }: HeaderProps) {
               >
                 <div
                   className={`w-8 h-8 rounded-full font-semibold text-xs flex items-center justify-center shadow-vercel-card transition ${
-                    isPremium
+                    isMaster
+                      ? "bg-gradient-to-tr from-amber-500 to-orange-500 text-white"
+                      : isPro
                       ? "bg-gradient-to-tr from-gradient-brand-start to-gradient-brand-end text-white"
                       : "bg-primary text-on-primary"
                   }`}

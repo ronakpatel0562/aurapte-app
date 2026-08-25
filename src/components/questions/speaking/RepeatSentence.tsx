@@ -5,6 +5,8 @@ import { Volume2 } from "lucide-react";
 import { scoreFluency, scoreAccuracy } from "@/lib/scoring/speaking";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
+import { useSpeechRecognition } from "@/lib/audio/useSpeechRecognition";
 
 interface RepeatSentenceProps {
   question: {
@@ -50,7 +52,12 @@ export default function RepeatSentence({
   const [phase, setPhase] = useState<Phase>("audio");
   const [recordCount, setRecordCount] = useState(RECORD_SECONDS);
   const [transcript, setTranscript] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const [result, setResult] = useState<{ accuracy: number } | null>(null);
+
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
 
   // Audio state
   const [prepSeconds, setPrepSeconds] = useState<number | null>(3);
@@ -62,11 +69,15 @@ export default function RepeatSentence({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const recognitionRef = useRef<any>(null);
   const latestTranscriptRef = useRef("");
-  const finalTranscriptRef = useRef("");
   const recordingStartRef = useRef(0);
   const recordedAudio = useRecordedAudio();
+  const speech = useSpeechRecognition({
+    onTranscriptChange: (text) => {
+      latestTranscriptRef.current = text;
+      setTranscript(text);
+    },
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem("portal_audio_volume");
@@ -110,11 +121,7 @@ export default function RepeatSentence({
   }, [prepSeconds, phase, volume]);
 
   const stopRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
+    speech.stopRecognition();
   };
 
   // Beep the instant recording starts, whether triggered by the sentence
@@ -132,7 +139,7 @@ export default function RepeatSentence({
     setRecordCount(RECORD_SECONDS);
     recordingStartRef.current = Date.now();
     latestTranscriptRef.current = "";
-    finalTranscriptRef.current = "";
+    speech.resetTranscript();
     setTranscript("");
 
     intervalRef.current = setInterval(() => {
@@ -149,61 +156,25 @@ export default function RepeatSentence({
 
     let cancelled = false;
 
-    // Speech recognition only starts once the recorder's own getUserMedia
-    // request has settled — requesting a second live mic stream *while*
-    // SpeechRecognition is already mid-session tends to make Chrome
-    // renegotiate the shared audio pipeline, aborting/restarting recognition
-    // and wiping whatever hadn't been finalised yet. Sequencing the two
-    // avoids that.
-    recordedAudio.start().then(() => {
-      if (cancelled) return;
-
-      const SR =
-        typeof window !== "undefined"
-          ? (window as any).SpeechRecognition ||
-            (window as any).webkitSpeechRecognition
-          : null;
-      if (!SR) return;
-
-      const recognition = new SR();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-      recognitionRef.current = recognition;
-
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript + " ";
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
-        const full = (finalTranscriptRef.current + interim).trim();
-        latestTranscriptRef.current = full;
-        setTranscript(full);
+    if (isMobileDevice()) {
+      speech.startRecognition();
+      return () => {
+        cancelled = true;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-
-      recognition.onerror = () => {};
-
-      recognition.onend = () => {
-        if (recognitionRef.current === recognition) {
-          try {
-            recognition.start();
-          } catch {}
-        }
+    } else {
+      recordedAudio.start().then(() => {
+        if (!cancelled) speech.startRecognition();
+      });
+      return () => {
+        cancelled = true;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-
-      recognition.start();
-    });
-
-    return () => {
-      cancelled = true;
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      stopRecognition();
-      recordedAudio.stop();
-    };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
@@ -222,7 +193,8 @@ export default function RepeatSentence({
 
   const handleReset = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    stopRecognition();
+    speech.stopRecognition();
+    speech.resetTranscript();
     recordedAudio.reset();
     if (audioRef.current) {
       audioRef.current.pause();
@@ -238,7 +210,6 @@ export default function RepeatSentence({
     setTranscript("");
     setResult(null);
     latestTranscriptRef.current = "";
-    finalTranscriptRef.current = "";
     recordingStartRef.current = 0;
   };
 
@@ -287,19 +258,32 @@ export default function RepeatSentence({
       audioRef.current.currentTime = 0;
     }
     setPrepSeconds(null);
+    speech.startRecognition();
     setPhase("recording");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     stopRecognition();
     if (intervalRef.current) clearInterval(intervalRef.current);
+    const blob = await recordedAudio.stop();
 
     const elapsedSeconds =
       recordingStartRef.current > 0
         ? Math.max(1, (Date.now() - recordingStartRef.current) / 1000)
         : RECORD_SECONDS;
 
-    const finalTranscript = latestTranscriptRef.current || transcript;
+    const rawTranscript = latestTranscriptRef.current || transcript;
+    const { transcript: finalTranscript } = await detectAccurateTranscript({
+      audioBlob: blob || recordedAudio.audioBlob,
+      liveTranscript: rawTranscript,
+      taskType: "repeat_sentence",
+      referenceText: content.sentence || "",
+      fallbackDuration: elapsedSeconds,
+    });
+
+    latestTranscriptRef.current = finalTranscript;
+    setTranscript(finalTranscript);
+
     const accuracy = scoreAccuracy(finalTranscript, content.sentence || "");
 
     setResult({ accuracy });
@@ -504,6 +488,7 @@ export default function RepeatSentence({
           {phase === "audio" ? (
             <button
               onClick={handleStartRecording}
+              onTouchEnd={handleStartRecording}
               className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
             >
               Start Recording

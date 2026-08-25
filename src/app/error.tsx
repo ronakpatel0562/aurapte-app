@@ -14,7 +14,16 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    console.error("Global runtime error:", error);
+
+    // If session/auth error, redirect to login automatically
+    if (
+      error.message?.toLowerCase().includes("auth") ||
+      error.message?.toLowerCase().includes("session") ||
+      error.message?.toLowerCase().includes("unauthorized")
+    ) {
+      window.location.href = "/login";
+    }
   }, [error]);
 
   return (

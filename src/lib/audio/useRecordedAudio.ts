@@ -13,73 +13,130 @@ import { useCallback, useRef, useState } from "react";
  */
 export function useRecordedAudio() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const mimeTypeRef = useRef<string>("");
+  const currentBlobRef = useRef<Blob | null>(null);
 
-  // Returns a promise that resolves once the recorder is actually rolling
-  // (or immediately if mic access fails) — callers that also run
-  // SpeechRecognition on the same device should await this before starting
-  // it. Requesting a second live getUserMedia stream *while* SpeechRecognition
-  // is mid-session tends to force Chrome to renegotiate the shared audio
-  // pipeline (echo-cancellation/AGC), which can abort and restart the
-  // recognition session and drop whatever hadn't been finalised yet — hence
-  // disabling audio processing here and sequencing the two acquisitions
-  // instead of racing them.
-  // Resolves `true` once the recorder is actually rolling, `false` if mic
-  // access failed — callers that also run SpeechRecognition on the same
-  // device should await this before starting it, and can use the boolean to
-  // decide whether to surface a "microphone blocked" warning.
   const start = useCallback((): Promise<boolean> => {
-    if (typeof navigator === "undefined" || !navigator.mediaDevices) return Promise.resolve(false);
-    return navigator.mediaDevices
-      .getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-      })
+    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return Promise.resolve(false);
+    }
+    const getStream = () =>
+      navigator.mediaDevices
+        .getUserMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        })
+        .catch(() => {
+          // Fallback to simpler constraints if mobile hardware/browser rejects strict processing flags
+          return navigator.mediaDevices.getUserMedia({ audio: true });
+        });
+
+    return getStream()
       .then((stream) => {
         streamRef.current = stream;
         chunksRef.current = [];
+        currentBlobRef.current = null;
         let recorder: MediaRecorder;
-        try {
-          recorder = new MediaRecorder(stream);
-        } catch {
-          stream.getTracks().forEach((t) => t.stop());
-          return false;
+        
+        let chosenMimeType = "";
+        if (typeof MediaRecorder !== "undefined") {
+          const candidates = [
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/mp4",
+            "audio/aac",
+            "audio/ogg",
+            "audio/wav",
+          ];
+          chosenMimeType = candidates.find((t) => MediaRecorder.isTypeSupported(t)) || "";
         }
+        mimeTypeRef.current = chosenMimeType;
+
+        try {
+          recorder = chosenMimeType
+            ? new MediaRecorder(stream, { mimeType: chosenMimeType })
+            : new MediaRecorder(stream);
+        } catch {
+          try {
+            recorder = new MediaRecorder(stream);
+          } catch {
+            stream.getTracks().forEach((t) => t.stop());
+            return false;
+          }
+        }
+
         recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) chunksRef.current.push(e.data);
+          if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
         };
+
         recorder.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          const finalMime = recorder.mimeType || mimeTypeRef.current || "audio/wav";
+          const blob = new Blob(chunksRef.current, { type: finalMime });
+          currentBlobRef.current = blob;
+          setAudioBlob(blob);
           setAudioUrl((prev) => {
             if (prev) URL.revokeObjectURL(prev);
             return URL.createObjectURL(blob);
           });
           stream.getTracks().forEach((t) => t.stop());
         };
-        recorder.start();
+
+        recorder.start(100); // 100ms timeslice for mobile streaming
         recorderRef.current = recorder;
         return true;
       })
       .catch(() => false);
   }, []);
 
-  const stop = useCallback(() => {
-    if (recorderRef.current && recorderRef.current.state !== "inactive") {
-      recorderRef.current.stop();
-    }
-    recorderRef.current = null;
+  const stop = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      const recorder = recorderRef.current;
+      if (!recorder || recorder.state === "inactive") {
+        recorderRef.current = null;
+        if (chunksRef.current.length > 0 && !currentBlobRef.current) {
+          const finalMime = mimeTypeRef.current || "audio/wav";
+          const b = new Blob(chunksRef.current, { type: finalMime });
+          currentBlobRef.current = b;
+          setAudioBlob(b);
+        }
+        resolve(currentBlobRef.current);
+        return;
+      }
+
+      const prevOnStop = recorder.onstop;
+      recorder.onstop = (e) => {
+        if (prevOnStop) prevOnStop.call(recorder, e);
+        const finalMime = recorder.mimeType || mimeTypeRef.current || "audio/wav";
+        const blob = new Blob(chunksRef.current, { type: finalMime });
+        currentBlobRef.current = blob;
+        setAudioBlob(blob);
+        resolve(blob);
+      };
+
+      try {
+        recorder.stop();
+      } catch {
+        recorderRef.current = null;
+        resolve(currentBlobRef.current);
+      }
+    });
   }, []);
 
   const reset = useCallback(() => {
     stop();
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    currentBlobRef.current = null;
+    chunksRef.current = [];
+    setAudioBlob(null);
     setAudioUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
   }, [stop]);
 
-  return { audioUrl, start, stop, reset };
+  return { audioUrl, audioBlob, start, stop, reset };
 }

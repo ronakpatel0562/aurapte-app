@@ -167,7 +167,7 @@ export default function MobileNavDrawer({
         }`}
         aria-hidden={!open}
       >
-        <div className="h-16 border-b border-hairline flex items-center justify-between px-5">
+        <div className="h-16 border-b border-hairline flex items-center justify-between px-5 pt-2">
           <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
             <img src="/logo.png" alt="AuraPTE" className="w-8 h-8 rounded-lg shadow-md object-cover" />
             <span className="text-lg font-bold tracking-tight text-ink">
@@ -290,8 +290,16 @@ export default function MobileNavDrawer({
                   <Award className="w-4 h-4" />
                   Plans &amp; Billing
                 </span>
-                <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
-                  {planName(plan)}
+                <span
+                  className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${
+                    plan === "master"
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm"
+                      : plan === "premium"
+                      ? "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white shadow-sm"
+                      : "bg-canvas-soft-2 text-mute border border-hairline"
+                  }`}
+                >
+                  {plan === "master" ? "85+ Mentorship" : plan === "premium" ? "Aura Pro" : "Aura Starter"}
                 </span>
               </span>
               {planActive && (

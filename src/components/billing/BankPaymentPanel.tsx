@@ -14,11 +14,11 @@ import { SUPPORT_EMAIL, SUPPORT_WHATSAPP_DISPLAY, whatsappLink } from "@/lib/con
  * without the user ever having to open a mail app.
  */
 const BANK_DETAILS = {
-  accountNumber: "5345413232",
-  accountName: "BADRESHIYA AKSHAYKUMAR GHANSHYAMBHAI",
-  ifsc: "KKBK0000822",
-  bankName: "KOTAK 811 FULL KYC",
-  upiId: "8320821028@kotak",
+  accountNumber: "150788999999",
+  accountName: "Ronak Hiteshbhai Jesadiya",
+  ifsc: "INDB0001827",
+  bankName: "INDUSIND BANK",
+  upiId: "myibl7999@indie",
 };
 
 const CONTACT_EMAIL = SUPPORT_EMAIL;
@@ -95,17 +95,23 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
     ["Account name", BANK_DETAILS.accountName],
     ["IFSC", BANK_DETAILS.ifsc],
     ["Bank", BANK_DETAILS.bankName],
-    ["UPI ID", BANK_DETAILS.upiId],
+    ...(BANK_DETAILS.upiId ? [["UPI ID", BANK_DETAILS.upiId] as [string, string]] : []),
   ];
+
+  const isMaster = planId === "master";
 
   if (!open) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full h-12 rounded-lg bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white font-semibold hover:opacity-95 active:scale-[0.99] transition flex items-center justify-center gap-2"
+        className={`w-full min-h-[48px] py-3 px-4 rounded-xl text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.99] cursor-pointer ${
+          isMaster
+            ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/25 shadow-md"
+            : "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end hover:opacity-95"
+        }`}
       >
-        <Landmark className="w-4 h-4" />
-        {label ?? `Get payment details for ${planName}`}
+        <Landmark className="w-4 h-4 shrink-0" />
+        <span className="leading-tight text-center">{label ?? `Get payment details for ${planName}`}</span>
       </button>
     );
   }
@@ -124,15 +130,18 @@ export default function BankPaymentPanel({ planId, planName, label }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-hairline bg-canvas-soft-2 p-4 space-y-2.5">
+      <div className="rounded-xl border border-hairline bg-canvas-soft-2 p-3.5 sm:p-4 divide-y divide-hairline/60">
         {rows.map(([field, value]) => (
-          <div key={field} className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-mute">{field}</span>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-ink">{value}</span>
+          <div key={field} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0 text-xs sm:text-sm">
+            <span className="text-mute font-medium shrink-0 whitespace-nowrap">{field}</span>
+            <div className="flex items-center justify-end gap-2 min-w-0 flex-1">
+              <span className="font-mono font-semibold text-ink select-all text-right truncate sm:whitespace-normal">
+                {value}
+              </span>
               <button
                 onClick={() => copy(field, value)}
-                className="text-mute hover:text-ink transition"
+                className="p-1.5 rounded-md text-mute hover:text-ink hover:bg-canvas transition shrink-0"
+                title={`Copy ${field}`}
                 aria-label={`Copy ${field}`}
               >
                 {copiedField === field ? (

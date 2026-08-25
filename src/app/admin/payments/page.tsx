@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin";
 import { getSupabaseCredentials } from "@/lib/supabase/config";
 import PaymentClaimsTable, { type AdminClaimRow } from "./PaymentClaimsTable";
+import type { PlanId } from "@/lib/plans";
 
 /**
  * /admin/payments — review queue for the in-app "I've made the payment"
@@ -59,7 +60,7 @@ export default async function AdminPaymentsPage() {
     id: c.id,
     userId: c.user_id,
     email: emailById.get(c.user_id) ?? null,
-    planId: c.plan_id as "free" | "premium",
+    planId: c.plan_id as PlanId,
     months: c.months,
     reference: c.reference,
     screenshotPath: c.screenshot_path,

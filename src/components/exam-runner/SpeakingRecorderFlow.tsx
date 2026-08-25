@@ -6,6 +6,8 @@ import RecordingMeter from "./RecordingMeter";
 import AudioPromptBox from "./AudioPromptBox";
 import { playRecordingBeep } from "@/lib/audio/beep";
 import { useRecordedAudio } from "@/lib/audio/useRecordedAudio";
+import { detectAccurateTranscript, isMobileDevice } from "@/lib/audio/transcriptDetector";
+import { useSpeechRecognition } from "@/lib/audio/useSpeechRecognition";
 
 export type SpeakingStep =
   | { kind: "audio"; audioUrl?: string }
@@ -28,6 +30,8 @@ export default function SpeakingRecorderFlow({
   onAnswerChange,
   onLockChange,
   onAudioRecorded,
+  taskType,
+  referenceText,
 }: {
   steps: SpeakingStep[];
   onAnswerChange: (transcript: string) => void;
@@ -41,6 +45,8 @@ export default function SpeakingRecorderFlow({
    * transcript — see [[project_reuse_audio_component]] for why this reuses
    * the Question Bank's useRecordedAudio hook instead of a fresh MediaRecorder. */
   onAudioRecorded?: (url: string) => void;
+  taskType?: string;
+  referenceText?: string;
 }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(() => stepDuration(steps[0]));
@@ -57,25 +63,35 @@ export default function SpeakingRecorderFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished, stepIndex]);
 
-  const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef("");
-  const finalTranscriptRef = useRef("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordedAudio = useRecordedAudio();
+  const speech = useSpeechRecognition({
+    onTranscriptChange: (newTranscript) => {
+      transcriptRef.current = newTranscript;
+      onAnswerChange(newTranscript);
+    },
+  });
 
-  const stopRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-  };
-
-  const advance = () => {
-    stopRecognition();
+  const advance = async () => {
+    speech.stopRecognition();
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
+    }
+    const blob = await recordedAudio.stop();
+    if (blob) {
+      const res = await detectAccurateTranscript({
+        audioBlob: blob,
+        liveTranscript: transcriptRef.current,
+        taskType: taskType || "read_aloud",
+        referenceText: referenceText || "",
+        fallbackDuration: step?.kind === "record" ? step.seconds : 30,
+      });
+      if (res.transcript) {
+        transcriptRef.current = res.transcript;
+        onAnswerChange(res.transcript);
+      }
     }
     setStepIndex((i) => {
       const next = i + 1;
@@ -119,83 +135,64 @@ export default function SpeakingRecorderFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
 
-  // Surface the captured recording to the exam shell as soon as it's ready.
+  // Surface the captured recording to the exam shell and recover mobile transcript if needed.
   useEffect(() => {
     if (recordedAudio.audioUrl) onAudioRecorded?.(recordedAudio.audioUrl);
+    if (recordedAudio.audioBlob) {
+      detectAccurateTranscript({
+        audioBlob: recordedAudio.audioBlob,
+        liveTranscript: transcriptRef.current,
+        taskType: taskType || "read_aloud",
+        referenceText: referenceText || "",
+        fallbackDuration: step?.kind === "record" ? step.seconds : 30,
+      }).then((res) => {
+        if (res.transcript && res.transcript !== transcriptRef.current) {
+          transcriptRef.current = res.transcript;
+          onAnswerChange(res.transcript);
+        }
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordedAudio.audioUrl]);
+  }, [recordedAudio.audioUrl, recordedAudio.audioBlob]);
 
-  // Speech recognition runs for the duration of a "record" step. The
-  // browser's own SpeechRecognition permission prompt is unreliable across
-  // browsers (some silently no-op instead of prompting), so mic access is
-  // requested explicitly first (via useRecordedAudio, which also captures
-  // the audio itself for playback) and a warning surfaces if it's denied.
-  // Recognition only starts once that request settles — starting it
-  // *concurrently* with a second live getUserMedia stream tends to make
-  // Chrome renegotiate the shared audio pipeline, aborting/restarting
-  // recognition and dropping whatever hadn't been finalised yet.
+  // Speech recognition runs for the duration of a "record" step. On mobile,
+  // we initialize SpeechRecognition instantly to avoid gesture token loss and stagger
+  // MediaRecorder to prevent audio hardware conflicts and initialization delays.
   useEffect(() => {
     if (!step || step.kind !== "record") return;
 
     let cancelled = false;
     transcriptRef.current = "";
-    finalTranscriptRef.current = "";
+    speech.resetTranscript();
     setMicWarning(null);
 
-    const startRecognition = () => {
-      const SR =
-        typeof window !== "undefined"
-          ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-          : null;
-      if (!SR) return;
-      const recognition = new SR();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-      recognitionRef.current = recognition;
-
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscriptRef.current += event.results[i][0].transcript + " ";
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
-        const full = (finalTranscriptRef.current + interim).trim();
-        transcriptRef.current = full;
-        onAnswerChange(full);
+    if (isMobileDevice()) {
+      // On mobile browsers (iOS Safari, Android Chrome), starting MediaRecorder (getUserMedia)
+      // simultaneously with Web Speech API terminates or silences SpeechRecognition due to mobile
+      // hardware single-stream restrictions. We let SpeechRecognition run exclusively on mobile.
+      speech.startRecognition();
+      return () => {
+        cancelled = true;
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-      recognition.onerror = () => {};
-      recognition.onend = () => {
-        if (recognitionRef.current === recognition) {
-          try {
-            recognition.start();
-          } catch {}
+    } else {
+      recordedAudio.start().then((ok) => {
+        if (cancelled) return;
+        if (ok) {
+          speech.startRecognition();
+        } else {
+          setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
         }
+      });
+      return () => {
+        cancelled = true;
+        speech.stopRecognition();
+        recordedAudio.stop();
       };
-      recognition.start();
-    };
-
-    recordedAudio.start().then((ok) => {
-      if (cancelled) return;
-      if (ok) {
-        startRecognition();
-      } else {
-        setMicWarning("Microphone access was blocked. Allow microphone permission to record your answer.");
-      }
-    });
-
-    return () => {
-      cancelled = true;
-      stopRecognition();
-      recordedAudio.stop();
-    };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
-
-  useEffect(() => () => stopRecognition(), []);
 
   if (!step) return null;
 

@@ -10,7 +10,7 @@ export interface AdminUserRow {
   email: string | null;
   fullName: string | null;
   createdAt: string;
-  plan: "free" | "premium";
+  plan: PlanId;
   planExpiry: string | null;
 }
 
@@ -65,7 +65,7 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
   }
 
   function handleActivate(row: AdminUserRow) {
-    const plan = planChoice[row.id] ?? "premium";
+    const plan = planChoice[row.id] ?? "master";
     const months = monthsChoice[row.id] ?? 1;
     run(row.id, async () => {
       const res = await activatePlan(row.id, plan, months);
@@ -79,23 +79,24 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
   }
 
   function handleExtend(row: AdminUserRow) {
+    const plan = planChoice[row.id] ?? row.plan;
     const months = monthsChoice[row.id] ?? 1;
     run(row.id, async () => {
-      const res = await extendPlan(row.id, months);
+      const res = await activatePlan(row.id, plan, months);
       if (!res.error) {
         const base =
           row.planExpiry && new Date(row.planExpiry).getTime() > Date.now()
             ? new Date(row.planExpiry)
             : new Date();
         base.setMonth(base.getMonth() + months);
-        patchRow(row.id, { planExpiry: base.toISOString() });
+        patchRow(row.id, { plan, planExpiry: base.toISOString() });
       }
       return res;
     });
   }
 
   function handleGrantTrial(row: AdminUserRow) {
-    const plan = planChoice[row.id] ?? "premium";
+    const plan = planChoice[row.id] ?? "master";
     const days = trialDaysChoice[row.id] ?? 7;
     run(row.id, async () => {
       const res = await grantTrial(row.id, plan, days);
@@ -201,12 +202,13 @@ export default function UsersTable({ initialRows }: { initialRows: AdminUserRow[
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <select
-                          value={planChoice[row.id] ?? "premium"}
+                          value={planChoice[row.id] ?? "master"}
                           onChange={(e) =>
                             setPlanChoice((p) => ({ ...p, [row.id]: e.target.value as PlanId }))
                           }
-                          className="text-xs bg-canvas border border-hairline rounded-md px-1.5 py-1"
+                          className="text-xs bg-canvas border border-hairline rounded-md px-1.5 py-1 font-medium"
                         >
+                          <option value="master">Mentorship 85+</option>
                           <option value="premium">Pro</option>
                           <option value="free">Starter</option>
                         </select>

@@ -129,7 +129,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 shrink-0 border-r border-hairline bg-canvas flex flex-col h-screen sticky top-0 overflow-y-auto select-none font-geist">
       {/* Brand Header */}
-      <div className="h-16 border-b border-hairline flex items-center px-6">
+      <div className="h-16 border-b border-hairline flex items-center px-6 pt-2">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <img
             src="/logo.png"
@@ -291,8 +291,16 @@ export default function Sidebar() {
                 <Award className="w-4 h-4" />
                 Plans &amp; Billing
               </span>
-              <span className="text-[10px] bg-canvas-soft-2 border border-hairline px-1.5 py-0.5 rounded font-mono text-mute">
-                {planName(plan)}
+              <span
+                className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${
+                  plan === "master"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm"
+                    : plan === "premium"
+                    ? "bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end text-white shadow-sm"
+                    : "bg-canvas-soft-2 text-mute border border-hairline"
+                }`}
+              >
+                {plan === "master" ? "85+ Mentorship" : plan === "premium" ? "Aura Pro" : "Aura Starter"}
               </span>
             </span>
             {planActive && (
