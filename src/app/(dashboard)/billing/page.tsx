@@ -195,15 +195,11 @@ export default async function BillingPage({
                   <BankPaymentPanel
                     planId={plan.id}
                     planName={plan.name}
-<<<<<<< HEAD
                     label={
                       plan.priceInr < (PLANS[currentPlan] ?? PLANS.free).priceInr
                         ? `Get payment details to switch to ${plan.name}`
                         : `Get payment details for ${plan.name}`
                     }
-=======
-                    label={`Get payment details for ${plan.name}`}
->>>>>>> cad5cde21cec42c11386173542d6df45866ceabc
                   />
                 )}
               </div>

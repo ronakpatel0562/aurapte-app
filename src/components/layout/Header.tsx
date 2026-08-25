@@ -79,13 +79,10 @@ export default function Header({ isAdmin = false }: HeaderProps) {
   };
 
   const planDef = PLANS[profile?.plan ?? "free"] ?? PLANS.free;
-<<<<<<< HEAD
-  const isPremium = profile?.plan === "premium";
-=======
   const isMaster = profile?.plan === "master";
   const isPro = profile?.plan === "premium";
   const isPremium = isMaster || isPro;
->>>>>>> cad5cde21cec42c11386173542d6df45866ceabc
+
 
 
   return (
