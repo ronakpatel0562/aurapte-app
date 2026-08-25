@@ -183,7 +183,7 @@ export default async function BillingPage({
                     planId={plan.id}
                     planName={plan.name}
                     label={
-                      plan.priceInr < PLANS[currentPlan].priceInr
+                      plan.priceInr < (PLANS[currentPlan] ?? PLANS.free).priceInr
                         ? `Get payment details to switch to ${plan.name}`
                         : `Get payment details for ${plan.name}`
                     }

@@ -78,8 +78,9 @@ export default function Header({ isAdmin = false }: HeaderProps) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const planDef = PLANS[profile?.plan ?? "free"];
+  const planDef = PLANS[profile?.plan ?? "free"] ?? PLANS.free;
   const isPremium = profile?.plan === "premium";
+
 
   return (
     <header className="h-16 border-b border-hairline bg-canvas flex items-center justify-between px-4 sm:px-6 lg:px-8 z-30 sticky top-0 backdrop-blur-md bg-canvas/85">

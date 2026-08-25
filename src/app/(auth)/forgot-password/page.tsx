@@ -1,12 +1,5 @@
-import React from "react";
-import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
-import AuthLayout from "@/components/auth/AuthLayout";
+import { redirect } from "next/navigation";
 
 export default function ForgotPasswordPage() {
-  // Trigger recompilation
-  return (
-    <AuthLayout>
-      <ForgotPasswordForm />
-    </AuthLayout>
-  );
+  redirect("/login");
 }

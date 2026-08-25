@@ -47,41 +47,24 @@ export default function MCQMultiple({
 
   const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
-  const optionHasPrefix = (opt: string): boolean => {
-    if (!opt || opt.length < 3) return false;
-    const first = opt[0];
-    return letters.includes(first) && (opt[1] === ")" || opt[1] === ".");
-  };
-
-  const getDisplayText = (option: string, index: number): string => {
-    if (optionHasPrefix(option)) return option;
-    return `${letters[index]}) ${option}`;
-  };
-
-  const stripPrefix = (opt: string): string => {
-    if (optionHasPrefix(opt)) return opt.slice(2).trim();
-    return opt;
-  };
-
-  const normalizedOptions = options.map(stripPrefix);
-  const normalizedCorrectAnswers = correct_answers.map(stripPrefix);
-
+  // Options arrive letter-prefixed from the mapper ("A. Some text").
+  // We display them as-is; selection and scoring both use just the letter (o[0]).
   const [selected, setSelected] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ score: number; maxScore: number } | null>(null);
 
-  const handleToggle = (optionText: string) => {
+  const handleToggle = (letter: string) => {
     if (submitted) return;
     setSelected((prev) =>
-      prev.includes(optionText)
-        ? prev.filter((item) => item !== optionText)
-        : [...prev, optionText]
+      prev.includes(letter)
+        ? prev.filter((item) => item !== letter)
+        : [...prev, letter]
     );
   };
 
   const handleSubmit = () => {
     if (submitted) return;
-    const scoreResult = scoreMCQMultiple(selected, normalizedCorrectAnswers);
+    const scoreResult = scoreMCQMultiple(selected, correct_answers);
     setResult(scoreResult);
     setSubmitted(true);
     onSubmitAttempt(scoreResult.score, scoreResult.maxScore, selected);
@@ -93,8 +76,8 @@ export default function MCQMultiple({
     setResult(null);
   };
 
-  const isOptionCorrect = (normalizedText: string) =>
-    normalizedCorrectAnswers.includes(normalizedText);
+  const isOptionCorrect = (letter: string) => correct_answers.includes(letter);
+
 
   return (
     <div className="space-y-6">
@@ -138,16 +121,16 @@ export default function MCQMultiple({
             )}
 
             <div className="space-y-4">
-              {normalizedOptions.map((optText, index) => {
-                const displayText = getDisplayText(options[index], index);
-                const isSel = selected.includes(optText);
-                const isCorr = isOptionCorrect(optText);
+              {options.map((optText, index) => {
+                const letter = optText[0] || letters[index];
+                const isSel = selected.includes(letter);
+                const isCorr = isOptionCorrect(letter);
 
                 if (!submitted) {
                   return (
                     <button
-                      key={`${index}-${optText}`}
-                      onClick={() => handleToggle(optText)}
+                      key={`${index}-${letter}`}
+                      onClick={() => handleToggle(letter)}
                       className="w-full text-left flex items-start gap-3.5 group transition duration-150 select-none py-2 cursor-pointer active:scale-[0.99]"
                     >
                       <div
@@ -160,12 +143,12 @@ export default function MCQMultiple({
                         {isSel && <Check className="w-4 h-4 text-white stroke-[3]" />}
                       </div>
                       <span className="text-[16px] text-gray-700 font-sans leading-relaxed select-text">
-                        {displayText}
+                        {optText}
                       </span>
                     </button>
                   );
                 } else {
-                  // Submitted feedback view (colored option container)
+                  // Submitted feedback view
                   let optionClass = "border border-gray-200 bg-white text-gray-700";
                   let checkboxClass = "border-gray-400 bg-white text-transparent";
                   let iconToRender = null;
@@ -205,7 +188,7 @@ export default function MCQMultiple({
 
                   return (
                     <div
-                      key={`${index}-${optText}`}
+                      key={`${index}-${letter}`}
                       className={`w-full text-left p-5 rounded-md text-xs transition duration-150 flex items-center justify-between group ${optionClass}`}
                     >
                       <div className="flex items-center gap-3.5 pr-4 select-text text-[16px]">
@@ -214,7 +197,7 @@ export default function MCQMultiple({
                         >
                           {iconToRender}
                         </div>
-                        <span className="leading-relaxed select-text font-sans">{displayText}</span>
+                        <span className="leading-relaxed select-text font-sans">{optText}</span>
                       </div>
                       {pointText && <div className="shrink-0 select-none">{pointText}</div>}
                     </div>

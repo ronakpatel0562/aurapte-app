@@ -307,9 +307,26 @@ export function transformQuestionContent(question: any): any {
   // 2c. Reading Multiple Choice – Multiple Answers (stored as
   // reading_mcq_multiple). Same text-vs-letter mismatch as above, just
   // with an array of correct answers instead of one.
+  //
+  // The DB stores options as bare text; we letter-prefix them (same as
+  // listening_mcq_multiple) so the component can extract o[0] as a key and
+  // compare against the letter-keyed correct_answers.
   if (type === "reading_mcq_multiple" || type === "reading-multiple-choice-multiple") {
     const opts = Array.isArray(content.options) ? content.options : [];
     const letters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+
+    // Letter-prefix options (only if not already prefixed)
+    const alreadyPrefixed = opts.length > 0 &&
+      typeof opts[0] === "string" &&
+      /^[A-H][.)]\s/.test(opts[0]);
+    if (!alreadyPrefixed) {
+      content.options = opts.map((opt: string, i: number) => {
+        const letter = letters[i] || String.fromCharCode(65 + i);
+        return `${letter}. ${opt}`;
+      });
+    }
+
+    // Normalize correct_answers to letter keys
     if (Array.isArray(content.correct_answers)) {
       content.correct_answers = content.correct_answers.map((ans: unknown) => {
         if (typeof ans !== "string") return ans;
@@ -321,6 +338,7 @@ export function transformQuestionContent(question: any): any {
       content.correct_answers = [];
     }
   }
+
 
   // 3. Listening Fill in the Blanks (stored as listening_fill_in_the_blanks)
   if (type === "listening_fill_in_the_blanks" || type === "listening-fill-in-the-blanks") {
