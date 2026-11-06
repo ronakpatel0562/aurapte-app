@@ -22,6 +22,7 @@ import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 import { planName, isPremiumPlan, isPlanActive, daysUntilExpiry, formatExpiryDate } from "@/lib/plans";
 import ThemeToggle from "@/components/providers/ThemeToggle";
+import { isDiwaliActive } from "@/lib/diwali";
 
 interface TaskTypeItem {
   name: string;
@@ -329,9 +330,7 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* Theme toggle — collapsed into a single icon button at the
-            bottom of the sidebar to save space; the full pill toggle is
-            available in the header. */}
+        {/* Appearance & Theme Toggle (includes Diya toggle during Diwali) */}
         <div className="pt-4 border-t border-hairline">
           <p className="px-3 text-2xs font-semibold text-mute uppercase tracking-widest mb-2">
             Appearance

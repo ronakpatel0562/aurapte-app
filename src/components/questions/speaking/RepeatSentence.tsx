@@ -359,8 +359,8 @@ export default function RepeatSentence({
   const circleLabel = phase === "recording" ? recordCount : "✓";
   const circleClass =
     phase === "recording"
-      ? "border-red-500 text-red-600"
-      : "border-green-500 text-green-600";
+      ? "border-red-500 text-red-600 dark:border-red-400 dark:text-red-400"
+      : "border-green-500 text-green-600 dark:border-green-400 dark:text-green-400";
   const statusText =
     phase === "recording"
       ? `Recording: ${recordCount}s remaining`
@@ -368,7 +368,7 @@ export default function RepeatSentence({
       ? "Recording complete — ready to submit"
       : "Response submitted";
   const statusClass =
-    phase === "recording" ? "text-red-600" : "text-green-700";
+    phase === "recording" ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400";
 
   return (
     <div className="space-y-4">
@@ -385,9 +385,9 @@ export default function RepeatSentence({
         }
       `}</style>
 
-      <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans">
+      <div className="bg-[#FAF9F6] dark:bg-canvas-soft border border-gray-300 dark:border-hairline rounded-lg shadow-sm overflow-hidden font-sans">
         {/* Instructions */}
-        <div className="px-6 py-5 text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-6 py-5 text-[14px] text-gray-800 dark:text-white font-bold leading-relaxed border-b border-gray-200 dark:border-hairline select-none">
           You will hear a sentence. Please repeat the sentence exactly as you
           hear it. You will hear the sentence only once.
         </div>
@@ -403,7 +403,7 @@ export default function RepeatSentence({
         )}
 
         {/* Content area */}
-        <div className="flex flex-col items-center py-8 bg-white select-none gap-6">
+        <div className="flex flex-col items-center py-8 bg-white dark:bg-canvas-soft select-none gap-6">
           {phase === "audio" ? (
             <div
               onClick={handleAudioBoxClick}
@@ -477,10 +477,10 @@ export default function RepeatSentence({
         </div>
 
         {/* Footer */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 dark:bg-canvas-soft-2 border-t border-gray-300 dark:border-hairline p-3 sm:p-4 flex justify-between items-center gap-2 select-none rounded-b-lg">
           <button
             onClick={handleReset}
-            className="px-6 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-[13px] uppercase rounded shadow transition"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white dark:bg-canvas border border-gray-300 dark:border-hairline hover:bg-gray-50 dark:hover:bg-canvas-soft text-gray-700 dark:text-amber-300 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition cursor-pointer"
           >
             RESTART
           </button>
@@ -489,7 +489,7 @@ export default function RepeatSentence({
             <button
               onClick={handleStartRecording}
               onTouchEnd={handleStartRecording}
-              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-zinc-900 dark:bg-amber-400 hover:bg-zinc-800 dark:hover:bg-amber-300 text-white dark:text-zinc-950 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition cursor-pointer"
             >
               Start Recording
             </button>
@@ -497,7 +497,7 @@ export default function RepeatSentence({
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-zinc-900 dark:bg-amber-400 hover:bg-zinc-800 dark:hover:bg-amber-300 text-white dark:text-zinc-950 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? "Submitting…" : "SUBMIT"}
             </button>

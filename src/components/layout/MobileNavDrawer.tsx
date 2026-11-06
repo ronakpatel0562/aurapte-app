@@ -23,6 +23,7 @@ import { logout } from "@/app/auth/actions";
 import { createClient } from "@/lib/supabase/client";
 import { planName, isPremiumPlan, isPlanActive, daysUntilExpiry, formatExpiryDate } from "@/lib/plans";
 import ThemeToggle from "@/components/providers/ThemeToggle";
+import { isDiwaliActive } from "@/lib/diwali";
 
 interface TaskTypeItem {
   name: string;

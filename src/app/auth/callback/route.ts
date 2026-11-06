@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { signSessionId } from "@/lib/session";
+import { isDiwaliActive } from "@/lib/diwali";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -8,7 +9,11 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") || "/dashboard";
 
   if (code) {
-    const response = NextResponse.redirect(`${origin}${next}`);
+    const redirectUrl = new URL(next, origin);
+    if (isDiwaliActive()) {
+      redirectUrl.searchParams.set("diwali_celebrate", "1");
+    }
+    const response = NextResponse.redirect(redirectUrl.toString());
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

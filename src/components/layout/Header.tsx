@@ -7,6 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/auth/actions";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { useFullscreen } from "@/hooks/useFullscreen";
+import { isDiwaliActive } from "@/lib/diwali";
+import { GlowingDiya } from "@/components/diwali/DiwaliDecorations";
+import ThemeToggle from "@/components/providers/ThemeToggle";
 
 interface UserProfile {
   fullName: string;
@@ -86,21 +89,28 @@ export default function Header({ isAdmin = false }: HeaderProps) {
 
 
   return (
-    <header className="h-16 border-b border-hairline bg-canvas flex items-center justify-between px-4 sm:px-6 lg:px-8 z-30 sticky top-0 backdrop-blur-md bg-canvas/85">
+    <header className="h-16 border-b border-hairline bg-canvas flex items-center justify-between px-3 sm:px-6 lg:px-8 z-30 sticky top-0 backdrop-blur-md bg-canvas/85">
       {/* Greeting (truncated on small screens) */}
-      <div className="min-w-0">
+      <div className="min-w-0 flex items-center gap-2 sm:gap-3 flex-1 mr-2">
         {profile ? (
-          <h2 className="text-body-sm-strong text-body truncate">
+          <h2 className="text-xs sm:text-body-sm-strong text-body truncate">
             Welcome back,{" "}
             <span className="text-ink font-semibold">{profile.fullName}</span>
           </h2>
         ) : (
-          <div className="w-36 h-4 bg-canvas-soft-2 animate-pulse rounded" />
+          <div className="w-28 sm:w-36 h-4 bg-canvas-soft-2 animate-pulse rounded" />
+        )}
+        {isDiwaliActive() && (
+          <div className="inline-flex items-center shrink-0" title="Happy Diwali!">
+            <GlowingDiya size={22} className="hidden xs:inline-flex" />
+          </div>
         )}
       </div>
 
       {/* Right cluster */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <ThemeToggle />
+
         <button
           onClick={toggleFullscreen}
           title={isFullscreen ? "Exit full screen" : "Enter full screen"}

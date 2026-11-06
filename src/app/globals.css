@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/diwali.css";
 
 /* ---------------------------------------------------------------------------
    AuraPTE design tokens
@@ -92,6 +93,67 @@
   --color-cyan: #6affd9;
   --color-cyan-soft: #0e3a32;
   --color-cyan-deep: #8fffe6;
+}
+
+/* Diwali Festive Theme Tokens */
+.diwali,
+html.diwali,
+html.diwali.dark {
+  --color-primary: #ffb830 !important;
+  --color-on-primary: #14050a !important;
+  --color-ink: #ffffff !important;
+  --color-body: #ffffff !important;
+  --color-mute: #ffd54f !important;
+  --color-hairline: rgba(255, 184, 48, 0.25) !important;
+  --color-hairline-strong: rgba(255, 184, 48, 0.5) !important;
+  --color-canvas: #1f0710 !important;
+  --color-canvas-soft: #14050a !important;
+  --color-canvas-soft-2: #2b0b16 !important;
+  --color-link: #ffd54f !important;
+  --color-link-deep: #ffa000 !important;
+  --color-link-bg-soft: #38121c !important;
+  --color-success: #10b981 !important;
+  --color-warning: #ffd54f !important;
+  --color-warning-soft: #381b0a !important;
+  --color-gradient-brand-start: #ffd54f !important;
+  --color-gradient-brand-mid: #ff6b35 !important;
+  --color-gradient-brand-end: #e91e63 !important;
+
+  /* Universal Tailwind Gray / Zinc / Slate overrides for questions and passages */
+  --color-gray-950: #ffffff !important;
+  --color-gray-900: #ffffff !important;
+  --color-gray-800: #ffffff !important;
+  --color-gray-700: #ffffff !important;
+  --color-gray-600: #ffd54f !important;
+  --color-gray-500: #ffd54f !important;
+  --color-gray-400: #ffd54f !important;
+  --color-gray-300: rgba(255, 184, 48, 0.35) !important;
+  --color-gray-200: rgba(255, 184, 48, 0.22) !important;
+  --color-gray-100: #240812 !important;
+  --color-gray-50: #1d060f !important;
+
+  --color-zinc-950: #ffffff !important;
+  --color-zinc-900: #ffffff !important;
+  --color-zinc-800: #ffffff !important;
+  --color-zinc-700: #ffffff !important;
+  --color-zinc-600: #ffd54f !important;
+  --color-zinc-500: #ffd54f !important;
+  --color-zinc-400: #ffd54f !important;
+  --color-zinc-300: rgba(255, 184, 48, 0.35) !important;
+  --color-zinc-200: rgba(255, 184, 48, 0.22) !important;
+  --color-zinc-100: #240812 !important;
+  --color-zinc-50: #1d060f !important;
+
+  --color-slate-900: #ffffff !important;
+  --color-slate-800: #ffffff !important;
+  --color-slate-700: #ffffff !important;
+  --color-slate-600: #ffd54f !important;
+  --color-slate-500: #ffd54f !important;
+  --color-slate-400: #ffd54f !important;
+  --color-slate-300: rgba(255, 184, 48, 0.35) !important;
+  --color-slate-200: rgba(255, 184, 48, 0.22) !important;
+  --color-slate-100: #240812 !important;
+  --color-slate-50: #1d060f !important;
 }
 
 @layer base {

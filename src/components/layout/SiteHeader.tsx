@@ -2,6 +2,8 @@ import Link from "next/link";
 import LandingThemeToggle from "@/components/landing/LandingThemeToggle";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { getCurrentUser } from "@/lib/supabase/auth-cache";
+import { isDiwaliActive } from "@/lib/diwali";
+import { GlowingDiya } from "@/components/diwali/DiwaliDecorations";
 
 export default async function SiteHeader() {
   const user = await getCurrentUser();
@@ -14,6 +16,11 @@ export default async function SiteHeader() {
           <span className="text-lg font-bold tracking-tight text-ink">
             Aura<span className="bg-gradient-to-r from-gradient-brand-start to-gradient-brand-end bg-clip-text text-transparent">PTE</span>
           </span>
+          {isDiwaliActive() && (
+            <span className="hidden sm:inline-flex items-center ml-1" title="Happy Diwali!">
+              <GlowingDiya size={26} />
+            </span>
+          )}
         </Link>
         <nav className="flex items-center gap-2">
           <LandingThemeToggle />

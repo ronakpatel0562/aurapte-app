@@ -10,6 +10,9 @@ import NavigationLoader from "@/components/layout/NavigationLoader";
 import DisableContextMenu from "@/components/layout/DisableContextMenu";
 import { ThemeProvider, themeInitScript } from "@/components/providers/ThemeProvider";
 import SupportWidget from "@/components/support/SupportWidget";
+import DiwaliDecorations from "@/components/diwali/DiwaliDecorations";
+import DiwaliCelebrationModal from "@/components/diwali/DiwaliCelebrationModal";
+import { isDiwaliActive } from "@/lib/diwali";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -81,7 +84,7 @@ export default function RootLayout({
         {/* Inline init runs before paint so the dark class is set on the
             very first render — no flash. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <meta name="theme-color" content="#fafafa" />
+        <meta name="theme-color" content={isDiwaliActive() ? "#14050a" : "#fafafa"} />
       </head>
       <body className="bg-canvas-soft text-ink min-h-screen flex flex-col font-geist antialiased">
         <Script
@@ -97,9 +100,13 @@ export default function RootLayout({
           `}
         </Script>
         <ThemeProvider>
+          <DiwaliDecorations />
+          <DiwaliCelebrationModal />
           <DisableContextMenu />
           <NavigationLoader />
-          {children}
+          <div className="relative z-10 flex-1 flex flex-col">
+            {children}
+          </div>
           <SupportWidget />
         </ThemeProvider>
       </body>

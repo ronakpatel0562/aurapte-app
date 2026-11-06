@@ -1,0 +1,388 @@
+/* ---------------------------------------------------------------------------
+   Diwali Festive Theme — Velvet Maroon & Diya Gold
+   ---------------------------------------------------------------------------
+   Active automatically for 7 days (until 2026-11-13T19:40:09+05:30).
+   Replaces light and standard dark tokens with a regal deep velvet maroon base
+   and forces ALL typography across ALL question modules, cards, passages,
+   instructions, and controls to be in crisp WHITE (#ffffff) or radiant GOLD (#ffd54f).
+   --------------------------------------------------------------------------- */
+
+html.diwali,
+html.diwali.dark,
+.diwali {
+  /* Semantic Tokens */
+  --color-primary: #ffb830 !important;
+  --color-on-primary: #14050a !important;
+  --color-ink: #ffffff !important;
+  --color-body: #ffffff !important;
+  --color-mute: #ffd54f !important;
+  --color-hairline: rgba(255, 184, 48, 0.25) !important;
+  --color-hairline-strong: rgba(255, 184, 48, 0.5) !important;
+  --color-canvas: #1f0710 !important;
+  --color-canvas-soft: #14050a !important;
+  --color-canvas-soft-2: #2b0b16 !important;
+  --color-link: #ffd54f !important;
+  --color-link-deep: #ffa000 !important;
+  --color-link-bg-soft: #38121c !important;
+  --color-success: #10b981 !important;
+  --color-warning: #ffd54f !important;
+  --color-warning-soft: #381b0a !important;
+  --color-gradient-brand-start: #ffd54f !important;
+  --color-gradient-brand-mid: #ff6b35 !important;
+  --color-gradient-brand-end: #e91e63 !important;
+
+  /* Universal Tailwind Gray Palette Overrides — Forces White & Gold */
+  --color-gray-950: #ffffff !important;
+  --color-gray-900: #ffffff !important;
+  --color-gray-800: #ffffff !important;
+  --color-gray-700: #ffffff !important;
+  --color-gray-600: #ffd54f !important;
+  --color-gray-500: #ffd54f !important;
+  --color-gray-400: #ffd54f !important;
+  --color-gray-300: rgba(255, 184, 48, 0.35) !important;
+  --color-gray-200: rgba(255, 184, 48, 0.22) !important;
+  --color-gray-100: #240812 !important;
+  --color-gray-50: #1d060f !important;
+
+  /* Universal Zinc Palette Overrides */
+  --color-zinc-950: #ffffff !important;
+  --color-zinc-900: #ffffff !important;
+  --color-zinc-800: #ffffff !important;
+  --color-zinc-700: #ffffff !important;
+  --color-zinc-600: #ffd54f !important;
+  --color-zinc-500: #ffd54f !important;
+  --color-zinc-400: #ffd54f !important;
+  --color-zinc-300: rgba(255, 184, 48, 0.35) !important;
+  --color-zinc-200: rgba(255, 184, 48, 0.22) !important;
+  --color-zinc-100: #240812 !important;
+  --color-zinc-50: #1d060f !important;
+
+  /* Universal Slate & Neutral Palette Overrides */
+  --color-slate-900: #ffffff !important;
+  --color-slate-800: #ffffff !important;
+  --color-slate-700: #ffffff !important;
+  --color-slate-600: #ffd54f !important;
+  --color-slate-500: #ffd54f !important;
+  --color-slate-400: #ffd54f !important;
+  --color-slate-300: rgba(255, 184, 48, 0.35) !important;
+  --color-slate-200: rgba(255, 184, 48, 0.22) !important;
+  --color-slate-100: #240812 !important;
+  --color-slate-50: #1d060f !important;
+
+  --color-neutral-900: #ffffff !important;
+  --color-neutral-800: #ffffff !important;
+  --color-neutral-700: #ffffff !important;
+  --color-neutral-600: #ffd54f !important;
+  --color-neutral-500: #ffd54f !important;
+  --color-neutral-400: #ffd54f !important;
+  --color-neutral-300: rgba(255, 184, 48, 0.35) !important;
+  --color-neutral-200: rgba(255, 184, 48, 0.22) !important;
+}
+
+/* Ensure body and html background color switch to velvet maroon in Diwali mode */
+html.diwali body {
+  background-color: #14050a !important;
+  color: #ffffff !important;
+}
+
+/* Ensure landing root matches velvet maroon base */
+html.diwali #landing-root {
+  background-color: #14050a !important;
+  color: #ffffff !important;
+}
+
+/* ---------------------------------------------------------------------------
+   UNIVERSAL TEXT VISIBILITY OVERRIDES — WHITE & GOLD TYPOGRAPHY
+   ---------------------------------------------------------------------------
+   Eliminates all dark/grey/black text so everything is razor-sharp on velvet maroon.
+   --------------------------------------------------------------------------- */
+
+/* Primary White Typography for all dark/grey/black text classes */
+html.diwali .text-gray-950,
+html.diwali .text-gray-900,
+html.diwali .text-gray-800,
+html.diwali .text-gray-700,
+html.diwali .text-zinc-950,
+html.diwali .text-zinc-900,
+html.diwali .text-zinc-800,
+html.diwali .text-zinc-700,
+html.diwali .text-slate-900,
+html.diwali .text-slate-800,
+html.diwali .text-slate-700,
+html.diwali .text-neutral-900,
+html.diwali .text-neutral-800,
+html.diwali .text-neutral-700,
+html.diwali .text-black,
+html.diwali .text-ink,
+html.diwali .text-body,
+html.diwali [class*="text-gray-9"],
+html.diwali [class*="text-gray-8"],
+html.diwali [class*="text-gray-7"],
+html.diwali [class*="text-zinc-9"],
+html.diwali [class*="text-zinc-8"],
+html.diwali [class*="text-zinc-7"],
+html.diwali [class*="text-slate-9"],
+html.diwali [class*="text-slate-8"],
+html.diwali [class*="text-slate-7"],
+html.diwali [class*="text-neutral-9"],
+html.diwali [class*="text-neutral-8"],
+html.diwali [class*="text-neutral-7"] {
+  color: #ffffff !important;
+}
+
+/* Secondary Gold Typography for accents, countdown, indicators, and status */
+html.diwali .text-gray-600,
+html.diwali .text-gray-500,
+html.diwali .text-gray-400,
+html.diwali .text-zinc-600,
+html.diwali .text-zinc-500,
+html.diwali .text-zinc-400,
+html.diwali .text-slate-600,
+html.diwali .text-slate-500,
+html.diwali .text-slate-400,
+html.diwali .text-neutral-600,
+html.diwali .text-neutral-500,
+html.diwali .text-neutral-400,
+html.diwali .text-mute,
+html.diwali [class*="text-gray-6"],
+html.diwali [class*="text-gray-5"],
+html.diwali [class*="text-gray-4"],
+html.diwali [class*="text-zinc-6"],
+html.diwali [class*="text-zinc-5"],
+html.diwali [class*="text-zinc-4"],
+html.diwali [class*="text-slate-6"],
+html.diwali [class*="text-slate-5"],
+html.diwali [class*="text-slate-4"] {
+  color: #ffd54f !important;
+}
+
+/* Question instructions, passages, headings, and labels */
+html.diwali p,
+html.diwali h1,
+html.diwali h2,
+html.diwali h3,
+html.diwali h4,
+html.diwali h5,
+html.diwali h6,
+html.diwali label,
+html.diwali li,
+html.diwali blockquote {
+  color: #ffffff !important;
+}
+
+/* Countdown circle and status text */
+html.diwali .border-gray-500,
+html.diwali .border-gray-400,
+html.diwali [class*="border-gray-5"],
+html.diwali [class*="border-gray-4"] {
+  border-color: #ffd54f !important;
+  color: #ffd54f !important;
+}
+
+/* ---------------------------------------------------------------------------
+   CONTAINERS & QUESTION SURFACES — FROSTED VELVET MAROON
+   --------------------------------------------------------------------------- */
+
+/* Transform light/white card containers and question blocks into solid velvet maroon */
+html.diwali .bg-white,
+html.diwali .bg-white\/90,
+html.diwali [class*="bg-white"],
+html.diwali .bg-gray-50,
+html.diwali .bg-gray-100,
+html.diwali .bg-zinc-50,
+html.diwali .bg-blue-50,
+html.diwali .bg-\[\#FAF9F6\],
+html.diwali .bg-\[\#b4b7bd\]\/80 {
+  background-color: #1a060d !important;
+  color: #ffffff !important;
+}
+
+/* Gilded festive borders for cards, boxes, and sections */
+html.diwali .border-gray-200,
+html.diwali .border-gray-300,
+html.diwali .border-gray-400,
+html.diwali .border-zinc-200,
+html.diwali .border-zinc-300,
+html.diwali .border-zinc-200\/80,
+html.diwali .border-blue-200,
+html.diwali [class*="border-gray-"],
+html.diwali [class*="border-zinc-"],
+html.diwali [class*="border-slate-"] {
+  border-color: rgba(255, 184, 48, 0.35) !important;
+}
+
+/* Input boxes, textareas, and transcript boxes */
+html.diwali input:not([type="checkbox"]):not([type="radio"]),
+html.diwali textarea,
+html.diwali select {
+  background-color: rgba(22, 5, 12, 0.96) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 184, 48, 0.38) !important;
+}
+
+html.diwali input::placeholder,
+html.diwali textarea::placeholder {
+  color: #ffd54f !important;
+  opacity: 0.7;
+}
+
+/* Interactive control buttons in question runner */
+html.diwali button.bg-white,
+html.diwali .bg-white button {
+  background-color: rgba(43, 11, 22, 0.95) !important;
+  color: #ffd54f !important;
+  border-color: rgba(255, 184, 48, 0.45) !important;
+}
+
+html.diwali button.bg-white:hover {
+  background-color: rgba(65, 16, 34, 1) !important;
+  color: #ffffff !important;
+}
+
+html.diwali .bg-zinc-900,
+html.diwali .bg-zinc-800 {
+  background-color: #ffb830 !important;
+  color: #14050a !important;
+  font-weight: 700 !important;
+}
+
+html.diwali .bg-zinc-900:hover,
+html.diwali .bg-zinc-800:hover {
+  background-color: #ffd54f !important;
+  color: #14050a !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Festive Diwali Keyframes & Micro-Animations
+   --------------------------------------------------------------------------- */
+
+/* Diya Flame Flicker: realistic organic candle/diya flame pulsation */
+@keyframes diya-flame-flicker {
+  0%, 100% {
+    transform: scale(1) skewX(0deg);
+    filter: drop-shadow(0 0 6px #ffb830) drop-shadow(0 0 14px rgba(255, 107, 53, 0.75));
+    opacity: 0.95;
+  }
+  20% {
+    transform: scale(1.05, 0.96) skewX(-1.5deg);
+    filter: drop-shadow(0 0 9px #ffb830) drop-shadow(0 0 18px rgba(255, 107, 53, 0.85));
+    opacity: 1;
+  }
+  40% {
+    transform: scale(0.96, 1.04) skewX(1deg);
+    filter: drop-shadow(0 0 7px #ffd54f) drop-shadow(0 0 12px rgba(255, 107, 53, 0.7));
+    opacity: 0.92;
+  }
+  65% {
+    transform: scale(1.03, 0.98) skewX(-0.5deg);
+    filter: drop-shadow(0 0 8px #ffb830) drop-shadow(0 0 16px rgba(255, 107, 53, 0.8));
+    opacity: 0.98;
+  }
+  85% {
+    transform: scale(0.98, 1.02) skewX(1.5deg);
+    filter: drop-shadow(0 0 6px #ff9500) drop-shadow(0 0 13px rgba(255, 107, 53, 0.72));
+    opacity: 0.94;
+  }
+}
+
+/* Hanging Lantern (Kandil) subtle pendulum sway */
+@keyframes lantern-sway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(1.8deg);
+  }
+  75% {
+    transform: rotate(-1.5deg);
+  }
+}
+
+/* Inner Lantern Glow Breathing */
+@keyframes lantern-glow-pulse {
+  0%, 100% {
+    opacity: 0.75;
+    filter: drop-shadow(0 0 10px rgba(255, 184, 48, 0.45));
+  }
+  50% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 18px rgba(255, 184, 48, 0.75));
+  }
+}
+
+/* Micro-star and golden dust twinkling */
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.2);
+  }
+}
+
+/* Golden Halo Pulse */
+@keyframes diwali-aura {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.06);
+  }
+}
+
+/* Utility classes for festive elements */
+.animate-diya-flame {
+  animation: diya-flame-flicker 2.8s ease-in-out infinite;
+  transform-origin: center bottom;
+  will-change: transform, filter;
+}
+
+.animate-star-twinkle {
+  animation: star-twinkle 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Accessibility: throttle or disable animations when prefers-reduced-motion is enabled */
+@media (prefers-reduced-motion: reduce) {
+  .animate-diya-flame,
+  .animate-star-twinkle {
+    animation: none !important;
+    filter: drop-shadow(0 0 6px #ffb830) !important;
+    opacity: 0.7 !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   MOBILE & SMALL SCREEN ENHANCEMENTS
+   ---------------------------------------------------------------------------
+   Ensures seamless responsive experience on screens from 320px up to 4K displays.
+   --------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  /* Prevent horizontal text overflows on mobile viewports */
+  html.diwali p,
+  html.diwali h1,
+  html.diwali h2,
+  html.diwali h3,
+  html.diwali span,
+  html.diwali div {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Improve button touch hitboxes and prevent double-tap zoom delays */
+  html.diwali button,
+  html.diwali a,
+  html.diwali input {
+    touch-action: manipulation;
+  }
+
+  /* Ensure modal card fits comfortably inside small screens with safe padding */
+  html.diwali [role="dialog"] > div {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}

@@ -295,10 +295,10 @@ export default function DescribeImage({
 
   const circleClass =
     phase === "prep"
-      ? "border-gray-400 text-gray-700"
+      ? "border-gray-400 text-gray-700 dark:border-amber-400 dark:text-amber-300"
       : phase === "recording"
-      ? "border-red-500 text-red-600"
-      : "border-green-500 text-green-600";
+      ? "border-red-500 text-red-600 dark:border-red-400 dark:text-red-400"
+      : "border-green-500 text-green-600 dark:border-green-400 dark:text-green-400";
 
   const statusText =
     phase === "prep"
@@ -309,25 +309,25 @@ export default function DescribeImage({
 
   const statusClass =
     phase === "prep"
-      ? "text-gray-600"
+      ? "text-gray-600 dark:text-amber-300"
       : phase === "recording"
-      ? "text-red-600"
-      : "text-green-700";
+      ? "text-red-600 dark:text-red-400"
+      : "text-green-700 dark:text-green-400";
 
   return (
     <div className="space-y-4">
-      <div className="bg-[#FAF9F6] border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans">
+      <div className="bg-[#FAF9F6] dark:bg-canvas-soft border border-gray-300 dark:border-hairline rounded-lg shadow-sm overflow-hidden font-sans">
         {/* Instructions */}
-        <div className="px-6 py-5 text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-5 text-[13px] sm:text-[14px] text-gray-800 dark:text-white font-bold leading-relaxed border-b border-gray-200 dark:border-hairline select-none">
           Look at the graph below. In {PREP_SECONDS} seconds, please speak into
           the microphone and describe in detail what the graph is showing. You
           will have {RECORD_SECONDS} seconds to give your response.
         </div>
 
         {/* Image + countdown row */}
-        <div className="px-8 py-8 bg-white">
-          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-            <div className="w-full flex-1 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+        <div className="px-4 sm:px-8 py-5 sm:py-8 bg-white dark:bg-canvas-soft">
+          <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+            <div className="w-full flex-1 border border-gray-200 dark:border-hairline rounded-lg overflow-hidden bg-white dark:bg-canvas-soft-2 shadow-sm">
               {content.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -337,25 +337,25 @@ export default function DescribeImage({
                   style={{ maxHeight: "420px", objectFit: "contain" }}
                 />
               ) : (
-                <div className="h-52 flex items-center justify-center text-gray-400 text-sm">
+                <div className="h-44 sm:h-52 flex items-center justify-center text-gray-400 dark:text-amber-400/60 text-sm">
                   No image provided
                 </div>
               )}
               {content.description && (
-                <p className="text-xs text-gray-500 text-center px-4 py-2 border-t border-gray-100">
+                <p className="text-xs text-gray-500 dark:text-amber-300 text-center px-4 py-2 border-t border-gray-100 dark:border-hairline">
                   {content.description}
                 </p>
               )}
             </div>
 
-            <div className="flex flex-col items-center gap-3 select-none shrink-0 w-36">
+            <div className="flex flex-row sm:flex-col items-center justify-center gap-3 select-none shrink-0 w-full sm:w-36">
               <div
-                className={`w-16 h-16 rounded-full border-2 flex items-center justify-center text-2xl font-semibold transition-colors duration-300 ${circleClass}`}
+                className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 flex items-center justify-center text-xl sm:text-2xl font-semibold transition-colors duration-300 ${circleClass}`}
               >
                 {circleLabel}
               </div>
               <span
-                className={`text-[13px] font-medium text-center leading-snug ${statusClass}`}
+                className={`text-xs sm:text-[13px] font-medium text-center leading-snug ${statusClass}`}
               >
                 {statusText}
               </span>
@@ -365,23 +365,23 @@ export default function DescribeImage({
 
         {/* Live transcript during recording */}
         {phase === "recording" && (
-          <div className="px-8 pb-6 bg-white">
+          <div className="px-4 sm:px-8 pb-4 sm:pb-6 bg-white dark:bg-canvas-soft">
             <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
               Live Transcript
             </p>
-            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 min-h-[48px] text-[14px] text-gray-700 leading-relaxed">
+            <div className="border border-gray-200 dark:border-hairline rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-canvas-soft-2 min-h-[44px] text-[13px] sm:text-[14px] text-gray-700 dark:text-amber-200 leading-relaxed">
               {transcript || (
-                <span className="text-gray-400 italic">Listening…</span>
+                <span className="text-gray-400 dark:text-amber-400/60 italic">Listening…</span>
               )}
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="bg-[#b4b7bd]/80 border-t border-gray-300 p-4 flex justify-between items-center select-none rounded-b-lg">
+        <div className="bg-[#b4b7bd]/80 dark:bg-canvas-soft-2 border-t border-gray-300 dark:border-hairline p-3 sm:p-4 flex justify-between items-center gap-2 select-none rounded-b-lg">
           <button
             onClick={handleReset}
-            className="px-6 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-[13px] uppercase rounded shadow transition"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white dark:bg-canvas border border-gray-300 dark:border-hairline hover:bg-gray-50 dark:hover:bg-canvas-soft text-gray-700 dark:text-amber-300 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition cursor-pointer"
           >
             RESTART
           </button>
@@ -390,7 +390,7 @@ export default function DescribeImage({
             <button
               onClick={handleStartRecording}
               onTouchEnd={handleStartRecording}
-              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-zinc-900 dark:bg-amber-400 hover:bg-zinc-800 dark:hover:bg-amber-300 text-white dark:text-zinc-950 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition cursor-pointer"
             >
               Start Recording
             </button>
@@ -398,7 +398,7 @@ export default function DescribeImage({
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-zinc-900 dark:bg-amber-400 hover:bg-zinc-800 dark:hover:bg-amber-300 text-white dark:text-zinc-950 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? "Submitting…" : "SUBMIT"}
             </button>

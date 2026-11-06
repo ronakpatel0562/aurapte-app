@@ -3,6 +3,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isPremiumPlan } from "@/lib/plans";
+import {
+  isDiwaliActive,
+  isDiwaliThemeEnabled,
+  DIWALI_EXPIRY_TIMESTAMP_MS,
+  DIWALI_STORAGE_KEYS,
+} from "@/lib/diwali";
 
 type Mode = "light" | "dark";
 
@@ -12,6 +18,14 @@ interface ThemeContextValue {
   toggle: () => void;
   /** Theme switching is an Aura Pro perk — Starter accounts stay on light mode. */
   isPremium: boolean;
+  /** True if we are within the 7-day Diwali celebration window. */
+  isDiwaliActive: boolean;
+  /** True if the user is currently using the Diwali theme. */
+  isDiwaliTheme: boolean;
+  /** Toggle between Diwali theme and standard Light/Dark theme. */
+  toggleDiwaliTheme: () => void;
+  /** Explicitly set Diwali theme on or off. */
+  setDiwaliTheme: (enabled: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -23,9 +37,19 @@ function detectSystemTheme(): Mode {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function applyClass(mode: Mode) {
+function applyClass(mode: Mode, diwaliTheme: boolean) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
+
+  if (diwaliTheme && isDiwaliActive()) {
+    root.classList.add("dark", "diwali");
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", "#14050a");
+    return;
+  }
+
+  // When Diwali theme is off, restore standard light/dark classes
+  root.classList.remove("diwali");
   if (mode === "dark") root.classList.add("dark");
   else root.classList.remove("dark");
   const meta = document.querySelector('meta[name="theme-color"]');
@@ -34,51 +58,67 @@ function applyClass(mode: Mode) {
 
 /**
  * Inline init script injected into <head> to prevent flash of incorrect theme.
- * Reads localStorage; if no saved preference, falls back to OS preference.
+ * Defaults to Diwali theme if within the 7-day window and not explicitly turned off.
  */
 export const themeInitScript = `
 (function() {
   try {
-    var stored = localStorage.getItem('${STORAGE_KEY}');
-    var resolved = stored === 'light' || stored === 'dark'
-      ? stored
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    if (resolved === 'dark') document.documentElement.classList.add('dark');
+    var DIWALI_EXPIRY_MS = ${DIWALI_EXPIRY_TIMESTAMP_MS};
+    var isDiwaliWindow = Date.now() <= DIWALI_EXPIRY_MS;
+    var diwaliPref = localStorage.getItem('${DIWALI_STORAGE_KEYS.THEME_ENABLED}');
+    var isDiwali = isDiwaliWindow && diwaliPref !== 'false';
     var meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) {
       meta = document.createElement('meta');
       meta.setAttribute('name', 'theme-color');
       document.head.appendChild(meta);
     }
+
+    if (isDiwali) {
+      document.documentElement.classList.add('dark', 'diwali');
+      meta.setAttribute('content', '#14050a');
+      return;
+    }
+
+    // Normal light/dark fallback
+    document.documentElement.classList.remove('diwali');
+    var stored = localStorage.getItem('${STORAGE_KEY}');
+    var resolved = stored === 'light' || stored === 'dark'
+      ? stored
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    if (resolved === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
     meta.setAttribute('content', resolved === 'dark' ? '#0a0a0a' : '#fafafa');
   } catch (_) {}
 })();
 `;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<Mode>("light");
+  const activeWindow = isDiwaliActive();
+  const [isDiwaliTheme, setIsDiwaliThemeState] = useState<boolean>(() => isDiwaliThemeEnabled());
+  const [mode, setModeState] = useState<Mode>("dark");
   const [isPremium, setIsPremium] = useState(false);
   const isPremiumRef = useRef(isPremium);
   isPremiumRef.current = isPremium;
 
   useEffect(() => {
-    // Step 1: resolve initial theme from localStorage or OS
-    let initial: Mode;
+    // 1. Resolve standard initial mode
+    let initialMode: Mode;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      initial = stored === "light" || stored === "dark" ? stored : detectSystemTheme();
+      initialMode = stored === "light" || stored === "dark" ? stored : detectSystemTheme();
     } catch (_) {
-      initial = detectSystemTheme();
+      initialMode = detectSystemTheme();
     }
+    setModeState(initialMode);
 
-    // Persist the resolved value so subsequent visits skip OS detection
-    try { localStorage.setItem(STORAGE_KEY, initial); } catch (_) {}
-    setModeState(initial);
-    applyClass(initial);
+    // 2. Resolve Diwali preference
+    const diwaliEnabled = isDiwaliThemeEnabled();
+    setIsDiwaliThemeState(diwaliEnabled);
+    applyClass(initialMode, diwaliEnabled);
 
-    // Step 2: sync with Supabase in background
+    // 3. Sync Supabase user profile plan
     const supabase = createClient();
-
     const syncWithDB = async (userId: string) => {
       try {
         const { data } = await supabase
@@ -90,34 +130,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const premium = isPremiumPlan(data?.plan);
         setIsPremium(premium);
 
-        if (!premium) {
-          // Starter accounts don't get to keep a dark preference — force light,
-          // but leave any saved preference in the DB untouched in case they upgrade later.
+        // If not premium and not on Diwali theme, lock to light mode
+        if (!premium && !isDiwaliThemeEnabled()) {
           setModeState("light");
-          applyClass("light");
+          applyClass("light", false);
           return;
         }
 
         if (data?.theme === "light" || data?.theme === "dark") {
-          // DB preference wins — apply and sync locally
           setModeState(data.theme);
           try { localStorage.setItem(STORAGE_KEY, data.theme); } catch (_) {}
-          applyClass(data.theme);
-        } else {
-          // No DB preference yet — save the resolved initial value
-          await supabase
-            .from("profiles")
-            .update({ theme: initial })
-            .eq("id", userId);
+          applyClass(data.theme, isDiwaliThemeEnabled());
         }
       } catch (_) {}
     };
 
-    // onAuthStateChange fires immediately with whatever session is already
-    // known (INITIAL_SESSION) and again on every change, so unlike a one-shot
-    // getUser() call it can't lose the race against session hydration on a
-    // fresh page load — a race that used to leave isPremium stuck at false
-    // (dark mode permanently locked) even for paid accounts.
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         syncWithDB(session.user.id);
@@ -129,13 +156,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
+  const setDiwaliTheme = useCallback((enabled: boolean) => {
+    if (!isDiwaliActive()) return;
+    setIsDiwaliThemeState(enabled);
+    try {
+      localStorage.setItem(DIWALI_STORAGE_KEYS.THEME_ENABLED, enabled ? "true" : "false");
+    } catch (_) {}
+    applyClass(mode, enabled);
+    window.dispatchEvent(new CustomEvent("diwaliThemeChanged", { detail: { enabled } }));
+  }, [mode]);
+
+  const toggleDiwaliTheme = useCallback(() => {
+    setDiwaliTheme(!isDiwaliTheme);
+  }, [isDiwaliTheme, setDiwaliTheme]);
+
   const setMode = useCallback(async (next: Mode) => {
+    // Setting light/dark mode automatically disables the forced Diwali theme
+    if (isDiwaliTheme) {
+      setDiwaliTheme(false);
+    }
+
     if (next === "dark" && !isPremiumRef.current) return;
     setModeState(next);
     try { localStorage.setItem(STORAGE_KEY, next); } catch (_) {}
-    applyClass(next);
+    applyClass(next, false);
 
-    // Persist to DB in background
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -143,14 +188,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         await supabase.from("profiles").update({ theme: next }).eq("id", user.id);
       }
     } catch (_) {}
-  }, []);
+  }, [isDiwaliTheme, setDiwaliTheme]);
 
   const toggle = useCallback(() => {
     setMode(mode === "dark" ? "light" : "dark");
   }, [mode, setMode]);
 
   return (
-    <ThemeContext.Provider value={{ mode, setMode, toggle, isPremium }}>
+    <ThemeContext.Provider
+      value={{
+        mode,
+        setMode,
+        toggle,
+        isPremium,
+        isDiwaliActive: activeWindow,
+        isDiwaliTheme,
+        toggleDiwaliTheme,
+        setDiwaliTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -303,44 +303,44 @@ export default function ReadAloud({
 
   const circleClass =
     phase === "recording"
-      ? "border-red-500 text-red-600"
+      ? "border-red-500 text-red-600 dark:border-red-400 dark:text-red-400"
       : phase === "done"
-      ? "border-green-500 text-green-600"
-      : "border-gray-500 text-gray-700";
+      ? "border-green-500 text-green-600 dark:border-green-400 dark:text-green-400"
+      : "border-gray-500 text-gray-700 dark:border-amber-400 dark:text-amber-300";
 
   const statusClass =
     phase === "recording"
-      ? "text-red-600"
+      ? "text-red-600 dark:text-red-400"
       : phase === "done"
-      ? "text-green-700"
-      : "text-gray-600";
+      ? "text-green-700 dark:text-green-400"
+      : "text-gray-600 dark:text-amber-300";
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden font-sans">
+      <div className="bg-white dark:bg-canvas-soft border border-gray-300 dark:border-hairline rounded-lg shadow-sm overflow-hidden font-sans">
         {/* Instructions */}
-        <div className="px-6 py-5 text-[14px] text-gray-800 font-bold leading-relaxed border-b border-gray-200 select-none">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-5 text-[13px] sm:text-[14px] text-gray-800 dark:text-white font-bold leading-relaxed border-b border-gray-200 dark:border-hairline select-none">
           Look at the text below. In {PREP_SECONDS} seconds, you must read this
           text aloud as naturally and clearly as possible. You have{" "}
           {RECORD_SECONDS} seconds to read aloud.
         </div>
 
         {/* Countdown row */}
-        <div className="flex justify-center items-center gap-4 py-8 select-none">
+        <div className="flex justify-center items-center gap-3 sm:gap-4 py-5 sm:py-8 select-none">
           <div
-            className={`w-14 h-14 rounded-full border-2 flex items-center justify-center text-xl font-semibold transition-colors duration-300 ${circleClass}`}
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center text-lg sm:text-xl font-semibold transition-colors duration-300 ${circleClass}`}
           >
             {circleLabel}
           </div>
-          <span className={`text-[14px] font-medium ${statusClass}`}>
+          <span className={`text-[13px] sm:text-[14px] font-medium ${statusClass}`}>
             {statusText}
           </span>
         </div>
 
         {/* Passage */}
-        <div className="px-8 pb-6">
-          <div className="border border-gray-300 rounded-lg p-5 bg-white leading-relaxed select-text">
-            <p className="text-[15px] text-gray-800">
+        <div className="px-3.5 sm:px-8 pb-4 sm:pb-6">
+          <div className="border border-gray-300 dark:border-hairline rounded-lg p-3.5 sm:p-5 bg-white dark:bg-canvas-soft-2 leading-relaxed select-text shadow-inner">
+            <p className="text-[14px] sm:text-[15px] text-gray-800 dark:text-white leading-relaxed font-normal">
               {content.passage ?? "No passage content provided."}
             </p>
           </div>
@@ -348,24 +348,24 @@ export default function ReadAloud({
 
         {/* Live transcript during recording */}
         {phase === "recording" && (
-          <div className="px-8 pb-6">
+          <div className="px-3.5 sm:px-8 pb-4 sm:pb-6">
             <p className="text-[11px] font-semibold text-mute font-mono uppercase tracking-wider mb-2">
               Live Transcript
             </p>
-            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 min-h-[48px] text-[14px] text-gray-700 leading-relaxed">
+            <div className="border border-gray-200 dark:border-hairline rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-canvas-soft-2 min-h-[44px] text-[13px] sm:text-[14px] text-gray-700 dark:text-amber-200 leading-relaxed">
               {transcript || (
-                <span className="text-gray-400 italic">Listening…</span>
+                <span className="text-gray-400 dark:text-amber-400/60 italic">Listening…</span>
               )}
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex justify-between items-center select-none rounded-b-lg">
+        <div className="border-t border-gray-200 dark:border-hairline p-3 sm:p-4 flex justify-between items-center gap-2 select-none rounded-b-lg">
           <button
             onClick={handleReset}
             disabled={phase === "submitted"}
-            className="px-6 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 sm:px-6 py-2 sm:py-2.5 bg-white dark:bg-canvas border border-gray-300 dark:border-hairline hover:bg-gray-50 dark:hover:bg-canvas-soft text-gray-700 dark:text-amber-300 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             RESTART
           </button>
@@ -374,7 +374,7 @@ export default function ReadAloud({
             <button
               onClick={handleStartRecording}
               onTouchEnd={handleStartRecording}
-              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-zinc-900 dark:bg-amber-400 hover:bg-zinc-800 dark:hover:bg-amber-300 text-white dark:text-zinc-950 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition cursor-pointer"
             >
               Start Recording
             </button>
@@ -382,7 +382,7 @@ export default function ReadAloud({
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-zinc-900 dark:bg-amber-400 hover:bg-zinc-800 dark:hover:bg-amber-300 text-white dark:text-zinc-950 font-bold text-xs sm:text-[13px] uppercase rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? "Submitting…" : "SUBMIT"}
             </button>

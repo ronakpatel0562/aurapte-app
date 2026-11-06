@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { establishSession } from "@/app/auth/actions";
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react";
+import { isDiwaliActive, DIWALI_STORAGE_KEYS } from "@/lib/diwali";
 
 function LoginFormInner() {
   const router = useRouter();
@@ -55,6 +56,11 @@ function LoginFormInner() {
       setError(result.error);
       setLoading(false);
       return;
+    }
+
+    // Trigger celebratory Diwali popup on successful login
+    if (typeof window !== "undefined" && isDiwaliActive()) {
+      sessionStorage.setItem(DIWALI_STORAGE_KEYS.LOGIN_TRIGGER, "true");
     }
 
     router.push("/dashboard");

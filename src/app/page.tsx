@@ -87,10 +87,19 @@ const FAQS: { question: string; answer: string }[] = [
 const LANDING_THEME_INIT_SCRIPT = `
 (function() {
   try {
+    var DIWALI_EXPIRY_MS = 1794579009000;
+    var isDiwaliWindow = Date.now() <= DIWALI_EXPIRY_MS;
+    var diwaliPref = localStorage.getItem('aurapte-diwali-theme-enabled');
+    var isDiwali = isDiwaliWindow && diwaliPref !== 'false';
+    var root = document.getElementById('landing-root');
+    if (isDiwali) {
+      if (root) root.classList.add('dark', 'diwali');
+      return;
+    }
+    if (root) root.classList.remove('diwali');
     var stored = localStorage.getItem('aurapte-landing-theme');
     var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     if (dark) {
-      var root = document.getElementById('landing-root');
       if (root) root.classList.add('dark');
     }
   } catch (_) {}
